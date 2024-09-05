@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "866432989267",
+    "project_id": "folio-29339",
+    "storage_bucket": "folio-29339.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:866432989267:android:57f897cf2489c0a5d56ea6",
+        "android_client_info": {
+          "package_name": "com.example.folio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD08AQh_ozf3QSFAZcg7eTWGtBMJw_kG_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
