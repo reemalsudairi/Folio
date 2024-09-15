@@ -5,6 +5,8 @@ import 'package:folio/screens/Profile/reviews_page.dart';
 import 'package:folio/screens/settings.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -12,7 +14,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
 
-  static List<Widget> _pages = <Widget>[
+  static final List<Widget> _pages = <Widget>[
     LibraryPage(),
     ClubsPage(),
     ReviewsPage(),
@@ -27,19 +29,21 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8F5F1),
+      backgroundColor: const Color(0xFFF8F5F1),
       appBar: PreferredSize(
-        preferredSize: Size(412, 56),
+        preferredSize: const Size(412, 56),
         child: AppBar(
-          backgroundColor: Color(0xFFF8F5F1),
+          backgroundColor: const Color(0xFFF8F5F1),
           elevation: 0,
           actions: [
             IconButton(
-              icon: Icon(Icons.edit, color: const Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.edit,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.settings, color: const Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.settings,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -53,14 +57,14 @@ class _ProfilePageState extends State<ProfilePage> {
       body: Container(
         width: 412,
         height: 915,
-        color: Color(0xFFF8F5F1),
+        color: const Color(0xFFF8F5F1),
         child: Column(
           children: [
-            CircleAvatar(
+            const CircleAvatar(
               radius: 50,
               backgroundImage: AssetImage('assets/avatar.png'),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text(
               'Nora',
               style: TextStyle(
@@ -69,79 +73,82 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.brown[800],
               ),
             ),
-            Text(
+            const Text(
               '@Noraisreading',
               style: TextStyle(
-                color: const Color.fromARGB(255, 88, 71, 71),
+                color: Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 10),
-            Container(
+            const SizedBox(height: 10),
+            SizedBox(
               width: 250,
-              child: Text(
+              child: const Text(
                 'Book lover, always seeking new stories and perspectives.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: const Color.fromARGB(255, 31, 24, 24),
+                  color: Color.fromARGB(255, 31, 24, 24),
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildYearlyGoal(),
-            SizedBox(height: 20),
-            Expanded(child: _pages[_selectedIndex]), // Display the selected page
+            const SizedBox(height: 20),
+            Expanded(
+                child: _pages[_selectedIndex]), // Display the selected page
           ],
         ),
       ),
-    bottomNavigationBar: BottomNavigationBar(
-  currentIndex: 0,
-  selectedItemColor: const Color(0xFFF790AD), // Selected item color
-  unselectedItemColor: const Color(0xFFB3B3B3),
-  showSelectedLabels: false,
-  showUnselectedLabels: false, // Unselected item color
-  items: const [
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.home_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        selectedItemColor: const Color(0xFFF790AD), // Selected item color
+        unselectedItemColor: const Color(0xFFB3B3B3),
+        showSelectedLabels: false,
+        showUnselectedLabels: false, // Unselected item color
+        items: const [
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child: Icon(Icons.home_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child:
+                  Icon(Icons.explore_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child: Icon(Icons.book_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Library',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child:
+                  Icon(Icons.person_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Profile',
+          ),
+        ],
       ),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.explore_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Search',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.book_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Library',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.person_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Profile',
-    ),
-  ],
-),
     );
   }
 
   Widget _buildYearlyGoal() {
     return Container(
-      padding: EdgeInsets.all(16),
-      margin: EdgeInsets.symmetric(horizontal: 30),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 30),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -176,13 +183,13 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           LinearProgressIndicator(
             value: 0.5,
             backgroundColor: Colors.grey[300],
-            valueColor: AlwaysStoppedAnimation(Color(0xFFF790AD)),
+            valueColor: const AlwaysStoppedAnimation(Color(0xFFF790AD)),
             minHeight: 13,
-            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
         ],
       ),

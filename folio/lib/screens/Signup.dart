@@ -1,14 +1,15 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
+import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:folio/screens/homePage.dart';
 import 'package:folio/screens/ProfileSetup.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
-import 'package:firebase_auth/firebase_auth.dart';     // Firebase Auth
-
+import 'package:folio/screens/homePage.dart';
 
 class SignUp extends StatefulWidget {
+  const SignUp({super.key});
+
   @override
   _SignUpState createState() => _SignUpState();
 }
@@ -16,13 +17,14 @@ class SignUp extends StatefulWidget {
 class _SignUpState extends State<SignUp> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
 
-    bool isLoading = false;
+  bool isLoading = false;
 
- // Firebase Auth instance
+  // Firebase Auth instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
   // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -36,13 +38,17 @@ class _SignUpState extends State<SignUp> {
 
       try {
         // Sign up the user using Firebase Auth
-        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        UserCredential userCredential =
+            await _auth.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
         // Add user data to Firestore "reader" collection
-        await _firestore.collection('reader').doc(userCredential.user!.uid).set({
+        await _firestore
+            .collection('reader')
+            .doc(userCredential.user!.uid)
+            .set({
           'username': _usernameController.text.trim(),
           'email': _emailController.text.trim(),
           'uid': userCredential.user!.uid,
@@ -87,7 +93,8 @@ class _SignUpState extends State<SignUp> {
       backgroundColor: Color(0xFFF8F8F3),
       body: SingleChildScrollView(
         child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+          constraints:
+              BoxConstraints(minHeight: MediaQuery.of(context).size.height),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -113,12 +120,14 @@ class _SignUpState extends State<SignUp> {
                     "images/Logo.png",
                     width: 500,
                     height: 300,
-                    fit: BoxFit.cover, // Ensures the image fits within the container
+                    fit: BoxFit
+                        .cover, // Ensures the image fits within the container
                   ),
 
                   // Introductory text at the bottom of the image
                   Positioned(
-                    bottom: 10, // Position the text 10 pixels from the bottom of the image
+                    bottom:
+                        10, // Position the text 10 pixels from the bottom of the image
                     left: 0,
                     right: 0,
                     child: Text(
@@ -199,7 +208,9 @@ class _SignUpState extends State<SignUp> {
                           if (value.length > 254) {
                             return "Email can't exceed 254 characters";
                           }
-                          if (!RegExp(r'^[a-zA-Z0-9._]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
+                          if (!RegExp(
+                                  r'^[a-zA-Z0-9._]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}$')
+                              .hasMatch(value)) {
                             return "Enter a valid email address";
                           }
                           return null;
@@ -299,10 +310,10 @@ class _SignUpState extends State<SignUp> {
 
                       SizedBox(height: 20),
 
-                       // Sign up button
+                      // Sign up button
                       isLoading
                           ? CircularProgressIndicator()
-                          : Container(
+                          : SizedBox(
                               width: 410,
                               child: MaterialButton(
                                 color: Color(0xFFF790AD),
@@ -318,7 +329,7 @@ class _SignUpState extends State<SignUp> {
 
                       SizedBox(height: 20),
 
-                        // Already have an account? Login
+                      // Already have an account? Login
                       RichText(
                         text: TextSpan(
                           children: [

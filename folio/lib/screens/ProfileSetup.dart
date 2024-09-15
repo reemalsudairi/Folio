@@ -1,13 +1,16 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:io';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 // Convert MyApp to ProfileSetup
 class ProfileSetup extends StatefulWidget {
+  const ProfileSetup({super.key});
+
   @override
   _ProfileSetupState createState() => _ProfileSetupState();
 }
@@ -78,14 +81,17 @@ class _ProfileSetupState extends State<ProfileSetup> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(40),
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(40),
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                                 borderRadius: BorderRadius.circular(40),
                               ),
                             ),
@@ -107,14 +113,17 @@ class _ProfileSetupState extends State<ProfileSetup> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(40),
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(40),
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                                 borderRadius: BorderRadius.circular(40),
                               ),
                             ),
@@ -126,7 +135,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           TextFormField(
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              hintText: "How many books do you want to read in 2024?",
+                              hintText:
+                                  "How many books do you want to read in 2024?",
                               hintStyle: TextStyle(
                                 color: Color(0xFF9B9B9B),
                                 fontWeight: FontWeight.w400,
@@ -134,14 +144,17 @@ class _ProfileSetupState extends State<ProfileSetup> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(40),
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(40),
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Color(0xFFF790AD)),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFF790AD)),
                                 borderRadius: BorderRadius.circular(40),
                               ),
                             ),
@@ -150,7 +163,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                           SizedBox(height: 20),
 
                           // Save button
-                          Container(
+                          SizedBox(
                             width: 410, // Match the width of the TextField
                             child: MaterialButton(
                               color: Color(0xFFF790AD),
@@ -163,7 +176,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
                                 print("Navigate to profile setup");
                               },
                               child: Text("Save",
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
 
@@ -201,7 +215,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
                               ],
                             ),
                           ),
-                          SizedBox(height: 20), // Additional space after the text
+                          SizedBox(
+                              height: 20), // Additional space after the text
                         ],
                       ),
                     ),
@@ -217,6 +232,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
 }
 
 class ProfilePhotoWidget extends StatefulWidget {
+  const ProfilePhotoWidget({super.key});
+
   @override
   _ProfilePhotoWidgetState createState() => _ProfilePhotoWidgetState();
 }
@@ -303,4 +320,3 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 }
-
