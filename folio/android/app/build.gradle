@@ -10,7 +10,7 @@ android {
     namespace = "com.example.folio"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
-
+  minSdkVersion 23
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
