@@ -17,6 +17,69 @@ class _SignUpState extends State<SignUp> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+
+    bool isLoading = false;
+
+ // Firebase Auth instance
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Sign up function
+  Future<void> _signUp() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        // Sign up the user using Firebase Auth
+        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        // Add user data to Firestore "reader" collection
+        await _firestore.collection('reader').doc(userCredential.user!.uid).set({
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'uid': userCredential.user!.uid,
+          'createdAt': Timestamp.now(),
+        });
+
+        // Navigate to the profile setup page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ProfileSetup()),
+        );
+      } on FirebaseAuthException catch (e) {
+        // Handle Firebase Auth errors
+        String message = 'An error occurred';
+        if (e.code == 'email-already-in-use') {
+          message = 'Email is already in use';
+        } else if (e.code == 'weak-password') {
+          message = 'Password is too weak';
+        } else if (e.code == 'invalid-email') {
+          message = 'Invalid email address';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      } catch (e) {
+        // Handle any other errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +154,7 @@ class _SignUpState extends State<SignUp> {
 
                       // Username
                       TextFormField(
+                        controller: _usernameController,
                         autovalidateMode: AutovalidateMode.always,
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -125,6 +189,7 @@ class _SignUpState extends State<SignUp> {
 
                       // Email
                       TextFormField(
+                        controller: _emailController,
                         autovalidateMode: AutovalidateMode.always,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
@@ -234,33 +299,26 @@ class _SignUpState extends State<SignUp> {
 
                       SizedBox(height: 20),
 
-                      // Sign up button
-                      Container(
-                        width: 410,
-                        child: MaterialButton(
-                          color: Color(0xFFF790AD),
-                          textColor: Color(0xFFFFFFFF),
-                          height: 50,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProfileSetup(),
+                       // Sign up button
+                      isLoading
+                          ? CircularProgressIndicator()
+                          : Container(
+                              width: 410,
+                              child: MaterialButton(
+                                color: Color(0xFFF790AD),
+                                textColor: Color(0xFFFFFFFF),
+                                height: 50,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(40),
                                 ),
-                              );
-                            }
-                          },
-                          child: Text("Sign up"),
-                        ),
-                      ),
+                                onPressed: _signUp,
+                                child: Text("Sign up"),
+                              ),
+                            ),
 
                       SizedBox(height: 20),
 
-                      // Already have an account? Login
+                        // Already have an account? Login
                       RichText(
                         text: TextSpan(
                           children: [
@@ -304,7 +362,3 @@ class _SignUpState extends State<SignUp> {
     );
   }
 }
-
-
-
-

@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:folio/screens/homePage.dart';
+import 'package:folio/screens/Signup.dart';
 
 void main() async {
     WidgetsFlutterBinding.ensureInitialized(
@@ -62,10 +62,10 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<SignUp> createState() => _SignUpState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _SignUpState extends State<SignUp> {
   int _counter = 0;
 
   void _incrementCounter() {
@@ -95,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        //title: Text(widget.title),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -127,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed:(){ Navigator.push(context, MaterialPageRoute(builder: (context)=>HomePage()));}
+        onPressed:(){ Navigator.push(context, MaterialPageRoute(builder: (context)=>SignUp()));}
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
