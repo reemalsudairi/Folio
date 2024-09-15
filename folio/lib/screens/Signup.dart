@@ -4,6 +4,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/homePage.dart';
 import 'package:folio/screens/ProfileSetup.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
+import 'package:firebase_auth/firebase_auth.dart';     // Firebase Auth
+
 
 class SignUp extends StatefulWidget {
   @override
