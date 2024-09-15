@@ -56,10 +56,13 @@ class _SignUpState extends State<SignUp> {
         });
 
         // Navigate to the profile setup page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProfileSetup()),
-        );
+       Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => ProfileSetup(userId: userCredential.user!.uid),
+  ),
+);
+
       } on FirebaseAuthException catch (e) {
         // Handle Firebase Auth errors
         String message = 'An error occurred';
