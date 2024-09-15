@@ -2,7 +2,7 @@
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:signup_one/homePage.dart';
+import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 

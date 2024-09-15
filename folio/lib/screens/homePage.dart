@@ -137,33 +137,33 @@ class _HomePageState extends State<HomePage> {
   items: const [
     BottomNavigationBarItem(
       icon: SizedBox(
-        child: Icon(Icons.home_outlined, size: 35), // Set the icon size
         width: 30, // Set the icon width
-        height: 30, // Set the icon height
+        height: 30,
+        child: Icon(Icons.home_outlined, size: 35), // Set the icon height
       ),
       label: 'Home',
     ),
     BottomNavigationBarItem(
       icon: SizedBox(
-        child: Icon(Icons.explore_outlined, size: 35), // Set the icon size
         width: 30, // Set the icon width
-        height: 30, // Set the icon height
+        height: 30,
+        child: Icon(Icons.explore_outlined, size: 35), // Set the icon height
       ),
       label: 'Search',
     ),
     BottomNavigationBarItem(
       icon: SizedBox(
-        child: Icon(Icons.book_outlined, size: 35), // Set the icon size
         width: 30, // Set the icon width
-        height: 30, // Set the icon height
+        height: 30,
+        child: Icon(Icons.book_outlined, size: 35), // Set the icon height
       ),
       label: 'Library',
     ),
     BottomNavigationBarItem(
       icon: SizedBox(
-        child: Icon(Icons.person_outlined, size: 35), // Set the icon size
         width: 30, // Set the icon width
-        height: 30, // Set the icon height
+        height: 30,
+        child: Icon(Icons.person_outlined, size: 35), // Set the icon height
       ),
       label: 'Profile',
     ),
