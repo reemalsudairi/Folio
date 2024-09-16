@@ -1,12 +1,13 @@
 
 import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 // Convert MyApp to ProfileSetup
 class ProfileSetup extends StatefulWidget {
@@ -316,10 +317,10 @@ void _saveProfile() async {
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
                                       // Navigate to home page
-                                     Navigator.pushReplacement(
+                                    Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => const HomePage(),
+                                            builder: (context) => HomePage(),
                                         ),
                                       );
                                     },
