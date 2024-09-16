@@ -1,10 +1,9 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/ProfileSetup.dart';
+import 'package:folio/screens/first.page.dart';
 import 'package:folio/screens/homePage.dart';
 
 class SignUp extends StatefulWidget {
@@ -17,8 +16,7 @@ class SignUp extends StatefulWidget {
 class _SignUpState extends State<SignUp> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
 
@@ -29,140 +27,178 @@ class _SignUpState extends State<SignUp> {
   // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Sign up function
-  Future<void> _signUp() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        isLoading = true;
+  // Check if username or email already exists
+Future<bool> checkIfUsernameExists(String username) async {
+  final QuerySnapshot result = await _firestore
+      .collection('reader')
+      .where('username', isEqualTo: username)
+      .limit(1)
+      .get();
+  final List<DocumentSnapshot> documents = result.docs;
+  return documents.isNotEmpty; // Returns true if username exists
+}
+
+Future<bool> checkIfEmailExists(String email) async {
+  final QuerySnapshot result = await _firestore
+      .collection('reader')
+      .where('email', isEqualTo: email)
+      .limit(1)
+      .get();
+  final List<DocumentSnapshot> documents = result.docs;
+  return documents.isNotEmpty; // Returns true if email exists
+}
+
+
+// Sign up function
+Future<void> _signUp() async {
+  if (_formKey.currentState!.validate()) {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Check if username already exists
+      bool usernameExists = await checkIfUsernameExists(_usernameController.text.trim());
+      if (usernameExists) {
+        throw FirebaseAuthException(code: 'username-already-in-use');
+      }
+
+      // Check if email already exists
+      bool emailExists = await checkIfEmailExists(_emailController.text.trim());
+      if (emailExists) {
+        throw FirebaseAuthException(code: 'email-already-in-use');
+      }
+
+      // Sign up the user using Firebase Auth
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Add user data to Firestore "reader" collection
+      await _firestore.collection('reader').doc(userCredential.user!.uid).set({
+        'username': _usernameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'uid': userCredential.user!.uid,
+        'createdAt': Timestamp.now(),
       });
 
-      try {
-        // Sign up the user using Firebase Auth
-        UserCredential userCredential =
-            await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        // Add user data to Firestore "reader" collection
-        await _firestore
-            .collection('reader')
-            .doc(userCredential.user!.uid)
-            .set({
-          'username': _usernameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'uid': userCredential.user!.uid,
-          'createdAt': Timestamp.now(),
-        });
-
-        // Navigate to the profile setup page
-       Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => ProfileSetup(userId: userCredential.user!.uid),
-  ),
-);
-
-      } on FirebaseAuthException catch (e) {
-        // Handle Firebase Auth errors
-        String message = 'An error occurred';
-        if (e.code == 'email-already-in-use') {
-          message = 'Email is already in use';
-        } else if (e.code == 'weak-password') {
-          message = 'Password is too weak';
-        } else if (e.code == 'invalid-email') {
-          message = 'Invalid email address';
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      } catch (e) {
-        // Handle any other errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-      } finally {
-        setState(() {
-          isLoading = false;
-        });
+      // Navigate to the profile setup page
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileSetup(userId: userCredential.user!.uid),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      // Handle Firebase Auth errors
+      String message = 'An error occurred';
+      if (e.code == 'username-already-in-use') {
+        message = 'Username is already in use';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'Email is already in use';
+      } else if (e.code == 'weak-password') {
+        message = 'Password is too weak';
+      } else if (e.code == 'invalid-email') {
+        message = 'Invalid email address';
       }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (e) {
+      // Handle any other errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8F8F3),
-      body: SingleChildScrollView(
+      backgroundColor: const Color(0xFFF8F8F3),
+      body: Center(
         child: ConstrainedBox(
           constraints:
               BoxConstraints(minHeight: MediaQuery.of(context).size.height),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 36),
+              const SizedBox(height: 36),
 
-              // Back icon
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  onPressed: () {
-                    print("Back button pressed");
-                  },
-                  iconSize: 50,
-                  icon: Icon(Icons.arrow_back_ios),
-                ),
-              ),
+Stack(
+  children: [
+    // Logo (Image)
+    Align(
+      alignment: Alignment.center,
+      child: Image.asset(
+        "assets/images/Logo.png",
+        width: 500,
+        height: 300,
+        fit: BoxFit.cover, // Ensures the image fits within the container
+      ),
+    ),
 
-              Stack(
-                alignment: Alignment.center, // Centers the stack content
-                children: [
-                  // Logo (Image)
-                  Image.asset(
-                    "images/Logo.png",
-                    width: 500,
-                    height: 300,
-                    fit: BoxFit
-                        .cover, // Ensures the image fits within the container
-                  ),
+    // Back arrow button positioned at the top left
+    Align(
+      alignment: Alignment.topLeft,
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back_ios),
+        iconSize: 40,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WelcomePage(),
+            ),
+          );
+        },
+      ),
+    ),
 
-                  // Introductory text at the bottom of the image
-                  Positioned(
-                    bottom:
-                        10, // Position the text 10 pixels from the bottom of the image
-                    left: 0,
-                    right: 0,
-                    child: Text(
-                      "Explore, discuss, and enjoy books with a \ncommunity of passionate readers.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        color: Color(0XFF695555),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        height: 22.08 / 16,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    // Introductory text at the bottom of the image
+    const Positioned(
+      bottom: 10, // Position the text 10 pixels from the bottom
+      left: 0,
+      right: 0,
+      child: Text(
+        "Explore, discuss, and enjoy books with a \ncommunity of passionate readers.",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          color: Color(0XFF695555),
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          height: 22.08 / 16,
+        ),
+      ),
+    ),
+  ],
+),
 
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Form fields
               Container(
                 width: 410,
-                padding: EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFFFFFF),
+                  color: const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     children: [
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Username
                       TextFormField(
@@ -185,19 +221,19 @@ class _SignUpState extends State<SignUp> {
                         maxLength: 20,
                         decoration: InputDecoration(
                           hintText: "@Username",
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             color: Color(0xFF9B9B9B),
                             fontWeight: FontWeight.w400,
                             fontSize: 20,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: BorderSide(color: Color(0xFFF790AD)),
+                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Email
                       TextFormField(
@@ -221,19 +257,19 @@ class _SignUpState extends State<SignUp> {
                         maxLength: 254,
                         decoration: InputDecoration(
                           hintText: "Email",
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             color: Color(0xFF9B9B9B),
                             fontWeight: FontWeight.w400,
                             fontSize: 20,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: BorderSide(color: Color(0xFFF790AD)),
+                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Password
                       TextFormField(
@@ -268,19 +304,19 @@ class _SignUpState extends State<SignUp> {
                         maxLength: 16,
                         decoration: InputDecoration(
                           hintText: "Password",
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             color: Color(0xFF9B9B9B),
                             fontWeight: FontWeight.w400,
                             fontSize: 20,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: BorderSide(color: Color(0xFFF790AD)),
+                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Confirm password
                       TextFormField(
@@ -299,46 +335,46 @@ class _SignUpState extends State<SignUp> {
                         },
                         decoration: InputDecoration(
                           hintText: "Confirm Password",
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             color: Color(0xFF9B9B9B),
                             fontWeight: FontWeight.w400,
                             fontSize: 20,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: BorderSide(color: Color(0xFFF790AD)),
+                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Sign up button
                       isLoading
-                          ? CircularProgressIndicator()
+                          ? const CircularProgressIndicator()
                           : SizedBox(
                               width: 410,
                               child: MaterialButton(
-                                color: Color(0xFFF790AD),
-                                textColor: Color(0xFFFFFFFF),
+                                color: const Color(0xFFF790AD),
+                                textColor: const Color(0xFFFFFFFF),
                                 height: 50,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(40),
                                 ),
                                 onPressed: _signUp,
-                                child: Text("Sign up"),
+                                child: const Text("Sign up"),
                               ),
                             ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Already have an account? Login
                       RichText(
                         text: TextSpan(
                           children: [
-                            TextSpan(
+                            const TextSpan(
                               text: "Already have an account? ",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Roboto',
                                 color: Color(0XFF695555),
                                 fontWeight: FontWeight.bold,
@@ -346,7 +382,7 @@ class _SignUpState extends State<SignUp> {
                             ),
                             TextSpan(
                               text: "Login",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Roboto',
                                 color: Color(0xFFF790AD),
                                 fontWeight: FontWeight.bold,
@@ -356,7 +392,7 @@ class _SignUpState extends State<SignUp> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => HomePage(),
+                                      builder: (context) => const HomePage(),
                                     ),
                                   );
                                 },
@@ -364,7 +400,7 @@ class _SignUpState extends State<SignUp> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
