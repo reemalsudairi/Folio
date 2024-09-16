@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/clubs_page.dart';
 import 'package:folio/screens/Profile/library_page.dart';
 import 'package:folio/screens/Profile/reviews_page.dart';
+import 'package:folio/screens/edit_profile.dart'; // Import the EditProfile page
+import 'package:folio/screens/homePage.dart';
 import 'package:folio/screens/settings.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -29,14 +31,19 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Color(0xFFF8F5F1),
       appBar: PreferredSize(
-        preferredSize: Size(412, 56),
+        preferredSize: Size.fromHeight(56),
         child: AppBar(
           backgroundColor: Color(0xFFF8F5F1),
           elevation: 0,
           actions: [
             IconButton(
               icon: Icon(Icons.edit, color: const Color.fromARGB(255, 35, 23, 23)),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EditProfile()),
+                );
+              },
             ),
             IconButton(
               icon: Icon(Icons.settings, color: const Color.fromARGB(255, 35, 23, 23)),
@@ -51,8 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: Container(
-        width: 412,
-        height: 915,
+        width: double.infinity, // Use full width
         color: Color(0xFFF8F5F1),
         child: Column(
           children: [
@@ -90,51 +96,148 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(height: 20),
             _buildYearlyGoal(),
             SizedBox(height: 20),
+            // New Row Widget
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround, // Space around elements
+              children: [
+                TextButton(
+                  onPressed: () => _onItemTapped(0), // Action when the button is pressed
+                  child: Column(
+                    children: [
+                      Text(
+                        'Library',
+                        style: TextStyle(
+                          fontSize: 18, // Font size of the text
+                          fontWeight: FontWeight.bold, // Font weight of the text
+                          color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600], // Color of the text
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _onItemTapped(1), // Action when the button is pressed
+                  child: Column(
+                    children: [
+                      Text(
+                        'Clubs',
+                        style: TextStyle(
+                          fontSize: 18, // Font size of the text
+                          fontWeight: FontWeight.bold, // Font weight of the text
+                          color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600], // Color of the text
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _onItemTapped(2), // Action when the button is pressed
+                  child: Column(
+                    children: [
+                      Text(
+                        'Reviews',
+                        style: TextStyle(
+                          fontSize: 18, // Font size of the text
+                          fontWeight: FontWeight.bold, // Font weight of the text
+                          color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600], // Color of the text
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
+            // New Stack Widget
+            Stack(
+              fit: StackFit.passthrough,
+              children: [
+                // Grey line
+                Container(
+                  height: 2, // Height of the grey line
+                  color: Colors.grey[300], // Color of the grey line
+                  margin: EdgeInsets.symmetric(horizontal: 16), // Margin around the grey line
+                ),
+                // Brown line
+                AnimatedPositioned(
+                  duration: Duration(milliseconds: 300), // Animation duration
+                  left: _selectedIndex * (MediaQuery.of(context).size.width / 3) + 16, // Position of the brown line
+                  top: -1, // Position the brown line slightly below the grey line
+                  child: Container(
+                    height: 4, // Height of the brown line
+                    width: 100, // Width of the brown line
+                    color: Colors.brown[800], // Color of the brown line
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
             Expanded(child: _pages[_selectedIndex]), // Display the selected page
           ],
         ),
       ),
-    bottomNavigationBar: BottomNavigationBar(
-  currentIndex: 0,
-  selectedItemColor: const Color(0xFFF790AD), // Selected item color
-  unselectedItemColor: const Color(0xFFB3B3B3),
-  showSelectedLabels: false,
-  showUnselectedLabels: false, // Unselected item color
-  items: const [
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.home_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 3, // Profile is selected by default
+        selectedItemColor: const Color(0xFFF790AD), // Selected item color
+        unselectedItemColor: const Color(0xFFB3B3B3),
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        items: const [
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              child: Icon(Icons.home_outlined, size: 35),
+              width: 30,
+              height: 30,
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              child: Icon(Icons.explore_outlined, size: 35),
+              width: 30,
+              height: 30,
+            ),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              child: Icon(Icons.book_outlined, size: 35),
+              width: 30,
+              height: 30,
+            ),
+            label: 'Library',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              child: Icon(Icons.person_outlined, size: 35),
+              width: 30,
+              height: 30,
+            ),
+            label: 'Profile',
+          ),
+        ],
+        onTap: (index) {
+          if (index != 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) {
+                  switch (index) {
+                    case 0:
+                      return HomePage();
+                    case 1:
+                      // return SearchPage();
+                    case 2:
+                      // return LibraryPage();
+                    default:
+                      return ProfilePage();
+                  }
+                },
+              ),
+            );
+          }
+        },
       ),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.explore_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Search',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.book_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Library',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.person_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Profile',
-    ),
-  ],
-),
     );
   }
 

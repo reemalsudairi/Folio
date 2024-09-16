@@ -33,8 +33,6 @@ class _SettingsPageState extends State<SettingsPage> {
         centerTitle: true,
       ),
       body: SizedBox(
-        width: 412,
-        height: 915,
         child: Center(
           child: Container(
             color: Color(0xFFFDF8F4),
