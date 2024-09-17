@@ -6,7 +6,19 @@ import 'package:http/http.dart' as http;
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
   final String apiKey =
-      'AIzaSyC0cNRGm7PrHIKVNtLMuAu4707hz4Yi0h0'; // Replace with your API key
+      'AIzaSyC0cNRGm7PrHIKVNtLMuAu4707hz4Yi0h0'; 
+
+
+      Future<Map<String, dynamic>> getBookDetails(String bookId) async {
+    final Uri url = Uri.parse('$_baseUrl/$bookId?key=$apiKey');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load book details');
+    }
+  }
 
   // Fetch books by query (subject) or general search term, ordered by newest
   Future<List<dynamic>> searchBooks(String query,
@@ -15,7 +27,7 @@ class GoogleBooksService {
 
     List<dynamic> allBooks = [];
     int maxResultsPerRequest = 40;
-    int totalResultsToFetch = 120;
+    int totalResultsToFetch = 100;
     int startIndex = 0;
 
     // Fetch books in batches until reaching totalResultsToFetch or no more books are available
