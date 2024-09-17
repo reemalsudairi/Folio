@@ -16,30 +16,31 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
 
+    // Navigate based on the selected index
     switch (index) {
       case 0:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => HomePage()), // Navigate to Home
+              builder: (context) => const HomePage()), // Navigate to Home
         );
         break;
       case 1:
-        // Navigator.pushReplacement(
+       // Navigator.pushReplacement(
         //  context,
         //  MaterialPageRoute(builder: (context) => SearchPage()), // Placeholder for SearchPage
         //);
         break;
       case 2:
-        // Navigator.pushReplacement(
+       // Navigator.pushReplacement(
         //  context,
         //  MaterialPageRoute(builder: (context) => LibraryPage()), // Placeholder for LibraryPage
-        // );
+       // );
         break;
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
         );
         break;
     }
@@ -47,103 +48,91 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    int yearlyGoalCurrent = 50;
-    int yearlyGoalTotal = 100;
+     int yearlyGoalCurrent = 50;
+     int yearlyGoalTotal = 100;
     return Scaffold(
-        backgroundColor: const Color(0xFFF8F8F3),
-        body: SingleChildScrollView(
-            child: Padding(
-                padding: const EdgeInsets.all(50.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 30), // Top spacing
-                    const Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.end, // Align to the right
-                      children: [
-                        Icon(Icons.notifications_active_outlined,
-                            size: 36, color: Color.fromARGB(255, 53, 31, 31)),
-                        Icon(Icons.person_2_outlined,
-                            size: 36, color: Color.fromARGB(255, 53, 31, 31))
-                      ],
-                    ),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Good Day,\nNora!',
-                            style: const TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Color.fromARGB(255, 53, 31, 31),
-                            )),
-                        const CircleAvatar(
-                          backgroundImage:
-                              AssetImage('assets/images/profile_pic.png'),
-                          radius: 40,
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    // Yearly Goal Section
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.all(10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Yearly Goal',
-                                  style: TextStyle(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(
-                                    width:
-                                        10), // Add some space between the texts
-                                Text(
-                                  '$yearlyGoalCurrent/$yearlyGoalTotal',
-                                  style: const TextStyle(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            LinearProgressIndicator(
-                              value: yearlyGoalCurrent / yearlyGoalTotal,
-                              color: const Color.fromARGB(255, 247, 144, 173),
-                              backgroundColor: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(20),
-                              minHeight: 15,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    // Currently Reading Section
-                    const Text(
-                      'Currently Reading',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 53, 31, 31),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    // Book List
+       backgroundColor: const Color(0xFFF8F8F3),
+       body: SingleChildScrollView(
+        child: Padding(
+           padding: const EdgeInsets.all(50.0),
+           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 30), // Top spacing
+            const Row(
+  mainAxisAlignment: MainAxisAlignment.end, // Align to the right
+  children: [
+    Icon(Icons.notifications_active_outlined, size: 36, color: Color.fromARGB(255, 53, 31, 31)), 
+    Icon(Icons.person_2_outlined, size: 36, color: Color.fromARGB(255, 53, 31, 31))
+  ],
+),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Good Day,\nNora!',
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 53, 31, 31),
+                  )
+                  ),
+                  const CircleAvatar(
+                    backgroundImage: AssetImage('assets/images/profile_pic.png'),
+                    radius: 40,
+                  )
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Yearly Goal Section
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.all(10),
+              child: Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(30),
+  ),
+  padding: const EdgeInsets.all(10),
+  child: Column(
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Yearly Goal',
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 10), // Add some space between the texts
+          Text('$yearlyGoalCurrent/$yearlyGoalTotal',
+            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+      const SizedBox(height: 5),
+      LinearProgressIndicator(
+        value: yearlyGoalCurrent / yearlyGoalTotal,
+        color: const Color.fromARGB(255, 247, 144, 173),
+        backgroundColor: Colors.grey[300],
+        borderRadius: BorderRadius.circular(20),
+        minHeight: 15,
+      ),
+    ],
+  ),
+),
+              ),
+              const SizedBox(height: 30),
+            // Currently Reading Section
+            const Text('Currently Reading', 
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 53, 31, 31),
+            ),
+            ),
+            const SizedBox(height: 15),
+            // Book List
 //               SizedBox(
 //                 height: 200,
 //                 child: ListView(
@@ -171,56 +160,58 @@ class _HomePageState extends State<HomePage> {
 //           ),
 //         ),
 //       ),
-                  ],
-                ))),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: 0,
-          selectedItemColor: const Color(0xFFF790AD), // Selected item color
-          unselectedItemColor: const Color(0xFFB3B3B3),
-          showSelectedLabels: false,
-          showUnselectedLabels: false, // Unselected item color
-          items: const [
-            BottomNavigationBarItem(
-              icon: SizedBox(
-                width: 30, // Set the icon width
-                height: 30,
-                child:
-                    Icon(Icons.home_outlined, size: 35), // Set the icon height
-              ),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: SizedBox(
-                width: 30, // Set the icon width
-                height: 30,
-                child: Icon(Icons.explore_outlined,
-                    size: 35), // Set the icon height
-              ),
-              label: 'Search',
-            ),
-            BottomNavigationBarItem(
-              icon: SizedBox(
-                width: 30, // Set the icon width
-                height: 30,
-                child:
-                    Icon(Icons.book_outlined, size: 35), // Set the icon height
-              ),
-              label: 'Library',
-            ),
-            BottomNavigationBarItem(
-              icon: SizedBox(
-                width: 30, // Set the icon width
-                height: 30,
-                child: Icon(Icons.person_outlined,
-                    size: 35), // Set the icon height
-              ),
-              label: 'Profile',
-            ),
-          ],
-        ));
-  }
-}
 
+              
+            ],
+           )
+          
+        )
+       ),
+     bottomNavigationBar: BottomNavigationBar(
+  currentIndex: 0,
+  selectedItemColor: const Color(0xFFF790AD), // Selected item color
+  unselectedItemColor: const Color(0xFFB3B3B3),
+  showSelectedLabels: false,
+  showUnselectedLabels: false, // Unselected item color
+  items: const [
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        width: 30, // Set the icon width
+        height: 30,
+        child: Icon(Icons.home_outlined, size: 35), // Set the icon height
+      ),
+      label: 'Home',
+    ),
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        width: 30, // Set the icon width
+        height: 30,
+        child: Icon(Icons.explore_outlined, size: 35), // Set the icon height
+      ),
+      label: 'Search',
+    ),
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        width: 30, // Set the icon width
+        height: 30,
+        child: Icon(Icons.book_outlined, size: 35), // Set the icon height
+      ),
+      label: 'Library',
+    ),
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        width: 30, // Set the icon width
+        height: 30,
+        child: Icon(Icons.person_outlined, size: 35), // Set the icon height
+      ),
+      label: 'Profile',
+    ),
+  ],
+)
+    );
+  }
+
+}
 // BookCard Widget
 class BookCard extends StatelessWidget {
   final String imagePath;
@@ -228,6 +219,7 @@ class BookCard extends StatelessWidget {
   final String author;
 
   const BookCard({
+    super.key,
     required this.imagePath,
     required this.title,
     required this.author,

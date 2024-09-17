@@ -1,11 +1,12 @@
 import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 // Convert MyApp to ProfileSetup
 class ProfileSetup extends StatefulWidget {
@@ -279,45 +280,48 @@ class _ProfileSetupState extends State<ProfileSetup> {
 
                     const SizedBox(height: 20),
 
-                    // Skip profile setup for now?
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: "Skip profile setup for now? ",
-                            style: TextStyle(
-                                fontFamily: 'Roboto',
-                                color: Color(0XFF695555),
-                                fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: "Skip",
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              color: Color(0xFFF790AD),
-                              fontWeight: FontWeight.bold,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                // Navigate to home page
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const HomePage(),
+                          // Skip profile setup for now?
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                const TextSpan(
+                                  text: "Skip profile setup for now? ",
+                                  style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      color: Color(0XFF695555),
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                TextSpan(
+                                  text: "Skip",
+                                  style: const TextStyle(
+                                    fontFamily: 'Roboto',
+                                    color: Color(0xFFF790AD),
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                );
-                              },
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      // Navigate to home page
+                                     Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const HomePage(),
+                                        ),
+                                      );
+                                    },
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(
+                              height: 20), // Additional space after the text
                         ],
                       ),
                     ),
-                    const SizedBox(
-                        height: 20), // Additional space after the text
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
