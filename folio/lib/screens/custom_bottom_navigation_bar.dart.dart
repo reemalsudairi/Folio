@@ -4,14 +4,16 @@ class CustomBottomNavigationBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onTap;
 
-  CustomBottomNavigationBar({required this.selectedIndex, required this.onTap});
+  const CustomBottomNavigationBar(
+      {super.key, required this.selectedIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       selectedItemColor: const Color(0xFFF790AD), // Selected item color (pink)
-      unselectedItemColor: const Color(0xFFB3B3B3), // Unselected item color (gray)
+      unselectedItemColor:
+          const Color(0xFFB3B3B3), // Unselected item color (gray)
       showSelectedLabels: false,
       showUnselectedLabels: false,
       items: const [

@@ -1,16 +1,16 @@
-
 import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 // Convert MyApp to ProfileSetup
 class ProfileSetup extends StatefulWidget {
-    final String userId;
+  final String userId;
   const ProfileSetup({super.key, required this.userId});
 
   @override
@@ -31,7 +31,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
   // Firestore instance
   final _firestore = FirebaseFirestore.instance;
 
-    // Function to pick image from gallery or camera
+  // Function to pick image from gallery or camera
   Future<void> _showImagePickerOptions(BuildContext context) async {
     showModalBottomSheet(
       context: context,
@@ -73,50 +73,53 @@ class _ProfileSetupState extends State<ProfileSetup> {
   }
 
   // Function to save profile data to Firestore
-void _saveProfile() async {
-  // Ensure the form is valid
-  if (_formKey.currentState?.validate() ?? false) {
-    try {
-      // Get the current user from FirebaseAuth
-      final user = FirebaseAuth.instance.currentUser;
-      
-      if (user != null) {
-        final userId = user.uid;  // Get the user ID
+  void _saveProfile() async {
+    // Ensure the form is valid
+    if (_formKey.currentState?.validate() ?? false) {
+      try {
+        // Get the current user from FirebaseAuth
+        final user = FirebaseAuth.instance.currentUser;
 
-        // Prepare the profile data
-        final userProfile = {
-          'name': _nameController.text,
-          'bio': _bioController.text,
-          'books': _booksController.text,
-          'profilePhoto': _imageFile != null
-              ? await _uploadProfilePhoto(userId)  // Upload the profile photo and get the URL
-              : null,
-        };
+        if (user != null) {
+          final userId = user.uid; // Get the user ID
 
-        // Update the Firestore document with the profile data
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .set(userProfile, SetOptions(merge: true));  // Merge to avoid overwriting existing data
+          // Prepare the profile data
+          final userProfile = {
+            'name': _nameController.text,
+            'bio': _bioController.text,
+            'books': _booksController.text,
+            'profilePhoto': _imageFile != null
+                ? await _uploadProfilePhoto(
+                    userId) // Upload the profile photo and get the URL
+                : null,
+          };
 
-        // Navigate to HomePage after saving the profile
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
+          // Update the Firestore document with the profile data
+          await FirebaseFirestore.instance.collection('reader').doc(userId).set(
+              userProfile,
+              SetOptions(
+                  merge: true)); // Merge to avoid overwriting existing data
+
+          // Navigate to HomePage after saving the profile
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        }
+      } catch (e) {
+        print('Error saving profile: $e');
+        // Handle error, show a snackbar or dialog if needed
       }
-    } catch (e) {
-      print('Error saving profile: $e');
-      // Handle error, show a snackbar or dialog if needed
     }
   }
-}
-
 
   // Function to upload profile photo to Firebase Storage
   Future<String?> _uploadProfilePhoto(String userId) async {
     if (_imageFile != null) {
-      final ref = FirebaseStorage.instance.ref().child('profile_photos').child('$userId.jpg');
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('profile_photos')
+          .child('$userId.jpg');
       await ref.putFile(_imageFile!);
       return await ref.getDownloadURL();
     }
@@ -149,7 +152,7 @@ void _saveProfile() async {
                 ),
               ),
 
-                // Profile photo with pencil icon
+              // Profile photo with pencil icon
               ProfilePhotoWidget(
                 onImagePicked: (File imageFile) {
                   setState(() {
@@ -286,12 +289,12 @@ void _saveProfile() async {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                             onPressed: _saveProfile,
-                              child: Text("Save",
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: _saveProfile,
+                              child: const Text("Save",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
-
 
                           const SizedBox(height: 20),
 
@@ -316,10 +319,11 @@ void _saveProfile() async {
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
                                       // Navigate to home page
-                                     Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const HomePage(),
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const HomePage(),
                                         ),
                                       );
                                     },
@@ -344,7 +348,8 @@ void _saveProfile() async {
 }
 
 class ProfilePhotoWidget extends StatefulWidget {
-  final Function(File) onImagePicked; // Callback function to notify the parent widget
+  final Function(File)
+      onImagePicked; // Callback function to notify the parent widget
   const ProfilePhotoWidget({super.key, required this.onImagePicked});
 
   @override

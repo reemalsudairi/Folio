@@ -5,6 +5,8 @@ import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
 
 class EditProfile extends StatefulWidget {
+  const EditProfile({super.key});
+
   @override
   _EditProfileState createState() => _EditProfileState();
 }
@@ -27,9 +29,9 @@ class _EditProfileState extends State<EditProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Profile'),
+        title: const Text('Edit Profile'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -38,10 +40,12 @@ class _EditProfileState extends State<EditProfile> {
               // Handle save action
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage()), // Navigate to HomePage if skipping
+                MaterialPageRoute(
+                    builder: (context) =>
+                        const HomePage()), // Navigate to HomePage if skipping
               );
             },
-            child: Text('Save', style: TextStyle(color: Colors.white)),
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -55,21 +59,21 @@ class _EditProfileState extends State<EditProfile> {
                 radius: 50,
                 backgroundImage: _image != null
                     ? FileImage(_image!)
-                    : AssetImage('assets/avatar.png') as ImageProvider,
-                child: Align(
+                    : const AssetImage('assets/avatar.png') as ImageProvider,
+                child: const Align(
                   alignment: Alignment.bottomRight,
                   child: Icon(Icons.camera_alt, color: Colors.white),
                 ),
               ),
             ),
-            SizedBox(height: 16),
-            TextField(
+            const SizedBox(height: 16),
+            const TextField(
               decoration: InputDecoration(labelText: 'Name'),
             ),
-            TextField(
+            const TextField(
               decoration: InputDecoration(labelText: 'Username'),
             ),
-            TextField(
+            const TextField(
               decoration: InputDecoration(labelText: 'Bio'),
             ),
             // Add more fields as needed

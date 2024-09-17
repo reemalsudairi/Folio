@@ -15,9 +15,9 @@ class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
 
   static final List<Widget> _pages = <Widget>[
-    LibraryPage(),
-    ClubsPage(),
-    ReviewsPage(),
+    const LibraryPage(),
+    const ClubsPage(),
+    const ReviewsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -31,13 +31,14 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F1),
       appBar: PreferredSize(
-        preferredSize: Size(412, 56),
+        preferredSize: const Size(412, 56),
         child: AppBar(
           backgroundColor: const Color(0xFFF8F5F1),
           elevation: 0,
           actions: [
             IconButton(
-              icon: Icon(Icons.edit, color: const Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.edit,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {},
             ),
             IconButton(
@@ -46,7 +47,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
                 );
               },
             ),
@@ -56,7 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
       body: Container(
         width: 412,
         height: 915,
-        color: Color(0xFFF8F5F1),
+        color: const Color(0xFFF8F5F1),
         child: Column(
           children: [
             const CircleAvatar(
@@ -80,9 +81,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 10),
-            SizedBox(
+            const SizedBox(
               width: 250,
-              child: const Text(
+              child: Text(
                 'Book lover, always seeking new stories and perspectives.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -92,52 +93,55 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 20),
             _buildYearlyGoal(),
-            SizedBox(height: 20),
-            Expanded(child: _pages[_selectedIndex]), // Display the selected page
+            const SizedBox(height: 20),
+            Expanded(
+                child: _pages[_selectedIndex]), // Display the selected page
           ],
         ),
       ),
-    bottomNavigationBar: BottomNavigationBar(
-  currentIndex: 0,
-  selectedItemColor: const Color(0xFFF790AD), // Selected item color
-  unselectedItemColor: const Color(0xFFB3B3B3),
-  showSelectedLabels: false,
-  showUnselectedLabels: false, // Unselected item color
-  items: const [
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.home_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        selectedItemColor: const Color(0xFFF790AD), // Selected item color
+        unselectedItemColor: const Color(0xFFB3B3B3),
+        showSelectedLabels: false,
+        showUnselectedLabels: false, // Unselected item color
+        items: const [
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child: Icon(Icons.home_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child:
+                  Icon(Icons.explore_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child: Icon(Icons.book_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Library',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(
+              width: 30, // Set the icon width
+              height: 30,
+              child:
+                  Icon(Icons.person_outlined, size: 35), // Set the icon height
+            ),
+            label: 'Profile',
+          ),
+        ],
       ),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.explore_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Search',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.book_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Library',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.person_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Profile',
-    ),
-  ],
-),
     );
   }
 
