@@ -3,7 +3,7 @@ import 'package:folio/screens/book_list_page.dart';
 import 'package:folio/services/google_books_service.dart';
 
 class CategoriesPage extends StatefulWidget {
-  CategoriesPage({super.key});
+  const CategoriesPage({super.key});
 
   @override
   _CategoriesPageState createState() => _CategoriesPageState();

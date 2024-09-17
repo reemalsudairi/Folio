@@ -21,7 +21,7 @@ class _HomePageState extends State<HomePage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => HomePage()), // Navigate to Home
+              builder: (context) => const HomePage()), // Navigate to Home
         );
         break;
       case 1:
@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
         );
         break;
     }
@@ -72,12 +72,12 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Good Day,\nNora!',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
                               color: Color.fromARGB(255, 53, 31, 31),
                             )),
-                        const CircleAvatar(
+                        CircleAvatar(
                           backgroundImage:
                               AssetImage('assets/images/profile_pic.png'),
                           radius: 40,
@@ -228,6 +228,7 @@ class BookCard extends StatelessWidget {
   final String author;
 
   const BookCard({
+    super.key,
     required this.imagePath,
     required this.title,
     required this.author,
