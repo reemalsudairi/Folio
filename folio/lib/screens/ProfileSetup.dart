@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -62,54 +63,53 @@ class _ProfileSetupState extends State<ProfileSetup> {
   }
 
   // Function to pick an image
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+Future<void> _pickImage(ImageSource source) async {
+  final pickedFile = await _picker.pickImage(source: source);
+  if (pickedFile != null) {
+    setState(() {
+      _imageFile = File(pickedFile.path);
+    });
+  }
+}
+
+
+void _saveProfile() async {
+  if (_formKey.currentState?.validate() ?? false) {
+    try {
+      final userId = widget.userId; // Use the passed userId
+
+      // Prepare the profile data
+      final userProfile = {
+        'name': _nameController.text,
+        'bio': _bioController.text,
+        'books': int.parse(_booksController.text), // Store as integer
+        'profilePhoto': _imageFile != null
+            ? await _uploadProfilePhoto(userId)
+            : null,
+      };
+
+      // Update the Firestore document
+      await _firestore
+          .collection('reader')
+          .doc(userId)
+          .set(userProfile, SetOptions(merge: true));
+
+      // Navigate to HomePage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } catch (e) {
+      print('Error saving profile: $e');
+      // Optionally, display an error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save profile: $e')),
+      );
     }
   }
+}
 
-  // Function to save profile data to Firestore
-  void _saveProfile() async {
-    // Ensure the form is valid
-    if (_formKey.currentState?.validate() ?? false) {
-      try {
-        // Get the current user from FirebaseAuth
-        final user = FirebaseAuth.instance.currentUser;
 
-        if (user != null) {
-          final userId = user.uid; // Get the user ID
-
-          // Prepare the profile data
-          final userProfile = {
-            'name': _nameController.text,
-            'bio': _bioController.text,
-            'books': _booksController.text,
-            'profilePhoto': _imageFile != null
-                ? await _uploadProfilePhoto(userId) // Upload the profile photo and get the URL
-                : null,
-          };
-
-          // Update the Firestore document with the profile data
-          await FirebaseFirestore.instance
-              .collection('reader')
-              .doc(userId)
-              .set(userProfile, SetOptions(merge: true)); // Merge to avoid overwriting existing data
-
-          // Navigate to HomePage after saving the profile
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
-        }
-      } catch (e) {
-        print('Error saving profile: $e');
-        // Handle error, show a snackbar or dialog if needed
-      }
-    }
-  }
 
   // Function to upload profile photo to Firebase Storage
   Future<String?> _uploadProfilePhoto(String userId) async {
@@ -191,7 +191,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                       },
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
 
                     // Bio
                     TextFormField(
@@ -221,98 +221,95 @@ class _ProfileSetupState extends State<ProfileSetup> {
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
 
                     // Books number
-                    TextFormField(
-                      controller: _booksController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: "How many books do you want to read in this year?",
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF9B9B9B),
-                          fontWeight: FontWeight.w400,
-                          fontSize: 15,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(40),
-                          borderSide: const BorderSide(color: Color(0xFFF790AD)),
- ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(40),
-                          borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter the number of books';
-                        }
-                        if (int.tryParse(value) == null) {
-                          return 'Please enter a valid number';
-                        }
-                        return null;
-                      },
-                    ),
+// Books number input field
+TextFormField(
+  controller: _booksController,
+  keyboardType: TextInputType.number,
+  inputFormatters: [FilteringTextInputFormatter.digitsOnly], // This ensures only numbers are allowed
+  decoration: InputDecoration(
+    hintText: "How many books do you want to read in this year?",
+    hintStyle: const TextStyle(
+      color: Color(0xFF9B9B9B),
+      fontWeight: FontWeight.w400,
+      fontSize: 15,
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(40),
+      borderSide: const BorderSide(color: Color(0xFFF790AD)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(40),
+      borderSide: const BorderSide(color: Color(0xFFF790AD)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Color(0xFFF790AD)),
+      borderRadius: BorderRadius.circular(40),
+    ),
+  ),
+),
+
 
                     const SizedBox(height: 20),
 
                     // Save button
-                    SizedBox(
-                      width: 410, // Match the width of the TextField
-                      child: MaterialButton(
-                        color: const Color(0xFFF790AD),
-                        textColor: const Color(0xFFFFFFFF),
-                        height: 50,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                        onPressed: _saveProfile,
-                        child: const Text("Save",
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
+SizedBox(
+  width: 410, // Match the width of the TextField
+  child: MaterialButton(
+    color: const Color(0xFFF790AD),
+    textColor: const Color(0xFFFFFFFF),
+    height: 50,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(40),
+    ),
+    onPressed: _saveProfile,
+    child: const Text(
+      "Save",
+      style: TextStyle(fontWeight: FontWeight.bold),
+    ),
+  ),
+),
+
 
 
                     const SizedBox(height: 20),
 
                     // Skip profile setup for now?
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: "Skip profile setup for now? ",
-                            style: TextStyle(
-                                fontFamily: 'Roboto',
-                                color: Color(0XFF695555),
-                                fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: "Skip",
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              color: Color(0xFFF790AD),
-                              fontWeight: FontWeight.bold,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                // Navigate to home page
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const HomePage(),
-                                  ),
-                                );
-                              },
-                          ),
-                        ],
-                      ),
-                    ),
+RichText(
+  text: TextSpan(
+    children: [
+      const TextSpan(
+        text: "Skip profile setup for now? ",
+        style: TextStyle(
+            fontFamily: 'Roboto',
+            color: Color(0XFF695555),
+            fontWeight: FontWeight.bold),
+      ),
+      TextSpan(
+        text: "Skip",
+        style: const TextStyle(
+          fontFamily: 'Roboto',
+          color: Color(0xFFF790AD),
+          fontWeight: FontWeight.bold,
+        ),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomePage(),
+              ),
+            );
+          },
+      ),
+    ],
+  ),
+),
+
                     const SizedBox(
-                        height: 20), // Additional space after the text
+                        height: 150), // Additional space after the text
                   ],
                 ),
               ),
@@ -325,7 +322,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
 }
 
 class ProfilePhotoWidget extends StatefulWidget {
-  final Function(File) onImagePicked; // Callback function to notify the parent widget
+  final Function(File) onImagePicked;
   const ProfilePhotoWidget({super.key, required this.onImagePicked});
 
   @override
@@ -337,10 +334,12 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
   final ImagePicker _picker = ImagePicker();
 
   // Function to pick image from gallery or camera
-  Future<void> _showImagePickerOptions(BuildContext context) async {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => BottomSheet(
+Future<void> _showImagePickerOptions(BuildContext context) async {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) => Padding(
+      padding: const EdgeInsets.only(bottom: 50.0), // Add padding for better look
+      child: BottomSheet(
         onClosing: () {},
         builder: (context) => Column(
           mainAxisSize: MainAxisSize.min,
@@ -350,7 +349,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
               title: const Text('Take a Photo'),
               onTap: () {
                 _pickImage(ImageSource.camera);
-                Navigator.of(context).pop(); // Close the bottom sheet
+                Navigator.of(context).pop();
               },
             ),
             ListTile(
@@ -358,14 +357,17 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
               title: const Text('Choose from Gallery'),
               onTap: () {
                 _pickImage(ImageSource.gallery);
-                Navigator.of(context).pop(); // Close the bottom sheet
+                Navigator.of(context).pop();
               },
             ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+
 
   // Function to pick an image
   Future<void> _pickImage(ImageSource source) async {
@@ -374,7 +376,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
       setState(() {
         _imageFile = File(pickedFile.path);
       });
-      widget.onImagePicked(_imageFile!); // Notify the parent widget
+      widget.onImagePicked(_imageFile!); // Notify parent widget
     }
   }
 
@@ -382,13 +384,20 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Profile photo (CircleAvatar)
-        CircleAvatar(
-          radius: 64,
-          backgroundImage: _imageFile != null
-              ? FileImage(_imageFile!)
-              : const AssetImage("assets/images/profile_pic.png") as ImageProvider,
-        ),
+        // Profile photo with thin border
+CircleAvatar(
+  radius: 64,
+  backgroundImage: _imageFile != null
+      ? FileImage(_imageFile!)
+      : const AssetImage("assets/images/profile_pic.png") as ImageProvider,
+  backgroundColor: const Color(0xFFF790AD),
+  child: Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: const Color(0xFFF790AD), width: 3),
+    ),
+  ),
+),
 
         // Pencil icon for editing
         Positioned(
@@ -413,3 +422,4 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 }
+
