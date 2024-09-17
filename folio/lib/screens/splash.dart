@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:folio/screens/first.page.dart';
 
 class Splash extends StatefulWidget {
+  const Splash({super.key});
+
   @override
   _SplashState createState() => _SplashState();
 }
 
 class _SplashState extends State<Splash> {
-
   @override
   void initState() {
     super.initState();
@@ -20,7 +21,7 @@ class _SplashState extends State<Splash> {
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => WelcomePage()),
+        MaterialPageRoute(builder: (context) => const WelcomePage()),
       );
     });
   }
@@ -36,7 +37,8 @@ class _SplashState extends State<Splash> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3), // Set background color
-      body: Center( // Center the logo in the middle
+      body: Center(
+        // Center the logo in the middle
         child: Image.asset(
           "assets/images/Logo.png", // Path to logo asset
           width: 500, // Set logo width
@@ -46,4 +48,3 @@ class _SplashState extends State<Splash> {
     );
   }
 }
-

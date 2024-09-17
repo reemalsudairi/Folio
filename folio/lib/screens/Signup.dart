@@ -16,7 +16,8 @@ class SignUp extends StatefulWidget {
 class _SignUpState extends State<SignUp> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
 
@@ -28,98 +29,102 @@ class _SignUpState extends State<SignUp> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Check if username or email already exists
-Future<bool> checkIfUsernameExists(String username) async {
-  final QuerySnapshot result = await _firestore
-      .collection('reader')
-      .where('username', isEqualTo: username)
-      .limit(1)
-      .get();
-  final List<DocumentSnapshot> documents = result.docs;
-  return documents.isNotEmpty; // Returns true if username exists
-}
+  Future<bool> checkIfUsernameExists(String username) async {
+    final QuerySnapshot result = await _firestore
+        .collection('reader')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get();
+    final List<DocumentSnapshot> documents = result.docs;
+    return documents.isNotEmpty; // Returns true if username exists
+  }
 
-Future<bool> checkIfEmailExists(String email) async {
-  final QuerySnapshot result = await _firestore
-      .collection('reader')
-      .where('email', isEqualTo: email)
-      .limit(1)
-      .get();
-  final List<DocumentSnapshot> documents = result.docs;
-  return documents.isNotEmpty; // Returns true if email exists
-}
-
+  Future<bool> checkIfEmailExists(String email) async {
+    final QuerySnapshot result = await _firestore
+        .collection('reader')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    final List<DocumentSnapshot> documents = result.docs;
+    return documents.isNotEmpty; // Returns true if email exists
+  }
 
 // Sign up function
-Future<void> _signUp() async {
-  if (_formKey.currentState!.validate()) {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      // Check if username already exists
-      bool usernameExists = await checkIfUsernameExists(_usernameController.text.trim());
-      if (usernameExists) {
-        throw FirebaseAuthException(code: 'username-already-in-use');
-      }
-
-      // Check if email already exists
-      bool emailExists = await checkIfEmailExists(_emailController.text.trim());
-      if (emailExists) {
-        throw FirebaseAuthException(code: 'email-already-in-use');
-      }
-
-      // Sign up the user using Firebase Auth
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      // Add user data to Firestore "reader" collection
-      await _firestore.collection('reader').doc(userCredential.user!.uid).set({
-        'username': _usernameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'uid': userCredential.user!.uid,
-        'createdAt': Timestamp.now(),
-      });
-
-      // Navigate to the profile setup page
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProfileSetup(userId: userCredential.user!.uid),
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      // Handle Firebase Auth errors
-      String message = 'An error occurred';
-      if (e.code == 'username-already-in-use') {
-        message = 'Username is already in use';
-      } else if (e.code == 'email-already-in-use') {
-        message = 'Email is already in use';
-      } else if (e.code == 'weak-password') {
-        message = 'Password is too weak';
-      } else if (e.code == 'invalid-email') {
-        message = 'Invalid email address';
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    } catch (e) {
-      // Handle any other errors
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
-    } finally {
+  Future<void> _signUp() async {
+    if (_formKey.currentState!.validate()) {
       setState(() {
-        isLoading = false;
+        isLoading = true;
       });
+
+      try {
+        // Check if username already exists
+        bool usernameExists =
+            await checkIfUsernameExists(_usernameController.text.trim());
+        if (usernameExists) {
+          throw FirebaseAuthException(code: 'username-already-in-use');
+        }
+
+        // Check if email already exists
+        bool emailExists =
+            await checkIfEmailExists(_emailController.text.trim());
+        if (emailExists) {
+          throw FirebaseAuthException(code: 'email-already-in-use');
+        }
+
+        // Sign up the user using Firebase Auth
+        UserCredential userCredential =
+            await _auth.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        // Add user data to Firestore "reader" collection
+        await _firestore
+            .collection('reader')
+            .doc(userCredential.user!.uid)
+            .set({
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'uid': userCredential.user!.uid,
+          'createdAt': Timestamp.now(),
+        });
+
+        // Navigate to the profile setup page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                ProfileSetup(userId: userCredential.user!.uid),
+          ),
+        );
+      } on FirebaseAuthException catch (e) {
+        // Handle Firebase Auth errors
+        String message = 'An error occurred';
+        if (e.code == 'username-already-in-use') {
+          message = 'Username is already in use';
+        } else if (e.code == 'email-already-in-use') {
+          message = 'Email is already in use';
+        } else if (e.code == 'weak-password') {
+          message = 'Password is too weak';
+        } else if (e.code == 'invalid-email') {
+          message = 'Invalid email address';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      } catch (e) {
+        // Handle any other errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -134,55 +139,56 @@ Future<void> _signUp() async {
             children: [
               const SizedBox(height: 36),
 
-Stack(
-  children: [
-    // Logo (Image)
-    Align(
-      alignment: Alignment.center,
-      child: Image.asset(
-        "assets/images/Logo.png",
-        width: 500,
-        height: 300,
-        fit: BoxFit.cover, // Ensures the image fits within the container
-      ),
-    ),
+              Stack(
+                children: [
+                  // Logo (Image)
+                  Align(
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      "assets/images/Logo.png",
+                      width: 500,
+                      height: 300,
+                      fit: BoxFit
+                          .cover, // Ensures the image fits within the container
+                    ),
+                  ),
 
-    // Back arrow button positioned at the top left
-    Align(
-      alignment: Alignment.topLeft,
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_ios),
-        iconSize: 40,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WelcomePage(),
-            ),
-          );
-        },
-      ),
-    ),
+                  // Back arrow button positioned at the top left
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios),
+                      iconSize: 40,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const WelcomePage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
 
-    // Introductory text at the bottom of the image
-    const Positioned(
-      bottom: 10, // Position the text 10 pixels from the bottom
-      left: 0,
-      right: 0,
-      child: Text(
-        "Explore, discuss, and enjoy books with a \ncommunity of passionate readers.",
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontFamily: 'Roboto',
-          color: Color(0XFF695555),
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          height: 22.08 / 16,
-        ),
-      ),
-    ),
-  ],
-),
+                  // Introductory text at the bottom of the image
+                  const Positioned(
+                    bottom: 10, // Position the text 10 pixels from the bottom
+                    left: 0,
+                    right: 0,
+                    child: Text(
+                      "Explore, discuss, and enjoy books with a \ncommunity of passionate readers.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        color: Color(0XFF695555),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 22.08 / 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
               const SizedBox(height: 20),
 
@@ -228,7 +234,8 @@ Stack(
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
@@ -264,7 +271,8 @@ Stack(
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
@@ -311,7 +319,8 @@ Stack(
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
@@ -342,7 +351,8 @@ Stack(
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(40),
-                            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFF790AD)),
                           ),
                         ),
                       ),
@@ -374,7 +384,7 @@ Stack(
                           children: [
                             const TextSpan(
                               text: "Already have an account? ",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Roboto',
                                 color: Color(0XFF695555),
                                 fontWeight: FontWeight.bold,
