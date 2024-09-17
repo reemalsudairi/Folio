@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF790AD)),
         useMaterial3: true,
       ),
-      home: const Splash(), // Set SignUp as the home page
+      home: Splash(), // Set SignUp as the home page
     );
   }
 }

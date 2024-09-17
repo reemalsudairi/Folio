@@ -4,55 +4,37 @@ class CustomBottomNavigationBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onTap;
 
-  CustomBottomNavigationBar({required this.selectedIndex, required this.onTap});
+  const CustomBottomNavigationBar(
+      {super.key, required this.selectedIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       selectedItemColor: const Color(0xFFF790AD), // Selected item color (pink)
-      unselectedItemColor: const Color(0xFFB3B3B3), // Unselected item color (gray)
+      unselectedItemColor:
+          const Color(0xFFB3B3B3), // Unselected item color (gray)
       showSelectedLabels: false,
       showUnselectedLabels: false,
       items: const [
         BottomNavigationBarItem(
-          icon: SizedBox(
-            width: 30,
-            height: 30,
-            child: Icon(Icons.home_outlined, size: 35),
-          ),
-          label: '', // No label
+          icon: Icon(Icons.home_outlined, size: 35), // Home icon
+          label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: SizedBox(
-            width: 30,
-            height: 30,
-            child: Icon(Icons.explore_outlined, size: 35),
-          ),
-          label: '', // No label
+          icon: Icon(Icons.explore_outlined, size: 35), // Search icon
+          label: 'Search',
         ),
         BottomNavigationBarItem(
-          icon: SizedBox(
-            width: 30,
-            height: 30,
-            child: Icon(Icons.book_outlined, size: 35),
-          ),
-          label: '', // No label
+          icon: Icon(Icons.book_outlined, size: 35), // Library icon
+          label: 'Library',
         ),
         BottomNavigationBarItem(
-          icon: SizedBox(
-            width: 30,
-            height: 30,
-            child: Icon(Icons.person_outlined, size: 35),
-          ),
-          label: '', // No label
+          icon: Icon(Icons.person_outlined, size: 35), // Profile icon
+          label: 'Profile',
         ),
       ],
-      selectedItemColor: Color(0xFFF790AD),
-      unselectedItemColor: Color(0xFFB3B3B3),
-      showSelectedLabels: false, // Hide selected labels
-      showUnselectedLabels: false, // Hide unselected labels
-      backgroundColor: Colors.white,
+      onTap: onTap,
     );
   }
 }
