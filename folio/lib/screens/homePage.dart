@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
+import 'package:folio/screens/categories_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,10 +14,10 @@ class _HomePageState extends State<HomePage> {
 
   // List of pages for each tab
   static final List<Widget> _pages = <Widget>[
-    HomeContent(),      // Home page content
-    SearchPage(),       // Placeholder for SearchPage
-    LibraryPage(),      // Placeholder for LibraryPage
-    ProfilePage(),      // ProfilePage
+    const HomeContent(), // Home page content
+    CategoriesPage(), // CategoriesPage (Search page)
+    const LibraryPage(), // Placeholder for LibraryPage
+    const ProfilePage(), // ProfilePage
   ];
 
   // Update the index when a tab is selected
@@ -34,8 +35,10 @@ class _HomePageState extends State<HomePage> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFFF790AD), // Pink color for selected item
-        unselectedItemColor: const Color(0xFFB3B3B3), // Grey color for unselected item
+        selectedItemColor:
+            const Color(0xFFF790AD), // Pink color for selected item
+        unselectedItemColor:
+            const Color(0xFFB3B3B3), // Grey color for unselected item
         showSelectedLabels: false, // No labels for selected items
         showUnselectedLabels: false, // No labels for unselected items
         onTap: _onItemTapped, // Handle tab selection
@@ -64,6 +67,8 @@ class _HomePageState extends State<HomePage> {
 
 // Content for the Home tab
 class HomeContent extends StatelessWidget {
+  const HomeContent({super.key});
+
   @override
   Widget build(BuildContext context) {
     int yearlyGoalCurrent = 50;
@@ -97,8 +102,7 @@ class HomeContent extends StatelessWidget {
                   ),
                 ),
                 CircleAvatar(
-                  backgroundImage:
-                      AssetImage('assets/images/profile_pic.png'),
+                  backgroundImage: AssetImage('assets/images/profile_pic.png'),
                   radius: 40,
                 )
               ],
@@ -191,9 +195,11 @@ class HomeContent extends StatelessWidget {
 
 // Placeholder for the SearchPage
 class SearchPage extends StatelessWidget {
+  const SearchPage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Text(
         'Search Page Content',
         style: TextStyle(fontSize: 24),
@@ -204,9 +210,11 @@ class SearchPage extends StatelessWidget {
 
 // Placeholder for the LibraryPage
 class LibraryPage extends StatelessWidget {
+  const LibraryPage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Text(
         'Library Page Content',
         style: TextStyle(fontSize: 24),
@@ -222,6 +230,7 @@ class BookCard extends StatelessWidget {
   final String author;
 
   const BookCard({
+    super.key,
     required this.imagePath,
     required this.title,
     required this.author,

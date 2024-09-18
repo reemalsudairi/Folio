@@ -4,7 +4,7 @@ import 'package:folio/services/google_books_service.dart';
 class BookDetailsPage extends StatefulWidget {
   final String bookId;
 
-  const BookDetailsPage({Key? key, required this.bookId}) : super(key: key);
+  const BookDetailsPage({super.key, required this.bookId});
 
   @override
   _BookDetailsPageState createState() => _BookDetailsPageState();
@@ -82,7 +82,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       children: [
                         // Book cover image
                         Image.network(
-                          bookDetails?['volumeInfo']['imageLinks']?['thumbnail'] ??
+                          bookDetails?['volumeInfo']['imageLinks']
+                                  ?['thumbnail'] ??
                               'https://via.placeholder.com/150',
                           height: 250,
                           fit: BoxFit.cover,
@@ -124,7 +125,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFF790AD),
-                                foregroundColor: Color.fromARGB(255, 255, 255, 255), // Set button background color
+                                foregroundColor: const Color.fromARGB(255, 255,
+                                    255, 255), // Set button background color
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 6,
@@ -144,7 +146,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                   PopupMenuButton<String>(
                                     onSelected: (String value) {
                                       setState(() {
-                                        selectedOption = value; // Update the selected option
+                                        selectedOption =
+                                            value; // Update the selected option
                                       });
                                     },
                                     itemBuilder: (BuildContext context) {
@@ -159,7 +162,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                         const PopupMenuItem<String>(
                                           value: 'Currently reading',
                                           child: ListTile(
-                                            leading: Icon(Icons.menu_book_sharp),
+                                            leading:
+                                                Icon(Icons.menu_book_sharp),
                                             title: Text('Currently reading'),
                                           ),
                                         ),
@@ -200,11 +204,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TabBar(
-                                labelColor: const Color(0xFF351F1F),
-                                unselectedLabelColor: const Color(0xFF351F1F),
-                                indicatorColor: const Color(0xFF351F1F),
-                                tabs: const [
+                              const TabBar(
+                                labelColor: Color(0xFF351F1F),
+                                unselectedLabelColor: Color(0xFF351F1F),
+                                indicatorColor: Color(0xFF351F1F),
+                                tabs: [
                                   Tab(text: 'About'),
                                   Tab(text: 'Reviews'),
                                   Tab(text: 'Clubs'),
@@ -249,8 +253,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                                 const Text('Number of pages'),
                                                 Text(
                                                   bookDetails?['volumeInfo']
-                                                          ['pageCount']
-                                                      ?.toString() ??
+                                                              ['pageCount']
+                                                          ?.toString() ??
                                                       'N/A',
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
@@ -268,7 +272,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                                   children: [
                                                     const Icon(
                                                       Icons.star,
-                                                      color: const Color(0xFFF790AD),
+                                                      color: Color(0xFFF790AD),
                                                       size: 18,
                                                     ),
                                                     Text(
@@ -299,14 +303,21 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                             color: Colors.grey,
                                           ),
                                         ),
-                                        const SizedBox(height: 10),  // Adds some space between "Description" and the actual content
+                                        const SizedBox(
+                                            height:
+                                                10), // Adds some space between "Description" and the actual content
                                         // Description with HTML tags and stars removed
                                         SizedBox(
-                                          height: 200,  // Set the maximum height for the description
+                                          height:
+                                              200, // Set the maximum height for the description
                                           child: SingleChildScrollView(
                                             child: Text(
-                                              removeHtmlTags(bookDetails?['volumeInfo']['description'] ?? 'No description available.'),
-                                              style: const TextStyle(fontSize: 16),
+                                              removeHtmlTags(bookDetails?[
+                                                          'volumeInfo']
+                                                      ['description'] ??
+                                                  'No description available.'),
+                                              style:
+                                                  const TextStyle(fontSize: 16),
                                               textAlign: TextAlign.justify,
                                             ),
                                           ),
@@ -319,7 +330,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                     ),
                                     // Clubs Tab
                                     const Center(
-                                      child: Text('No clubs discussing this book currently.'),
+                                      child: Text(
+                                          'No clubs discussing this book currently.'),
                                     ),
                                   ],
                                 ),

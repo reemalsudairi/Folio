@@ -21,7 +21,7 @@ class _HomePageState extends State<HomePage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomePage(),
+            builder: (context) => const HomePage(),
           ),
         );
         break;
@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ProfilePage(),
+            builder: (context) => const ProfilePage(),
           ),
         );
         break;
@@ -72,7 +72,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
       currentIndex: selectedIndex,
       onTap: onTap,
       selectedItemColor: const Color(0xFFF790AD), // Selected item color (pink)
-      unselectedItemColor: const Color(0xFFB3B3B3), // Unselected item color (gray)
+      unselectedItemColor:
+          const Color(0xFFB3B3B3), // Unselected item color (gray)
       showSelectedLabels: false,
       showUnselectedLabels: false,
       items: const [

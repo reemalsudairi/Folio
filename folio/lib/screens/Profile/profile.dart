@@ -39,7 +39,10 @@ class _ProfilePageState extends State<ProfilePage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final userId = user.uid;
-        final userDoc = await FirebaseFirestore.instance.collection('reader').doc(userId).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('reader')
+            .doc(userId)
+            .get();
         if (userDoc.exists) {
           final userData = userDoc.data()!;
           setState(() {
@@ -47,7 +50,8 @@ class _ProfilePageState extends State<ProfilePage> {
             _bio = userData['bio'] ?? '';
             _profilePhotoUrl = userData['profilePhoto'] ?? '';
             _booksGoal = userData['books'] ?? 0;
-            _booksRead = 70; // Example value; replace with actual data if available
+            _booksRead =
+                70; // Example value; replace with actual data if available
             _username = userData['username'] ?? ''; // Fetch username
           });
         }
@@ -78,13 +82,15 @@ class _ProfilePageState extends State<ProfilePage> {
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.edit,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {
                 // Handle edit profile action
               },
             ),
             IconButton(
-              icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.settings,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -116,7 +122,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             Text(
               '@$_username', // Use the username variable here
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
@@ -127,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Text(
                 _bio,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Color.fromARGB(255, 31, 24, 24),
                 ),
               ),
@@ -149,7 +155,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600],
+                              color: _selectedIndex == 0
+                                  ? Colors.brown[800]
+                                  : Colors.grey[600],
                             ),
                           ),
                         ],
@@ -164,7 +172,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600],
+                              color: _selectedIndex == 1
+                                  ? Colors.brown[800]
+                                  : Colors.grey[600],
                             ),
                           ),
                         ],
@@ -179,7 +189,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600],
+                              color: _selectedIndex == 2
+                                  ? Colors.brown[800]
+                                  : Colors.grey[600],
                             ),
                           ),
                         ],
@@ -193,10 +205,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     Container(
                       height: 2,
                       color: Colors.grey[300],
-                      margin: EdgeInsets.symmetric(horizontal: 16),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
                     ),
                     AnimatedPositioned(
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 300),
                       left: _selectedIndex * (412 / 3) + 16,
                       top: -1,
                       child: Container(
@@ -270,4 +282,3 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
