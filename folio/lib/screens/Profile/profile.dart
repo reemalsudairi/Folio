@@ -5,6 +5,8 @@ import 'package:folio/screens/Profile/reviews_page.dart';
 import 'package:folio/screens/settings.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -13,9 +15,9 @@ class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
 
   static final List<Widget> _pages = <Widget>[
-    LibraryPage(),
-    ClubsPage(),
-    ReviewsPage(),
+    const LibraryPage(),
+    const ClubsPage(),
+    const ReviewsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -27,23 +29,25 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8F5F1),
+      backgroundColor: const Color(0xFFF8F5F1),
       appBar: PreferredSize(
-        preferredSize: Size(412, 56),
+        preferredSize: const Size(412, 56),
         child: AppBar(
-          backgroundColor: Color(0xFFF8F5F1),
+          backgroundColor: const Color(0xFFF8F5F1),
           elevation: 0,
           actions: [
             IconButton(
-              icon: Icon(Icons.edit, color: const Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.edit,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.settings, color: const Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.settings,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
                 );
               },
             ),
@@ -51,16 +55,14 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: Container(
-        width: 412,
-        height: 915,
-        color: Color(0xFFF8F5F1),
+        color: const Color(0xFFF8F5F1),
         child: Column(
           children: [
-            CircleAvatar(
+            const CircleAvatar(
               radius: 50,
               backgroundImage: AssetImage('assets/avatar.png'),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text(
               'Nora',
               style: TextStyle(
@@ -69,72 +71,109 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.brown[800],
               ),
             ),
-            Text(
+            const Text(
               '@Noraisreading',
               style: TextStyle(
-                color: const Color.fromARGB(255, 88, 71, 71),
+                color: Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
-            SizedBox(
+            const SizedBox(
               width: 250,
               child: Text(
                 'Book lover, always seeking new stories and perspectives.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: const Color.fromARGB(255, 31, 24, 24),
+                  color: Color.fromARGB(255, 31, 24, 24),
                 ),
               ),
             ),
             const SizedBox(height: 20),
             _buildYearlyGoal(),
-            SizedBox(height: 20),
-            Expanded(child: _pages[_selectedIndex]), // Display the selected page
+            const SizedBox(height: 20),
+            // Tab-like navigation section
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    TextButton(
+                      onPressed: () => _onItemTapped(0),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Library',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _onItemTapped(1),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Clubs',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _onItemTapped(2),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Reviews',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    Container(
+                      height: 2,
+                      color: Colors.grey[300],
+                      margin: EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    AnimatedPositioned(
+                      duration: Duration(milliseconds: 300),
+                      left: _selectedIndex * (412 / 3) + 16,
+                      top: -1,
+                      child: Container(
+                        height: 4,
+                        width: 100,
+                        color: Colors.brown[800],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: _pages[_selectedIndex],
+            ), // Display the selected page
           ],
         ),
       ),
-    bottomNavigationBar: BottomNavigationBar(
-  currentIndex: 0,
-  selectedItemColor: const Color(0xFFF790AD), // Selected item color
-  unselectedItemColor: const Color(0xFFB3B3B3),
-  showSelectedLabels: false,
-  showUnselectedLabels: false, // Unselected item color
-  items: const [
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.home_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.explore_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Search',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.book_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Library',
-    ),
-    BottomNavigationBarItem(
-      icon: SizedBox(
-        child: Icon(Icons.person_outlined, size: 35), // Set the icon size
-        width: 30, // Set the icon width
-        height: 30, // Set the icon height
-      ),
-      label: 'Profile',
-    ),
-  ],
-),
     );
   }
 
