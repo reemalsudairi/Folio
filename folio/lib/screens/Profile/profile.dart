@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/clubs_page.dart';
 import 'package:folio/screens/Profile/library_page.dart';
@@ -13,12 +15,51 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
+  String _name = '';
+  String _bio = '';
+  String _profilePhotoUrl = '';
+  int _booksGoal = 0;
+  int _booksRead = 0; // Example for tracking progress
+  String _username = '';
 
   static final List<Widget> _pages = <Widget>[
     const LibraryPage(),
     const ClubsPage(),
     const ReviewsPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
+  }
+
+  void _fetchUserProfile() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userId = user.uid;
+        final userDoc = await FirebaseFirestore.instance.collection('reader').doc(userId).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data()!;
+          setState(() {
+            _name = userData['name'] ?? '';
+            _bio = userData['bio'] ?? '';
+            _profilePhotoUrl = userData['profilePhoto'] ?? '';
+            _booksGoal = userData['books'] ?? 0;
+            _booksRead = 70; // Example value; replace with actual data if available
+            _username = userData['username'] ?? ''; // Fetch username
+          });
+        }
+      } else {
+        // Handle case when user is not logged in
+        print('User is not logged in');
+      }
+    } catch (e) {
+      print('Error fetching user profile: $e');
+      // Handle error, e.g., show a snackbar or alert
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -37,13 +78,13 @@ class _ProfilePageState extends State<ProfilePage> {
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(Icons.edit,
-                  color: Color.fromARGB(255, 35, 23, 23)),
-              onPressed: () {},
+              icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23)),
+              onPressed: () {
+                // Handle edit profile action
+              },
             ),
             IconButton(
-              icon: const Icon(Icons.settings,
-                  color: Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -58,31 +99,33 @@ class _ProfilePageState extends State<ProfilePage> {
         color: const Color(0xFFF8F5F1),
         child: Column(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 50,
-              backgroundImage: AssetImage('assets/avatar.png'),
+              backgroundImage: _profilePhotoUrl.isNotEmpty
+                  ? NetworkImage(_profilePhotoUrl)
+                  : const AssetImage('assets/avatar.png') as ImageProvider,
             ),
             const SizedBox(height: 5),
             Text(
-              'Nora',
+              _name,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.brown[800],
               ),
             ),
-            const Text(
-              '@Noraisreading',
+            Text(
+              '@$_username', // Use the username variable here
               style: TextStyle(
                 color: Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
-            const SizedBox(
+            SizedBox(
               width: 250,
               child: Text(
-                'Book lover, always seeking new stories and perspectives.',
+                _bio,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color.fromARGB(255, 31, 24, 24),
@@ -92,7 +135,6 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 20),
             _buildYearlyGoal(),
             const SizedBox(height: 20),
-            // Tab-like navigation section
             Column(
               children: [
                 Row(
@@ -170,7 +212,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 10),
             Expanded(
               child: _pages[_selectedIndex],
-            ), // Display the selected page
+            ),
           ],
         ),
       ),
@@ -206,7 +248,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               Text(
-                '50/100',
+                '$_booksRead/$_booksGoal',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -217,7 +259,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: 10),
           LinearProgressIndicator(
-            value: 0.5,
+            value: _booksGoal > 0 ? _booksRead / _booksGoal : 0,
             backgroundColor: Colors.grey[300],
             valueColor: const AlwaysStoppedAnimation(Color(0xFFF790AD)),
             minHeight: 13,
@@ -228,3 +270,4 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
+
