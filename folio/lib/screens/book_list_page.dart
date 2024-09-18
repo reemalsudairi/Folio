@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:folio/services/google_books_service.dart';
 
-class BookListPage extends StatefulWidget {
-  final String searchTerm; // Can be category or book name
-  final bool
-      isCategory; // Determines if we are searching by category or book name
+import 'book_details_page.dart';
 
-  const BookListPage(
-      {super.key, required this.searchTerm, required this.isCategory});
+class BookListPage extends StatefulWidget {
+  final String searchTerm;
+  final bool isCategory;
+
+  const BookListPage({
+    Key? key,
+    required this.searchTerm,
+    required this.isCategory,
+  }) : super(key: key);
 
   @override
   _BookListPageState createState() => _BookListPageState();
@@ -29,11 +33,10 @@ class _BookListPageState extends State<BookListPage> {
     try {
       final books = await _googleBooksService.searchBooks(
         widget.searchTerm,
-        isCategory: widget.isCategory, // true for category, false for book name
+        isCategory: widget.isCategory,
       );
       if (books.isEmpty) {
-        setState(
-            () => _errorMessage = "No books found for '${widget.searchTerm}'.");
+        setState(() => _errorMessage = "No books found for '${widget.searchTerm}'.");
       } else {
         setState(() => _books = books);
       }
@@ -53,9 +56,7 @@ class _BookListPageState extends State<BookListPage> {
       backgroundColor: const Color(0xFFF8F8F3),
       appBar: AppBar(
         title: Text(
-          widget.isCategory
-              ? widget.searchTerm
-              : "Results for '${widget.searchTerm}'",
+          widget.isCategory ? widget.searchTerm : "Results for '${widget.searchTerm}'",
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 26,
@@ -71,89 +72,81 @@ class _BookListPageState extends State<BookListPage> {
               : Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2, // Display 2 books per row
-                      childAspectRatio:
-                          0.6, // Adjust aspect ratio to make book covers taller
-                      crossAxisSpacing: 20, // Horizontal space between books
-                      mainAxisSpacing: 20, // Vertical space between books
+                      childAspectRatio: 0.66,
+                      crossAxisSpacing: 40,
+                      mainAxisSpacing: 20,
                     ),
                     itemCount: _books.length,
                     itemBuilder: (context, index) {
                       final book = _books[index];
                       final title = book['volumeInfo']['title'] ?? 'No title';
-                      final authors =
-                          book['volumeInfo']['authors']?.join(', ') ??
-                              'Unknown author';
+                      final authors = book['volumeInfo']['authors']?.join(', ') ?? 'Unknown author';
                       final thumbnail = book['volumeInfo']['imageLinks'] != null
                           ? book['volumeInfo']['imageLinks']['thumbnail']
                           : 'https://via.placeholder.com/150';
+                      final bookId = book['id']; // Fetch the book ID here
 
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F8F3),
-                          borderRadius: BorderRadius.circular(8.0),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0xFFF8F8F3),
-                              spreadRadius: 2,
-                              blurRadius: 4,
-                              offset: Offset(0, 4),
+                      return GestureDetector(
+                        onTap: () {
+                          // Navigate to BookDetailsPage and pass the bookId
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookDetailsPage(bookId: bookId),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Expanded maximizes the cover size within the container
-                              Expanded(
-                                flex: 3, // Give more space to the cover
-                                child: Image.network(
-                                  thumbnail,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Center(
-                                        child: Icon(Icons
-                                            .error)); // Error icon if image fails to load
-                                  },
-                                ),
-                              ),
-                              // Reduced padding for title to prioritize the cover size
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 4.0),
-                                child: Text(
-                                  title,
-                                  style: const TextStyle(
-                                    color: Color(0xFF351F1F),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                          child: Container(
+                            color: const Color(0xFFF8F8F3),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Image.network(
+                                    thumbnail,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Center(
+                                        child: Icon(Icons.error),
+                                      );
+                                    },
                                   ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              // Reduced padding for authors to prioritize the cover size
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 8.0, right: 8.0, bottom: 8.0),
-                                child: Text(
-                                  authors,
-                                  style: const TextStyle(
-                                    color: Color(0xFF9b9b9b),
-                                    fontSize: 12,
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    title,
+                                    style: const TextStyle(
+                                      color: Color(0xFF351F1F),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 8.0, right: 8.0, bottom: 8.0),
+                                  child: Text(
+                                    authors,
+                                    style: const TextStyle(
+                                      color: Color(0xFF9b9b9b),
+                                      fontSize: 15,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

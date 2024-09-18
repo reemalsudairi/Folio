@@ -10,6 +10,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: selectedIndex,
+      onTap: onTap,
       selectedItemColor: const Color(0xFFF790AD), // Selected item color (pink)
       unselectedItemColor: const Color(0xFFB3B3B3), // Unselected item color (gray)
       showSelectedLabels: false,
@@ -48,10 +49,6 @@ class CustomBottomNavigationBar extends StatelessWidget {
           label: '', // No label
         ),
       ],
-      selectedItemColor: Color(0xFFF790AD),
-      unselectedItemColor: Color(0xFFB3B3B3),
-      showSelectedLabels: false, // Hide selected labels
-      showUnselectedLabels: false, // Hide unselected labels
       backgroundColor: Colors.white,
     );
   }
