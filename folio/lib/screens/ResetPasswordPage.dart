@@ -1,39 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'ResetPasswordPage.dart'; // Import the reset password page
+import 'package:firebase_auth/firebase_auth.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ResetPasswordPage extends StatefulWidget {
+  const ResetPasswordPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: LoginPage(),
-    );
-  }
+  _ResetPasswordPageState createState() => _ResetPasswordPageState();
 }
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
-  @override
-  _LoginPageState createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
+class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final emailController = TextEditingController();
-  final passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isEmailValid = true;
-  bool _isPasswordValid = true;
-  bool _obscurePassword = true; // To toggle password visibility
 
   @override
   void initState() {
@@ -43,32 +21,30 @@ class _LoginPageState extends State<LoginPage> {
         _isEmailValid = _validateEmail(emailController.text);
       });
     });
-    passwordController.addListener(() {
-      setState(() {
-        _isPasswordValid = passwordController.text.isNotEmpty;
-      });
-    });
   }
 
-  Future<void> signUserIn() async {
+  bool _validateEmail(String email) {
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    return emailRegex.hasMatch(email);
+  }
+
+  Future<void> sendPasswordResetEmail() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        await FirebaseAuth.instance.sendPasswordResetEmail(
           email: emailController.text.trim(),
-          password: passwordController.text,
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Login Successful!"),
+            content: Text("Reset link sent! Check your email."),
             backgroundColor: Colors.green,
           ),
         );
       } on FirebaseAuthException catch (e) {
         print('Error: $e');
-        String errorMessage = _handleAuthError(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
+            content: Text(_handleAuthError(e)),
             backgroundColor: Colors.red,
           ),
         );
@@ -81,39 +57,19 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter a valid email and password."),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
-  }
-
-  bool _validateEmail(String email) {
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    return emailRegex.hasMatch(email);
   }
 
   String _handleAuthError(FirebaseAuthException error) {
     switch (error.code) {
-      case 'user-not-found':
-        return 'No user found for that email.';
-      case 'wrong-password':
-        return 'Wrong password provided.';
       case 'invalid-email':
         return 'The email address is badly formatted.';
-      case 'user-disabled':
-        return 'This user has been disabled.';
+      case 'user-not-found':
+        return 'No user found for that email.';
       case 'network-request-failed':
         return 'Network error, please try again later.';
-      case 'too-many-requests':
-        return 'Too many requests. Please try again later.';
-      case 'operation-not-allowed':
-        return 'Operation not allowed. Please contact support.';
       default:
-        return 'invalid email/password. please try again.';
+        return 'An unknown error occurred.';
     }
   }
 
@@ -122,7 +78,6 @@ class _LoginPageState extends State<LoginPage> {
     required String hintText,
     bool obscureText = false,
     required String? Function(String?) validator,
-    bool isPassword = false, // New parameter to differentiate password field
   }) {
     return Container(
       width: double.infinity,
@@ -136,23 +91,11 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: TextFormField(
           controller: controller,
-          obscureText: isPassword ? _obscurePassword : obscureText,
+          obscureText: obscureText,
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: hintText,
-            hintStyle: TextStyle(color: Color(0xFF695555)),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  )
-                : null,
+            hintStyle: const TextStyle(color: Color(0xFF695555)),
           ),
           validator: validator,
         ),
@@ -172,24 +115,22 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 100),
                 Stack(
-                  alignment: Alignment.center, // Centers the stack content
+                  alignment: Alignment.center,
                   children: [
-                    // Logo (Image)
                     Image.asset(
                       "images/Logo.png",
                       width: 500,
                       height: 300,
-                      fit: BoxFit.cover, // Ensures the image fits within the container
+                      fit: BoxFit.cover,
                     ),
-
-                    // Introductory text at the bottom of the image
                     Positioned(
-                      bottom: 10, // Position the text 10 pixels from the bottom of the image
+                      bottom: 10,
                       left: 0,
                       right: 0,
                       child: Text(
-                        "Explore, discuss, and enjoy books with a \ncommunity of passionate readers.",
+                        "Reset your password to regain access \nto your account.",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Roboto',
@@ -202,8 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
-
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildTextField(
                   controller: emailController,
                   hintText: 'Email',
@@ -216,40 +156,6 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
-                _buildTextField(
-                  controller: passwordController,
-                  hintText: 'Password',
-                  obscureText: true,
-                  isPassword: true, // Indicates password field
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      // Navigate to Reset Password Page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ResetPasswordPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Forgot password?',
-                      style: TextStyle(
-                        color: Color(0xFF695555),
-                      ),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
@@ -261,9 +167,9 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: signUserIn,
+                    onPressed: sendPasswordResetEmail,
                     child: const Text(
-                      'Login',
+                      'Send OTP',
                       style: TextStyle(
                         color: Colors.white,
                       ),
@@ -273,15 +179,15 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {
-                    // Navigate to the sign-up page
+                    Navigator.pop(context); // Navigate back to login page
                   },
                   child: const Text.rich(
                     TextSpan(
-                      text: "Don't have an account? ",
+                      text: "Remember your password? ",
                       style: TextStyle(color: Color(0xFF695555)),
                       children: [
                         TextSpan(
-                          text: 'Sign up',
+                          text: 'Login',
                           style: TextStyle(
                             color: Color(0xFFF790AD),
                           ),
