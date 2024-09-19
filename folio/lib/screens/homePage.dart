@@ -15,7 +15,7 @@ class _HomePageState extends State<HomePage> {
   // List of pages for each tab
   static final List<Widget> _pages = <Widget>[
     const HomeContent(), // Home page content
-    CategoriesPage(), // CategoriesPage (Search page)
+    const CategoriesPage(), // CategoriesPage (Search page)
     const LibraryPage(), // Placeholder for LibraryPage
     const ProfilePage(), // ProfilePage
   ];
