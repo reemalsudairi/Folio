@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'ResetPasswordPage.dart'; // Import the reset password page
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
       case 'operation-not-allowed':
         return 'Operation not allowed. Please contact support.';
       default:
-        return 'invalid email/password. please try again.';
+        return 'An unknown error occurred.';
     }
   }
 
@@ -173,37 +172,37 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Stack(
-                  alignment: Alignment.center, // Centers the stack content
-                  children: [
-                    // Logo (Image)
-                    Image.asset(
-                      "images/Logo.png",
-                      width: 500,
-                      height: 300,
-                      fit: BoxFit.cover, // Ensures the image fits within the container
-                    ),
+                alignment: Alignment.center, // Centers the stack content
+                children: [
+                  // Logo (Image)
+                  Image.asset(
+                    "images/Logo.png",
+                    width: 500,
+                    height: 300,
+                    fit: BoxFit.cover, // Ensures the image fits within the container
+                  ),
 
-                    // Introductory text at the bottom of the image
-                    Positioned(
-                      bottom: 10, // Position the text 10 pixels from the bottom of the image
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        "Explore, discuss, and enjoy books with a \ncommunity of passionate readers.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          color: Color(0XFF695555),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          height: 22.08 / 16,
-                        ),
+                  // Introductory text at the bottom of the image
+                  Positioned(
+                    bottom: 10, // Position the text 10 pixels from the bottom of the image
+                    left: 0,
+                    right: 0,
+                    child: Text(
+                      "Explore, discuss, and enjoy books with a \ncommunity of passionate readers.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        color: Color(0XFF695555),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 22.08 / 16,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
 
-                SizedBox(height: 20),
+              SizedBox(height: 20),
                 _buildTextField(
                   controller: emailController,
                   hintText: 'Email',
@@ -230,23 +229,12 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 const SizedBox(height: 10),
-                Align(
+                const Align(
                   alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      // Navigate to Reset Password Page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ResetPasswordPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Forgot password?',
-                      style: TextStyle(
-                        color: Color(0xFF695555),
-                      ),
+                  child: Text(
+                    'Forgot password?',
+                    style: TextStyle(
+                      color: Color(0xFF695555),
                     ),
                   ),
                 ),
