@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CurrentlyReading extends StatefulWidget {
-  const CurrentlyReading({Key? key}) : super(key: key);
-
+  const CurrentlyReading({super.key});
 
   @override
   _CurrentlyReadingState createState() => _CurrentlyReadingState();
@@ -10,8 +9,8 @@ class CurrentlyReading extends StatefulWidget {
 
 class _CurrentlyReadingState extends State<CurrentlyReading> {
 //  final String userId = FirebaseAuth.instance.currentUser!.uid;
-    List<Book> currentlyReadingBooks = [];
-    
+  List<Book> currentlyReadingBooks = [];
+
   //     @override
   // void initState() {
   //   super.initState();
@@ -60,50 +59,50 @@ class _CurrentlyReadingState extends State<CurrentlyReading> {
   //   }
   // }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Currently reading'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+        appBar: AppBar(
+          title: const Text('Currently reading'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         ),
-      ),
-      body: //currentlyReadingBooks.isEmpty
-           Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/Logo.png', // Placeholder image when no books exist
-                    height: 150,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No books in your currently reading list.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
+        body: //currentlyReadingBooks.isEmpty
+            Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/Logo.png', // Placeholder image when no books exist
+                height: 150,
               ),
-            )
-          // : GridView.builder(
-          //     padding: const EdgeInsets.all(16.0),
-          //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          //       crossAxisCount: 2,
-          //       crossAxisSpacing: 16,
-          //       mainAxisSpacing: 16,
-          //       childAspectRatio: 0.65,
-          //     ),
-          //     itemCount: currentlyReadingBooks.length,
-          //     itemBuilder: (context, index) {
-          //       Book book = currentlyReadingBooks[index];
-          //       return BookCard(book: book);
-          //     },
-          //   ),
-    );
+              const SizedBox(height: 20),
+              const Text(
+                'No books in your currently reading list.',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+              ),
+            ],
+          ),
+        )
+        // : GridView.builder(
+        //     padding: const EdgeInsets.all(16.0),
+        //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        //       crossAxisCount: 2,
+        //       crossAxisSpacing: 16,
+        //       mainAxisSpacing: 16,
+        //       childAspectRatio: 0.65,
+        //     ),
+        //     itemCount: currentlyReadingBooks.length,
+        //     itemBuilder: (context, index) {
+        //       Book book = currentlyReadingBooks[index];
+        //       return BookCard(book: book);
+        //     },
+        //   ),
+        );
   }
 }
 
@@ -133,7 +132,7 @@ class Book {
 class BookCard extends StatelessWidget {
   final Book book;
 
-  const BookCard({required this.book});
+  const BookCard({super.key, required this.book});
 
   @override
   Widget build(BuildContext context) {

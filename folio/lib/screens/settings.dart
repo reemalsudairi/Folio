@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
@@ -11,17 +13,17 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFDF8F4),
+      backgroundColor: const Color(0xFFFDF8F4),
       appBar: AppBar(
-        backgroundColor: Color(0xFFFDF8F4),
+        backgroundColor: const Color(0xFFFDF8F4),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF4A2E2B)),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2B)),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text(
+        title: const Text(
           'Settings',
           style: TextStyle(
             color: Color(0xFF4A2E2B),
@@ -33,18 +35,17 @@ class _SettingsPageState extends State<SettingsPage> {
         centerTitle: true,
       ),
       body: SizedBox(
-        width: 412,
-        height: 915,
         child: Center(
           child: Container(
-            color: Color(0xFFFDF8F4),
+            color: const Color(0xFFFDF8F4),
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ListTile(
-                  leading: Icon(Icons.notifications, color: Color(0xFF4A2E2B)),
-                  title: Text(
+                  leading:
+                      const Icon(Icons.notifications, color: Color(0xFF4A2E2B)),
+                  title: const Text(
                     'Notifications',
                     style: TextStyle(
                       color: Color(0xFF4A2E2B),
@@ -59,11 +60,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         _notificationOn = value;
                       });
                     },
-                    activeColor: Color(0xFFF790AD),
-                    activeTrackColor: Color.fromARGB(255, 255, 255, 255),
+                    activeColor: const Color(0xFFF790AD),
+                    activeTrackColor: const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ),
-                ListTile(
+                const ListTile(
                   leading: Icon(Icons.chat, color: Color(0xFF4A2E2B)),
                   title: Text(
                     'Contact Us',
@@ -74,18 +75,19 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Center(
                   child: OutlinedButton(
                     onPressed: () {},
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Color(0xFFF790AD)),
+                      side: const BorderSide(color: Color(0xFFF790AD)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.0),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 40, vertical: 12),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Sign out',
                       style: TextStyle(
                         color: Color(0xFFF790AD),
@@ -95,21 +97,23 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                Spacer(), // Pushes "Delete account" to the bottom
+                const Spacer(), // Pushes "Delete account" to the bottom
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 200), // Adjust the padding as needed
+                    padding: const EdgeInsets.only(
+                        top: 200), // Adjust the padding as needed
                     child: ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFF790AD),
+                        backgroundColor: const Color(0xFFF790AD),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30.0),
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                        minimumSize: Size(280, 48),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 12),
+                        minimumSize: const Size(280, 48),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Delete account',
                         style: TextStyle(
                           color: Colors.white,
