@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
 class LibraryPage extends StatelessWidget {
-  const LibraryPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: NeverScrollableScrollPhysics(),
         children: [
           _buildGridItem(Icons.hourglass_empty, 'Currently reading'),
           _buildGridItem(Icons.bookmark_border, 'Saved'),
@@ -21,8 +19,8 @@ class LibraryPage extends StatelessWidget {
 
   Widget _buildGridItem(IconData icon, String label) {
     return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(20),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -38,7 +36,7 @@ class LibraryPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 40, color: Colors.brown[800]),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             label,
             textAlign: TextAlign.center,

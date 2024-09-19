@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/clubs_page.dart';
 import 'package:folio/screens/Profile/library_page.dart';
@@ -7,63 +5,18 @@ import 'package:folio/screens/Profile/reviews_page.dart';
 import 'package:folio/screens/settings.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
-
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 0;
-  String _name = '';
-  String _bio = '';
-  String _profilePhotoUrl = '';
-  int _booksGoal = 0;
-  int _booksRead = 0; // Example for tracking progress
-  String _username = '';
 
-  static final List<Widget> _pages = <Widget>[
-    const LibraryPage(),
-    const ClubsPage(),
-    const ReviewsPage(),
+  static List<Widget> _pages = <Widget>[
+    LibraryPage(),
+    ClubsPage(),
+    ReviewsPage(),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserProfile();
-  }
-
-  void _fetchUserProfile() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final userId = user.uid;
-        final userDoc = await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .get();
-        if (userDoc.exists) {
-          final userData = userDoc.data()!;
-          setState(() {
-            _name = userData['name'] ?? '';
-            _bio = userData['bio'] ?? '';
-            _profilePhotoUrl = userData['profilePhoto'] ?? '';
-            _booksGoal = userData['books'] ?? 0;
-            _booksRead =
-                70; // Example value; replace with actual data if available
-            _username = userData['username'] ?? ''; // Fetch username
-          });
-        }
-      } else {
-        // Handle case when user is not logged in
-        print('User is not logged in');
-      }
-    } catch (e) {
-      print('Error fetching user profile: $e');
-      // Handle error, e.g., show a snackbar or alert
-    }
-  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -74,27 +27,23 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F1),
+      backgroundColor: Color(0xFFF8F5F1),
       appBar: PreferredSize(
-        preferredSize: const Size(412, 56),
+        preferredSize: Size(412, 56),
         child: AppBar(
-          backgroundColor: const Color(0xFFF8F5F1),
+          backgroundColor: Color(0xFFF8F5F1),
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(Icons.edit,
-                  color: Color.fromARGB(255, 35, 23, 23)),
-              onPressed: () {
-                // Handle edit profile action
-              },
+              icon: Icon(Icons.edit, color: const Color.fromARGB(255, 35, 23, 23)),
+              onPressed: () {},
             ),
             IconButton(
-              icon: const Icon(Icons.settings,
-                  color: Color.fromARGB(255, 35, 23, 23)),
+              icon: Icon(Icons.settings, color: const Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
             ),
@@ -102,18 +51,18 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: Container(
-        color: const Color(0xFFF8F5F1),
+        width: 412,
+        height: 915,
+        color: Color(0xFFF8F5F1),
         child: Column(
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundImage: _profilePhotoUrl.isNotEmpty
-                  ? NetworkImage(_profilePhotoUrl)
-                  : const AssetImage('assets/avatar.png') as ImageProvider,
+              backgroundImage: AssetImage('assets/avatar.png'),
             ),
-            const SizedBox(height: 5),
+            SizedBox(height: 5),
             Text(
-              _name,
+              'Nora',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -121,120 +70,78 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             Text(
-              '@$_username', // Use the username variable here
-              style: const TextStyle(
-                color: Color.fromARGB(255, 88, 71, 71),
+              '@Noraisreading',
+              style: TextStyle(
+                color: const Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
-            SizedBox(
+            SizedBox(height: 10),
+            Container(
               width: 250,
               child: Text(
-                _bio,
+                'Book lover, always seeking new stories and perspectives.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color.fromARGB(255, 31, 24, 24),
+                style: TextStyle(
+                  color: const Color.fromARGB(255, 31, 24, 24),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             _buildYearlyGoal(),
-            const SizedBox(height: 20),
-            Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    TextButton(
-                      onPressed: () => _onItemTapped(0),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Library',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _selectedIndex == 0
-                                  ? Colors.brown[800]
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => _onItemTapped(1),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Clubs',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _selectedIndex == 1
-                                  ? Colors.brown[800]
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => _onItemTapped(2),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Reviews',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _selectedIndex == 2
-                                  ? Colors.brown[800]
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Stack(
-                  fit: StackFit.passthrough,
-                  children: [
-                    Container(
-                      height: 2,
-                      color: Colors.grey[300],
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 300),
-                      left: _selectedIndex * (412 / 3) + 16,
-                      top: -1,
-                      child: Container(
-                        height: 4,
-                        width: 100,
-                        color: Colors.brown[800],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: _pages[_selectedIndex],
-            ),
+            SizedBox(height: 20),
+            Expanded(child: _pages[_selectedIndex]), // Display the selected page
           ],
         ),
       ),
+    bottomNavigationBar: BottomNavigationBar(
+  currentIndex: 0,
+  selectedItemColor: const Color(0xFFF790AD), // Selected item color
+  unselectedItemColor: const Color(0xFFB3B3B3),
+  showSelectedLabels: false,
+  showUnselectedLabels: false, // Unselected item color
+  items: const [
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        child: Icon(Icons.home_outlined, size: 35), // Set the icon size
+        width: 30, // Set the icon width
+        height: 30, // Set the icon height
+      ),
+      label: 'Home',
+    ),
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        child: Icon(Icons.explore_outlined, size: 35), // Set the icon size
+        width: 30, // Set the icon width
+        height: 30, // Set the icon height
+      ),
+      label: 'Search',
+    ),
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        child: Icon(Icons.book_outlined, size: 35), // Set the icon size
+        width: 30, // Set the icon width
+        height: 30, // Set the icon height
+      ),
+      label: 'Library',
+    ),
+    BottomNavigationBarItem(
+      icon: SizedBox(
+        child: Icon(Icons.person_outlined, size: 35), // Set the icon size
+        width: 30, // Set the icon width
+        height: 30, // Set the icon height
+      ),
+      label: 'Profile',
+    ),
+  ],
+),
     );
   }
 
   Widget _buildYearlyGoal() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 30),
+      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: 30),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -260,7 +167,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               Text(
-                '$_booksRead/$_booksGoal',
+                '50/100',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -269,13 +176,13 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           LinearProgressIndicator(
-            value: _booksGoal > 0 ? _booksRead / _booksGoal : 0,
+            value: 0.5,
             backgroundColor: Colors.grey[300],
-            valueColor: const AlwaysStoppedAnimation(Color(0xFFF790AD)),
+            valueColor: AlwaysStoppedAnimation(Color(0xFFF790AD)),
             minHeight: 13,
-            borderRadius: const BorderRadius.all(Radius.circular(20)),
+            borderRadius: BorderRadius.all(Radius.circular(20)),
           ),
         ],
       ),
