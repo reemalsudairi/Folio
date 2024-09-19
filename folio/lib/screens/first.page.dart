@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Signup.dart';
-import 'package:folio/screens/homePage.dart';
+import 'package:folio/screens/loginPage.dart'; // Import the LoginPage
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -78,9 +78,10 @@ class WelcomePage extends StatelessWidget {
             // Login Button
             ElevatedButton(
               onPressed: () {
+                // Navigate to LoginPage when "Login" button is pressed
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
                 );
               },
               style: ElevatedButton.styleFrom(
