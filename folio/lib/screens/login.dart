@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:folio/screens/Signup.dart';
 import 'package:folio/screens/homePage.dart';
 
 import 'ResetPasswordPage.dart'; // Import the reset password page
+import 'Signup.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

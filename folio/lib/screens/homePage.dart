@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/library_page.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
 import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
-import 'package:folio/screens/settings.dart'; // Import for EditProfilePage
+import 'package:folio/screens/settings.dart'; // Import for SettingsPage
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.userId});
@@ -66,7 +66,7 @@ class _HomePageState extends State<HomePage> {
   void _initializePages() {
     setState(() {
       _pages = [
-        HomeContent(
+        HomePageContent(
           name: _name,
           profilePhotoUrl: _profilePhotoUrl,
           booksGoal: _booksGoal,
@@ -124,15 +124,14 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Content for the Home tab
-class HomeContent extends StatelessWidget {
+class HomePageContent extends StatelessWidget {
   final String name;
   final String profilePhotoUrl;
   final int booksGoal;
   final int booksRead;
   final VoidCallback onEdit;
 
-  const HomeContent({
+  const HomePageContent({
     super.key,
     required this.name,
     required this.profilePhotoUrl,
@@ -181,56 +180,59 @@ class HomeContent extends StatelessWidget {
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(30.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Good Day,\n$name!',
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 53, 31, 31),
+      body: SingleChildScrollView(
+        // Add SingleChildScrollView to make the content scrollable
+        child: Padding(
+          padding: const EdgeInsets.all(30.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Good Day,\n$name!',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 53, 31, 31),
+                    ),
                   ),
-                ),
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: profilePhotoUrl.isNotEmpty
-                      ? NetworkImage(profilePhotoUrl)
-                      : const AssetImage('assets/images/profile_pic.png')
-                          as ImageProvider,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildYearlyGoal(),
-            const SizedBox(height: 30),
-            const Text(
-              'Currently Reading',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 53, 31, 31),
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: profilePhotoUrl.isNotEmpty
+                        ? NetworkImage(profilePhotoUrl)
+                        : const AssetImage('assets/images/profile_pic.png')
+                            as ImageProvider,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 15),
-            _buildCurrentlyReadingSection(),
-            const SizedBox(height: 120),
-            const Text(
-              'Clubs',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 53, 31, 31),
+              const SizedBox(height: 20),
+              _buildYearlyGoal(),
+              const SizedBox(height: 30),
+              const Text(
+                'Currently Reading',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 53, 31, 31),
+                ),
               ),
-            ),
-            const SizedBox(height: 15),
-            _buildClubsSection(),
-          ],
+              const SizedBox(height: 15),
+              _buildCurrentlyReadingSection(),
+              const SizedBox(height: 120),
+              const Text(
+                'Clubs',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 53, 31, 31),
+                ),
+              ),
+              const SizedBox(height: 15),
+              _buildClubsSection(),
+            ],
+          ),
         ),
       ),
     );
