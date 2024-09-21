@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/Profile/library_page.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
 import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
-import 'package:folio/screens/edit_profile.dart';
 import 'package:folio/screens/settings.dart'; // Import for EditProfilePage
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required String userId});
+  const HomePage({super.key, required this.userId});
+
+  final String userId;
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -20,8 +22,16 @@ class _HomePageState extends State<HomePage> {
   int _booksGoal = 0;
   int _booksRead = 0;
 
-  // List of pages for each tab
-  late List<Widget> _pages;
+  // Initialize pages with placeholders to avoid late initialization error
+  late List<Widget> _pages = [
+    const Center(
+        child: CircularProgressIndicator()), // Placeholder while loading
+    const CategoriesPage(),
+    const LibraryPage(),
+    const Center(
+        child:
+            CircularProgressIndicator()), // Placeholder while loading profile
+  ];
 
   @override
   void initState() {
@@ -43,27 +53,31 @@ class _HomePageState extends State<HomePage> {
           _name = userData['name'] ?? '';
           _profilePhotoUrl = userData['profilePhoto'] ?? '';
           _booksGoal = userData['books'] ?? 0;
-          _booksRead = userData['booksRead'] ??
-              0; // Ensure this matches Firestore fields
+          _booksRead = userData['booksRead'] ?? 0;
+
+          // Initialize the pages with actual content
           _initializePages();
         });
       }
     }
   }
 
+  // Initialize the list of pages with user data
   void _initializePages() {
-    _pages = [
-      HomeContent(
-        name: _name,
-        profilePhotoUrl: _profilePhotoUrl,
-        booksGoal: _booksGoal,
-        booksRead: _booksRead,
-        onEdit: _fetchUserData, // Pass the update method
-      ),
-      const CategoriesPage(),
-      const LibraryPage(),
-      ProfilePage(onEdit: _fetchUserData),
-    ];
+    setState(() {
+      _pages = [
+        HomeContent(
+          name: _name,
+          profilePhotoUrl: _profilePhotoUrl,
+          booksGoal: _booksGoal,
+          booksRead: _booksRead,
+          onEdit: _fetchUserData, // Pass the update method
+        ),
+        const CategoriesPage(),
+        const LibraryPage(),
+        ProfilePage(onEdit: _fetchUserData),
+      ];
+    });
   }
 
   // Update the index when a tab is selected
@@ -73,38 +87,11 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Navigate to EditProfile and get updated data
-  void _navigateToEditProfile() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditProfile(
-          userId: FirebaseAuth.instance.currentUser!.uid,
-          name: _name,
-          profilePhotoUrl: _profilePhotoUrl,
-          booksGoal: _booksGoal,
-          bio: '',
-        ),
-      ),
-    );
-
-    // Check if result is not null and update the profile data
-    if (result != null) {
-      setState(() {
-        _name = result['name'] ?? _name;
-        _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
-        _booksGoal = result['books'] ?? _booksGoal;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3),
-      body: _pages.isNotEmpty
-          ? _pages[_selectedIndex]
-          : const Center(child: CircularProgressIndicator()),
+      body: _pages[_selectedIndex], // Display the selected page
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor:
@@ -163,7 +150,6 @@ class HomeContent extends StatelessWidget {
         child: AppBar(
           backgroundColor: const Color(0xFFF8F5F1),
           elevation: 0,
-          // Remove the leading back button
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
@@ -232,7 +218,6 @@ class HomeContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
-            // Currently Reading section
             _buildCurrentlyReadingSection(),
             const SizedBox(height: 120),
             const Text(
@@ -244,7 +229,6 @@ class HomeContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
-            // Clubs section
             _buildClubsSection(),
           ],
         ),
@@ -337,21 +321,6 @@ class HomeContent extends StatelessWidget {
             borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Placeholder for the LibraryPage
-class LibraryPage extends StatelessWidget {
-  const LibraryPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Library Page Content',
-        style: TextStyle(fontSize: 24),
       ),
     );
   }
