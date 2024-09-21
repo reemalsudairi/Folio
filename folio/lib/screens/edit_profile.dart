@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,8 +34,7 @@ class _EditProfilePageState extends State<EditProfile> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
 
-  // Firebase Auth instance
-  final _auth = FirebaseAuth.instance;
+ 
   // Firestore instance
   final _firestore = FirebaseFirestore.instance;
 

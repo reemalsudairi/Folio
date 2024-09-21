@@ -105,7 +105,7 @@ void _saveProfile() async {
       // Navigate to HomePage
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => HomePage(userId: userId,)),
       );
     } catch (e) {
       print('Error saving profile: $e');
@@ -301,7 +301,7 @@ RichText(
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const HomePage(),
+                builder: (context) => const HomePage(userId: '',),
               ),
             );
           },

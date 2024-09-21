@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
-import 'package:folio/screens/categories_page.dart';
+import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
+import 'package:folio/screens/edit_profile.dart'; // Import for EditProfilePage
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required String userId});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -11,14 +14,53 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0; // Tracks the selected tab
+  String _name = '';
+  String _profilePhotoUrl = '';
+  int _booksGoal = 0;
+  int _booksRead = 0;
 
   // List of pages for each tab
-  static final List<Widget> _pages = <Widget>[
-    HomeContent(),      // Home page content
-    CategoriesPage(),       // Placeholder for SearchPage
-    LibraryPage(),      // Placeholder for LibraryPage
-    ProfilePage(),      // ProfilePage
-  ];
+  late List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  // Fetch user data from Firestore
+ void _fetchUserData() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userDoc = await FirebaseFirestore.instance.collection('reader').doc(user.uid).get();
+    if (userDoc.exists) {
+      final userData = userDoc.data()!;
+      setState(() {
+        _name = userData['name'] ?? '';
+        _profilePhotoUrl = userData['profilePhoto'] ?? '';
+        _booksGoal = userData['booksGoal'] ?? 0;
+        _booksRead = userData['booksRead'] ?? 0; // Ensure this matches Firestore fields
+        _initializePages();
+      });
+    }
+  }
+}
+
+
+  void _initializePages() {
+    _pages = [
+      HomeContent(
+        name: _name,
+        profilePhotoUrl: _profilePhotoUrl,
+        booksGoal: _booksGoal,
+        booksRead: _booksRead,
+        onEdit: _fetchUserData, // Pass the update method
+      ),
+      const CategoriesPage(),
+      const LibraryPage(),
+      ProfilePage(), // Pass the update method to ProfilePage
+    ];
+  }
 
   // Update the index when a tab is selected
   void _onItemTapped(int index) {
@@ -27,19 +69,42 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Navigate to EditProfile and get updated data
+  void _navigateToEditProfile() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfile(
+          userId: FirebaseAuth.instance.currentUser!.uid,
+          name: _name,
+          profilePhotoUrl: _profilePhotoUrl,
+          booksGoal: _booksGoal, bio: '',
+        ),
+      ),
+    );
+
+    // Check if result is not null and update the profile data
+    if (result != null) {
+      setState(() {
+        _name = result['name'] ?? _name;
+        _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
+        _booksGoal = result['books'] ?? _booksGoal;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3),
-      // Display the selected page
-      body: _pages[_selectedIndex],
+      body: _pages.isNotEmpty ? _pages[_selectedIndex] : Center(child: CircularProgressIndicator()),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: const Color(0xFFF790AD), // Pink color for selected item
         unselectedItemColor: const Color(0xFFB3B3B3), // Grey color for unselected item
-        showSelectedLabels: false, // No labels for selected items
-        showUnselectedLabels: false, // No labels for unselected items
-        onTap: _onItemTapped, // Handle tab selection
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined, size: 35),
@@ -65,91 +130,59 @@ class _HomePageState extends State<HomePage> {
 
 // Content for the Home tab
 class HomeContent extends StatelessWidget {
+  final String name;
+  final String profilePhotoUrl;
+  final int booksGoal;
+  final int booksRead;
+  final VoidCallback onEdit;
+
+  const HomeContent({
+    super.key,
+    required this.name,
+    required this.profilePhotoUrl,
+    required this.booksGoal,
+    required this.booksRead,
+    required this.onEdit, // Receive onEdit callback
+  });
+
   @override
   Widget build(BuildContext context) {
-    int yearlyGoalCurrent = 50;
-    int yearlyGoalTotal = 100;
-
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(50.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 30), // Top spacing
+            const SizedBox(height: 30),
             const Row(
-              mainAxisAlignment: MainAxisAlignment.end, // Align to the right
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(Icons.notifications_active_outlined,
-                    size: 36, color: Color.fromARGB(255, 53, 31, 31)),
-                Icon(Icons.person_2_outlined,
-                    size: 36, color: Color.fromARGB(255, 53, 31, 31))
+                Icon(Icons.notifications_active_outlined, size: 36, color: Color.fromARGB(255, 53, 31, 31)),
+                Icon(Icons.person_2_outlined, size: 36, color: Color.fromARGB(255, 53, 31, 31)),
               ],
             ),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Good Day,\nNora!',
-                  style: TextStyle(
+                  'Good Day,\n$name!',
+                  style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: Color.fromARGB(255, 53, 31, 31),
                   ),
                 ),
                 CircleAvatar(
-                  backgroundImage:
-                      AssetImage('assets/images/profile_pic.png'),
                   radius: 40,
-                )
+                  backgroundImage: profilePhotoUrl.isNotEmpty
+                      ? NetworkImage(profilePhotoUrl)
+                      : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
+                ),
               ],
             ),
             const SizedBox(height: 20),
-            // Yearly Goal Section
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.all(10),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Yearly Goal',
-                          style: TextStyle(
-                              fontSize: 25, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(
-                            width: 10), // Add some space between the texts
-                        Text(
-                          '$yearlyGoalCurrent/$yearlyGoalTotal',
-                          style: const TextStyle(
-                              fontSize: 25, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    LinearProgressIndicator(
-                      value: yearlyGoalCurrent / yearlyGoalTotal,
-                      color: const Color.fromARGB(255, 247, 144, 173),
-                      backgroundColor: Colors.grey[300],
-                      minHeight: 15,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildYearlyGoal(),
             const SizedBox(height: 30),
-            // Currently Reading Section
             const Text(
               'Currently Reading',
               style: TextStyle(
@@ -159,94 +192,59 @@ class HomeContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
-            // Book List
-            SizedBox(
-              height: 200,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: const [
-                  BookCard(
-                    imagePath: 'assets/images/book1.png',
-                    title: 'The sum of all things',
-                    author: 'Nicole Brooks',
-                  ),
-                  BookCard(
-                    imagePath: 'assets/images/book2.png',
-                    title: 'The Dreaming Arts',
-                    author: 'Tom Maloney',
-                  ),
-                  BookCard(
-                    imagePath: 'assets/images/book3.png',
-                    title: 'The Hypothetical World',
-                    author: 'Sophia Lewis',
-                  ),
-                ],
-              ),
-            ),
+            // Add your Currently Reading section here
           ],
         ),
       ),
     );
   }
-}
 
-// Placeholder for the SearchPage
-class SearchPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Search Page Content',
-        style: TextStyle(fontSize: 24),
-      ),
-    );
-  }
-}
-
-// Placeholder for the LibraryPage
-class LibraryPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Library Page Content',
-        style: TextStyle(fontSize: 24),
-      ),
-    );
-  }
-}
-
-// BookCard widget
-class BookCard extends StatelessWidget {
-  final String imagePath;
-  final String title;
-  final String author;
-
-  const BookCard({
-    required this.imagePath,
-    required this.title,
-    required this.author,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  // Yearly Goal section
+  Widget _buildYearlyGoal() {
     return Container(
-      width: 120,
-      margin: const EdgeInsets.only(right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.asset(imagePath, height: 140, fit: BoxFit.cover),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
           ),
-          Text(
-            author,
-            style: const TextStyle(color: Colors.grey),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Yearly Goal',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.brown,
+                ),
+              ),
+              Text(
+                '$booksRead/$booksGoal',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.brown,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: booksGoal > 0 ? booksRead / booksGoal : 0,
+            backgroundColor: Colors.grey[300],
+            valueColor: const AlwaysStoppedAnimation(Color(0xFFF790AD)),
+            minHeight: 13,
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
         ],
       ),
@@ -254,3 +252,17 @@ class BookCard extends StatelessWidget {
   }
 }
 
+// Placeholder for the LibraryPage
+class LibraryPage extends StatelessWidget {
+  const LibraryPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        'Library Page Content',
+        style: TextStyle(fontSize: 24),
+      ),
+    );
+  }
+}
