@@ -78,8 +78,7 @@ ProfilePage(onEdit: _fetchUserData),    ];
           userId: FirebaseAuth.instance.currentUser!.uid,
           name: _name,
           profilePhotoUrl: _profilePhotoUrl,
-          booksGoal: _booksGoal, bio: '', 
-          email: '',
+          booksGoal: _booksGoal, bio: '',
         ),
       ),
     );
@@ -158,8 +157,7 @@ class HomeContent extends StatelessWidget {
     // Remove the leading back button
     automaticallyImplyLeading: false,
     actions: [
-      IgnorePointer(
-      child: IconButton(
+      IconButton(
         icon: const Icon(Icons.notifications_active, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
         onPressed: () {
           Navigator.push(
@@ -167,9 +165,7 @@ class HomeContent extends StatelessWidget {
             MaterialPageRoute(builder: (context) => const SettingsPage()),
           );
         },      ),
-         ),
-         IgnorePointer(
-     child: IconButton(
+      IconButton(
         icon: const Icon(Icons.person_2, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
         onPressed: () {
           Navigator.push(
@@ -178,7 +174,6 @@ class HomeContent extends StatelessWidget {
           );
         },
       ),
-         )
     ],
   ),
 ),
@@ -336,7 +331,7 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Text(
-        'Clubs Page',
+        'Library Page Content',
         style: TextStyle(fontSize: 24),
       ),
     );

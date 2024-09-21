@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // Import for email link
 import 'package:folio/screens/first.page.dart'; // Import the WelcomePage
 
 class SettingsPage extends StatefulWidget {
@@ -133,34 +132,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  // Function to send an email
-// Function to send an email
-void _sendEmail() async {
-  final Uri emailLaunchUri = Uri(
-    scheme: 'mailto',
-    path: 'follio444@gmail.com',
-    query: Uri.encodeFull('subject=Contact Us'),
-  );
-
-  // Check if the URI can be launched
-  if (await canLaunch(emailLaunchUri.toString())) {
-    await launch(emailLaunchUri.toString());
-  } else {
-    // If it can't be launched, show an error message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not launch email app')),
-    );
-  }
-}
-
-
-  // Helper function to encode query parameters
-  String encodeQueryParameters(Map<String, String> params) {
-    return params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
-        .join('&');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -214,9 +185,9 @@ void _sendEmail() async {
                     activeTrackColor: const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.chat, color: Color(0xFF4A2E2B)),
-                  title: const Text(
+                const ListTile(
+                  leading: Icon(Icons.chat, color: Color(0xFF4A2E2B)),
+                  title: Text(
                     'Contact Us',
                     style: TextStyle(
                       color: Color(0xFF4A2E2B),
@@ -224,7 +195,6 @@ void _sendEmail() async {
                       fontFamily: 'Nunito',
                     ),
                   ),
-                  onTap: _sendEmail, // Link to email
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -238,7 +208,6 @@ void _sendEmail() async {
                         borderRadius: BorderRadius.circular(30.0),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                      minimumSize: const Size(280, 48), // Match size with Delete Account
                     ),
                     child: const Text(
                       'Sign Out',
@@ -250,31 +219,33 @@ void _sendEmail() async {
                     ),
                   ),
                 ),
-                const SizedBox(height: 450), // Space between buttons
+                const Spacer(),
                 Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF790AD),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.0),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 200),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF790AD),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                        minimumSize: const Size(280, 48),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                      minimumSize: const Size(280, 48),
-                    ),
-                    child: const Text(
-                      'Delete Account',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontFamily: 'Nunito',
+                      child: const Text(
+                        'Delete Account',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontFamily: 'Nunito',
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const Spacer(),
               ],
             ),
           ),
@@ -283,3 +254,4 @@ void _sendEmail() async {
     );
   }
 }
+

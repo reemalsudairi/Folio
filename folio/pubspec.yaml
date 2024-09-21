@@ -12,7 +12,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  url_launcher: ^6.0.20
   http: ^0.13.4  # HTTP package to make API requests
   json_annotation: ^4.6.0  # Optional: For parsing JSON (if needed)
   flutter_html: ^2.0.0 
