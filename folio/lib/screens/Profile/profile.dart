@@ -22,7 +22,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _profilePhotoUrl = '';
   int _booksGoal = 0;
   int _booksRead = 0; // Example for tracking progress
-  String _username = '';
+  String _email = ''; // Changed from _username to _email
 
   static final List<Widget> _pages = <Widget>[
     const LibraryPage(),
@@ -37,31 +37,30 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _fetchUserProfile() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final userId = user.uid;
-        final userDoc = await FirebaseFirestore.instance.collection('reader').doc(userId).get();
-        if (userDoc.exists) {
-          final userData = userDoc.data()!;
-          setState(() {
-            _name = userData['name'] ?? '';
-            _bio = userData['bio'] ?? '';
-            _profilePhotoUrl = userData['profilePhoto'] ?? '';
-            _booksGoal = userData['books'] ?? 0;
-            _booksRead = 0; // Example value; replace with actual data if available
-            _username = userData['username'] ?? ''; // Fetch username
-          });
-        }
-      } else {
-        // Handle case when user is not logged in
-        print('User is not logged in');
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userId = user.uid;
+      final userDoc = await FirebaseFirestore.instance.collection('reader').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+        setState(() {
+          _name = userData['name'] ?? '';
+          _bio = userData['bio'] ?? '';
+          _profilePhotoUrl = userData['profilePhoto'] ?? '';
+          _booksGoal = userData['books'] ?? 0;
+          _booksRead = 0; // Example value; replace with actual data if available
+          _email = userData['email'] ?? ''; // Fetch email
+        });
       }
-    } catch (e) {
-      print('Error fetching user profile: $e');
-      // Handle error, e.g., show a snackbar or alert
+    } else {
+      print('User is not logged in');
     }
+  } catch (e) {
+    print('Error fetching user profile: $e');
   }
+}
+
 
   void _onItemTapped(int index) {
     setState(() {
@@ -69,63 +68,60 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-void _navigateToEditProfile() async {
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditProfile(
-        userId: FirebaseAuth.instance.currentUser!.uid,
-        name: _name,
-        bio: _bio,
-        profilePhotoUrl: _profilePhotoUrl,
-        booksGoal: _booksGoal,
+  void _navigateToEditProfile() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfile(
+          userId: FirebaseAuth.instance.currentUser!.uid,
+          name: _name,
+          bio: _bio,
+          profilePhotoUrl: _profilePhotoUrl,
+          booksGoal: _booksGoal,
+          email: _email, // Pass the email here
+        ),
       ),
-    ),
-  );
+    );
 
-  // Check if result is not null and update the profile data
-  if (result != null) {
-    setState(() {
-      _name = result['name'] ?? _name;
-      _bio = result['bio'] ?? _bio;
-      _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
-      _booksGoal = result['books'] ?? _booksGoal;
-    });
-          widget.onEdit();
-
+    // Check if result is not null and update the profile data
+    if (result != null) {
+      setState(() {
+        _name = result['name'] ?? _name;
+        _bio = result['bio'] ?? _bio;
+        _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
+        _booksGoal = result['books'] ?? _booksGoal;
+      });
+      widget.onEdit();
+    }
   }
-}
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F1),
       appBar: PreferredSize(
-  preferredSize: const Size(412, 56),
-  child: AppBar(
-    backgroundColor: const Color(0xFFF8F5F1),
-    elevation: 0,
-    // Remove the leading back button
-    automaticallyImplyLeading: false,
-    actions: [
-      IconButton(
-        icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
-        onPressed: _navigateToEditProfile,
+        preferredSize: const Size(412, 56),
+        child: AppBar(
+          backgroundColor: const Color(0xFFF8F5F1),
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
+              onPressed: _navigateToEditProfile,
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                );
+              },
+            ),
+          ],
+        ),
       ),
-      IconButton(
-        icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SettingsPage()),
-          );
-        },
-      ),
-    ],
-  ),
-),
       body: Container(
         color: const Color(0xFFF8F5F1),
         child: Column(
@@ -146,9 +142,9 @@ void _navigateToEditProfile() async {
               ),
             ),
             Text(
-              '@$_username', // Use the username variable here
-              style: const TextStyle(
-                color: Color.fromARGB(255, 88, 71, 71),
+              _email, // Display the email instead of username
+              style: TextStyle(
+                color: const Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -301,6 +297,4 @@ void _navigateToEditProfile() async {
     );
   }
 }
-
-
 

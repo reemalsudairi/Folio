@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart'; // Import for email link
 import 'package:folio/screens/first.page.dart'; // Import the WelcomePage
 
 class SettingsPage extends StatefulWidget {
@@ -132,6 +133,34 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  // Function to send an email
+// Function to send an email
+void _sendEmail() async {
+  final Uri emailLaunchUri = Uri(
+    scheme: 'mailto',
+    path: 'follio444@gmail.com',
+    query: Uri.encodeFull('subject=Contact Us'),
+  );
+
+  // Check if the URI can be launched
+  if (await canLaunch(emailLaunchUri.toString())) {
+    await launch(emailLaunchUri.toString());
+  } else {
+    // If it can't be launched, show an error message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not launch email app')),
+    );
+  }
+}
+
+
+  // Helper function to encode query parameters
+  String encodeQueryParameters(Map<String, String> params) {
+    return params.entries
+        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,9 +214,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     activeTrackColor: const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ),
-                const ListTile(
-                  leading: Icon(Icons.chat, color: Color(0xFF4A2E2B)),
-                  title: Text(
+                ListTile(
+                  leading: const Icon(Icons.chat, color: Color(0xFF4A2E2B)),
+                  title: const Text(
                     'Contact Us',
                     style: TextStyle(
                       color: Color(0xFF4A2E2B),
@@ -195,6 +224,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontFamily: 'Nunito',
                     ),
                   ),
+                  onTap: _sendEmail, // Link to email
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -208,6 +238,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         borderRadius: BorderRadius.circular(30.0),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                      minimumSize: const Size(280, 48), // Match size with Delete Account
                     ),
                     child: const Text(
                       'Sign Out',
@@ -219,33 +250,31 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 450), // Space between buttons
                 Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 200),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF790AD),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                        minimumSize: const Size(280, 48),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF790AD),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
                       ),
-                      child: const Text(
-                        'Delete Account',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: 'Nunito',
-                        ),
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                      minimumSize: const Size(280, 48),
+                    ),
+                    child: const Text(
+                      'Delete Account',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontFamily: 'Nunito',
                       ),
                     ),
                   ),
                 ),
+                const Spacer(),
               ],
             ),
           ),
@@ -254,4 +283,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-
