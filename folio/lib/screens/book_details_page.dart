@@ -126,8 +126,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF790AD),
-                                  foregroundColor: const Color.fromARGB(255, 255,
-                                      255, 255), // Set button background color
+                                  foregroundColor: const Color.fromARGB(
+                                      255,
+                                      255,
+                                      255,
+                                      255), // Set button background color
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
                                     vertical: 6,
@@ -137,7 +140,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                   ),
                                 ),
                                 child: Stack(
-                                  alignment: Alignment.center, // Center the content
+                                  alignment:
+                                      Alignment.center, // Center the content
                                   children: [
                                     // Display the currently selected option in the center
                                     Align(
@@ -153,7 +157,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                       child: PopupMenuButton<String>(
                                         onSelected: (String value) {
                                           setState(() {
-                                            selectedOption = value; // Update the selected option
+                                            selectedOption =
+                                                value; // Update the selected option
                                           });
                                         },
                                         itemBuilder: (BuildContext context) {
@@ -170,13 +175,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                               child: ListTile(
                                                 leading:
                                                     Icon(Icons.menu_book_sharp),
-                                                title: Text('Currently reading'),
+                                                title:
+                                                    Text('Currently reading'),
                                               ),
                                             ),
                                             const PopupMenuItem<String>(
                                               value: 'Finished',
                                               child: ListTile(
-                                                leading: Icon(Icons.check_circle),
+                                                leading:
+                                                    Icon(Icons.check_circle),
                                                 title: Text('Finished'),
                                               ),
                                             ),
@@ -188,7 +195,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                         ),
                                         color: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                         ),
                                       ),
                                     ),
@@ -264,25 +272,26 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                                 ),
                                               ],
                                             ),
-                                            Column(
+                                            const Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.end,
                                               children: [
-                                                const Text('Ratings'),
+                                                Text('Ratings'),
                                                 Row(
                                                   children: [
                                                     // Display frontend-only rating with 1 pink star
                                                     Row(
-                                                      children: const [
+                                                      children: [
                                                         Icon(
                                                           Icons.star,
-                                                          color: Color(0xFFF790AD), // Pink color for one filled star
+                                                          color: Color(
+                                                              0xFFF790AD), // Pink color for one filled star
                                                           size: 18,
                                                         ),
                                                       ],
                                                     ),
-                                                    const SizedBox(width: 5),
-                                                    const Text(
+                                                    SizedBox(width: 5),
+                                                    Text(
                                                       '0', // Set the rating to 1 star
                                                       style: TextStyle(
                                                         fontWeight:
@@ -311,7 +320,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                                 10), // Adds some space between "Description" and the actual content
                                         // Full Description with HTML tags removed
                                         SizedBox(
-                                          height: 200, // Set a height for the description
+                                          height:
+                                              200, // Set a height for the description
                                           child: SingleChildScrollView(
                                             child: Text(
                                               removeHtmlTags(bookDetails?[

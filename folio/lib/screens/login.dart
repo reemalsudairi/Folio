@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'ResetPasswordPage.dart'; // Import the reset password page
-import 'package:folio/screens/homePage.dart';
+import 'package:flutter/material.dart';
 import 'package:folio/screens/Signup.dart';
+import 'package:folio/screens/homePage.dart';
+
+import 'ResetPasswordPage.dart'; // Import the reset password page
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,10 +63,15 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pop(context); // Dismiss loading dialog
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(userId: '',)), // Ensure HomePage is the correct widget
+          MaterialPageRoute(
+              builder: (context) => const HomePage(
+                    userId: '',
+                  )), // Ensure HomePage is the correct widget
         );
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login Successful!"), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text("Login Successful!"),
+              backgroundColor: Colors.green),
         );
       } on FirebaseAuthException catch (e) {
         Navigator.pop(context); // Dismiss loading dialog on error
@@ -76,12 +82,16 @@ class _LoginPageState extends State<LoginPage> {
       } catch (e) {
         Navigator.pop(context); // Dismiss loading dialog on error
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("An unexpected error occurred."), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text("An unexpected error occurred."),
+              backgroundColor: Colors.red),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid email and password."), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text("Please enter a valid email and password."),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -125,10 +135,13 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: const Color(0xFFF790AD), width: 2), // Default border thickness
+        border: Border.all(
+            color: const Color(0xFFF790AD),
+            width: 2), // Default border thickness
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0), // Adjusted padding
+        padding: const EdgeInsets.symmetric(
+            vertical: 8.0, horizontal: 20.0), // Adjusted padding
         child: TextFormField(
           controller: controller,
           obscureText: isPassword ? _obscurePassword : obscureText,
@@ -140,7 +153,9 @@ class _LoginPageState extends State<LoginPage> {
             suffixIcon: isPassword
                 ? IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -149,7 +164,6 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   )
                 : null,
-            
           ),
           validator: validator,
         ),
@@ -230,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ResetPasswordPage(),
+                          builder: (context) => const ResetPasswordPage(),
                         ),
                       );
                     },

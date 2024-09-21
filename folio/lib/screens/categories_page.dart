@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/book_list_page.dart';
 import 'package:folio/services/google_books_service.dart';
-import 'package:folio/screens/homePage.dart'; // Import the HomePage
+// Import the HomePage
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -102,7 +102,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2, // Keeping 2 books per row
-                childAspectRatio: 0.90, // Adjusting to make the book cards larger
+                childAspectRatio:
+                    0.90, // Adjusting to make the book cards larger
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
