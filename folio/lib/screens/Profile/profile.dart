@@ -8,7 +8,8 @@ import 'package:folio/screens/edit_profile.dart'; // Import for EditProfilePage
 import 'package:folio/screens/settings.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final VoidCallback onEdit;
+  const ProfilePage({super.key, required this.onEdit});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -90,6 +91,8 @@ void _navigateToEditProfile() async {
       _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
       _booksGoal = result['books'] ?? _booksGoal;
     });
+          widget.onEdit();
+
   }
 }
 
@@ -108,11 +111,11 @@ void _navigateToEditProfile() async {
     automaticallyImplyLeading: false,
     actions: [
       IconButton(
-        icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23)),
+        icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
         onPressed: _navigateToEditProfile,
       ),
       IconButton(
-        icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23)),
+        icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
         onPressed: () {
           Navigator.push(
             context,
@@ -144,8 +147,8 @@ void _navigateToEditProfile() async {
             ),
             Text(
               '@$_username', // Use the username variable here
-              style: TextStyle(
-                color: const Color.fromARGB(255, 88, 71, 71),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),

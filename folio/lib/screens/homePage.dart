@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
 import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
-import 'package:folio/screens/edit_profile.dart'; // Import for EditProfilePage
+import 'package:folio/screens/edit_profile.dart';
+import 'package:folio/screens/settings.dart'; // Import for EditProfilePage
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required String userId});
@@ -38,7 +39,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _name = userData['name'] ?? '';
         _profilePhotoUrl = userData['profilePhoto'] ?? '';
-        _booksGoal = userData['booksGoal'] ?? 0;
+        _booksGoal = userData['books'] ?? 0;
         _booksRead = userData['booksRead'] ?? 0; // Ensure this matches Firestore fields
         _initializePages();
       });
@@ -58,8 +59,7 @@ class _HomePageState extends State<HomePage> {
       ),
       const CategoriesPage(),
       const LibraryPage(),
-      ProfilePage(), // Pass the update method to ProfilePage
-    ];
+ProfilePage(onEdit: _fetchUserData),    ];
   }
 
   // Update the index when a tab is selected
@@ -147,63 +147,134 @@ class HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(50.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 30),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Icon(Icons.notifications_active_outlined, size: 36, color: Color.fromARGB(255, 53, 31, 31)),
-                Icon(Icons.person_2_outlined, size: 36, color: Color.fromARGB(255, 53, 31, 31)),
-              ],
+    return Scaffold(
+            backgroundColor: const Color(0xFFF8F5F1),
+       appBar: PreferredSize(
+  preferredSize: const Size(412, 56),
+  child: AppBar(
+    backgroundColor: const Color(0xFFF8F5F1),
+    elevation: 0,
+    // Remove the leading back button
+    automaticallyImplyLeading: false,
+    actions: [
+      IconButton(
+        icon: const Icon(Icons.notifications_active, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsPage()),
+          );
+        },      ),
+      IconButton(
+        icon: const Icon(Icons.person_2, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsPage()),
+          );
+        },
+      ),
+    ],
+  ),
+),
+body: Padding(
+  padding: const EdgeInsets.all(30.0),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Good Day,\n$name!',
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 53, 31, 31),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Good Day,\n$name!',
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 53, 31, 31),
-                  ),
-                ),
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: profilePhotoUrl.isNotEmpty
-                      ? NetworkImage(profilePhotoUrl)
-                      : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildYearlyGoal(),
-            const SizedBox(height: 30),
-            const Text(
-              'Currently Reading',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 53, 31, 31),
-              ),
-            ),
-            const SizedBox(height: 15),
-            // Add your Currently Reading section here
-          ],
+          ),
+          CircleAvatar(
+            radius: 40,
+            backgroundImage: profilePhotoUrl.isNotEmpty
+                ? NetworkImage(profilePhotoUrl)
+                : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
+          ),
+        ],
+      ),
+      const SizedBox(height: 20),
+      _buildYearlyGoal(),
+      const SizedBox(height: 30),
+      const Text(
+        'Currently Reading',
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Color.fromARGB(255, 53, 31, 31),
         ),
       ),
+      const SizedBox(height: 15),
+      // Currently Reading section
+      _buildCurrentlyReadingSection(),
+      const SizedBox(height: 120),
+      const Text(
+        'Clubs',
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Color.fromARGB(255, 53, 31, 31),
+        ),
+      ),
+      const SizedBox(height: 15),
+      // Clubs section
+      _buildClubsSection(),
+    ],
+  ),
+),
     );
   }
+
+  Widget _buildCurrentlyReadingSection() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF8F5F1),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: const Center(
+      child: Text(
+        'No added books yet',
+        style: TextStyle(
+          fontSize: 16,
+          color: Color.fromARGB(255, 53, 31, 31),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildClubsSection() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF8F5F1),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: const Center(
+      child: Text(
+        'No joined clubs yet',
+        style: TextStyle(
+          fontSize: 16,
+          color: Color.fromARGB(255, 53, 31, 31),
+        ),
+      ),
+    ),
+  );
+}
 
   // Yearly Goal section
   Widget _buildYearlyGoal() {
     return Container(
       padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 30),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -225,7 +296,7 @@ class HomeContent extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.brown,
+                  color: Color.fromARGB(255, 53, 31, 31),
                 ),
               ),
               Text(
@@ -233,7 +304,7 @@ class HomeContent extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.brown,
+                  color: Color.fromARGB(255, 53, 31, 31),
                 ),
               ),
             ],
