@@ -1,14 +1,14 @@
 import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/homePage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
-// Convert MyApp to ProfileSetup
 class ProfileSetup extends StatefulWidget {
   final String userId;
   const ProfileSetup({super.key, required this.userId});
@@ -25,11 +25,19 @@ class _ProfileSetupState extends State<ProfileSetup> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
 
-  // Add your Firebase Auth instance
+  // Firebase Auth instance
   final _auth = FirebaseAuth.instance;
-
   // Firestore instance
   final _firestore = FirebaseFirestore.instance;
+
+  // Dispose controllers to prevent memory leaks
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    _booksController.dispose();
+    super.dispose();
+  }
 
   // Function to pick image from gallery or camera
   Future<void> _showImagePickerOptions(BuildContext context) async {
@@ -45,7 +53,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
               title: const Text('Take a Photo'),
               onTap: () {
                 _pickImage(ImageSource.camera);
-                Navigator.of(context).pop(); // Close the bottom sheet
+                Navigator.of(context).pop();
               },
             ),
             ListTile(
@@ -53,7 +61,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
               title: const Text('Choose from Gallery'),
               onTap: () {
                 _pickImage(ImageSource.gallery);
-                Navigator.of(context).pop(); // Close the bottom sheet
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -111,12 +119,20 @@ void _saveProfile() async {
 
 
 
-  // Function to upload profile photo to Firebase Storage
+  // Upload profile photo to Firebase Storage
   Future<String?> _uploadProfilePhoto(String userId) async {
     if (_imageFile != null) {
-      final ref = FirebaseStorage.instance.ref().child('profile_photos').child('$userId.jpg');
-      await ref.putFile(_imageFile!);
-      return await ref.getDownloadURL();
+      try {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('profile_photos')
+            .child('$userId.jpg');
+        await ref.putFile(_imageFile!);
+        return await ref.getDownloadURL();
+      } catch (e) {
+        print('Error uploading profile photo: $e');
+        return null;
+      }
     }
     return null;
   }
@@ -125,10 +141,7 @@ void _saveProfile() async {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3),
-      body: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height,
-        ),
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -141,10 +154,7 @@ void _saveProfile() async {
                 });
               },
             ),
-
             const SizedBox(height: 20),
-
-            // Form fields
             Container(
               width: 410,
               padding: const EdgeInsets.all(10),
@@ -157,17 +167,15 @@ void _saveProfile() async {
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
-
                     // Name
                     TextFormField(
                       controller: _nameController,
                       keyboardType: TextInputType.name,
-                      maxLength: 50, // Set maximum length of name field
+                      maxLength: 50,
                       decoration: InputDecoration(
                         hintText: "Name",
                         hintStyle: const TextStyle(
                           color: Color(0xFF9B9B9B),
-                          fontWeight: FontWeight.w400,
                           fontSize: 20,
                         ),
                         border: OutlineInputBorder(
@@ -177,10 +185,6 @@ void _saveProfile() async {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(40),
                           borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                          borderRadius: BorderRadius.circular(40),
                         ),
                       ),
                       validator: (value) {
@@ -203,7 +207,6 @@ void _saveProfile() async {
                         hintText: "Bio",
                         hintStyle: const TextStyle(
                           color: Color(0xFF9B9B9B),
-                          fontWeight: FontWeight.w400,
                           fontSize: 20,
                         ),
                         border: OutlineInputBorder(
@@ -253,7 +256,6 @@ TextFormField(
 
 
                     const SizedBox(height: 20),
-
                     // Save button
 SizedBox(
   width: 410, // Match the width of the TextField
@@ -375,6 +377,7 @@ Future<void> _showImagePickerOptions(BuildContext context) async {
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
+        widget.onImagePicked(_imageFile!);
       });
       widget.onImagePicked(_imageFile!); // Notify parent widget
     }
@@ -403,22 +406,14 @@ CircleAvatar(
         Positioned(
           bottom: 0,
           right: 0,
-          child: GestureDetector(
-            onTap: () {
-              _showImagePickerOptions(context); // Show the option to pick image
-            },
-            child: Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: const Color(0xFFF790AD),
-              ),
-              child: const Icon(Icons.edit, color: Colors.white),
-            ),
+          child: IconButton(
+            icon: const Icon(Icons.camera_alt),
+            onPressed: () => _showImagePickerOptions(context),
           ),
         ),
       ],
     );
   }
 }
+
+

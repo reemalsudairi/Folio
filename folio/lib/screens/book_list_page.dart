@@ -8,10 +8,10 @@ class BookListPage extends StatefulWidget {
   final bool isCategory;
 
   const BookListPage({
-    Key? key,
+    super.key,
     required this.searchTerm,
     required this.isCategory,
-  }) : super(key: key);
+  });
 
   @override
   _BookListPageState createState() => _BookListPageState();
@@ -36,7 +36,8 @@ class _BookListPageState extends State<BookListPage> {
         isCategory: widget.isCategory,
       );
       if (books.isEmpty) {
-        setState(() => _errorMessage = "No books found for '${widget.searchTerm}'.");
+        setState(
+            () => _errorMessage = "No books found for '${widget.searchTerm}'.");
       } else {
         setState(() => _books = books);
       }
@@ -56,7 +57,9 @@ class _BookListPageState extends State<BookListPage> {
       backgroundColor: const Color(0xFFF8F8F3),
       appBar: AppBar(
         title: Text(
-          widget.isCategory ? widget.searchTerm : "Results for '${widget.searchTerm}'",
+          widget.isCategory
+              ? widget.searchTerm
+              : "Results for '${widget.searchTerm}'",
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 26,
@@ -72,7 +75,8 @@ class _BookListPageState extends State<BookListPage> {
               : Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2, // Display 2 books per row
                       childAspectRatio: 0.66,
                       crossAxisSpacing: 40,
@@ -82,7 +86,9 @@ class _BookListPageState extends State<BookListPage> {
                     itemBuilder: (context, index) {
                       final book = _books[index];
                       final title = book['volumeInfo']['title'] ?? 'No title';
-                      final authors = book['volumeInfo']['authors']?.join(', ') ?? 'Unknown author';
+                      final authors =
+                          book['volumeInfo']['authors']?.join(', ') ??
+                              'Unknown author';
                       final thumbnail = book['volumeInfo']['imageLinks'] != null
                           ? book['volumeInfo']['imageLinks']['thumbnail']
                           : 'https://via.placeholder.com/150';
@@ -94,7 +100,8 @@ class _BookListPageState extends State<BookListPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => BookDetailsPage(bookId: bookId),
+                              builder: (context) =>
+                                  BookDetailsPage(bookId: bookId),
                             ),
                           );
                         },

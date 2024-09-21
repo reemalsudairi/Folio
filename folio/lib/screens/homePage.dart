@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
+import 'package:folio/screens/categories_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,7 +15,7 @@ class _HomePageState extends State<HomePage> {
   // List of pages for each tab
   static final List<Widget> _pages = <Widget>[
     HomeContent(),      // Home page content
-    SearchPage(),       // Placeholder for SearchPage
+    CategoriesPage(),       // Placeholder for SearchPage
     LibraryPage(),      // Placeholder for LibraryPage
     ProfilePage(),      // ProfilePage
   ];
@@ -252,3 +253,4 @@ class BookCard extends StatelessWidget {
     );
   }
 }
+

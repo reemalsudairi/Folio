@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/clubs_page.dart';
 import 'package:folio/screens/Profile/library_page.dart';
 import 'package:folio/screens/Profile/reviews_page.dart';
+import 'package:folio/screens/edit_profile.dart'; // Import for EditProfilePage
 import 'package:folio/screens/settings.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -47,7 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _bio = userData['bio'] ?? '';
             _profilePhotoUrl = userData['profilePhoto'] ?? '';
             _booksGoal = userData['books'] ?? 0;
-            _booksRead = 70; // Example value; replace with actual data if available
+            _booksRead = 0; // Example value; replace with actual data if available
             _username = userData['username'] ?? ''; // Fetch username
           });
         }
@@ -67,34 +68,61 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+void _navigateToEditProfile() async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditProfile(
+        userId: FirebaseAuth.instance.currentUser!.uid,
+        name: _name,
+        bio: _bio,
+        profilePhotoUrl: _profilePhotoUrl,
+        booksGoal: _booksGoal,
+      ),
+    ),
+  );
+
+  // Check if result is not null and update the profile data
+  if (result != null) {
+    setState(() {
+      _name = result['name'] ?? _name;
+      _bio = result['bio'] ?? _bio;
+      _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
+      _booksGoal = result['books'] ?? _booksGoal;
+    });
+  }
+}
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F1),
       appBar: PreferredSize(
-        preferredSize: const Size(412, 56),
-        child: AppBar(
-          backgroundColor: const Color(0xFFF8F5F1),
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23)),
-              onPressed: () {
-                // Handle edit profile action
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23)),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-            ),
-          ],
-        ),
+  preferredSize: const Size(412, 56),
+  child: AppBar(
+    backgroundColor: const Color(0xFFF8F5F1),
+    elevation: 0,
+    // Remove the leading back button
+    automaticallyImplyLeading: false,
+    actions: [
+      IconButton(
+        icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23)),
+        onPressed: _navigateToEditProfile,
       ),
+      IconButton(
+        icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23)),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsPage()),
+          );
+        },
+      ),
+    ],
+  ),
+),
       body: Container(
         color: const Color(0xFFF8F5F1),
         child: Column(
@@ -117,7 +145,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Text(
               '@$_username', // Use the username variable here
               style: TextStyle(
-                color: Color.fromARGB(255, 88, 71, 71),
+                color: const Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -127,7 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Text(
                 _bio,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Color.fromARGB(255, 31, 24, 24),
                 ),
               ),
@@ -193,10 +221,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     Container(
                       height: 2,
                       color: Colors.grey[300],
-                      margin: EdgeInsets.symmetric(horizontal: 16),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
                     ),
                     AnimatedPositioned(
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 300),
                       left: _selectedIndex * (412 / 3) + 16,
                       top: -1,
                       child: Container(
@@ -270,4 +298,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
+
+
 

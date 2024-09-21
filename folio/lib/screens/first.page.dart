@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Signup.dart';
 import 'package:folio/screens/homePage.dart';
+import 'package:folio/screens/splash.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -80,7 +81,7 @@ class WelcomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  MaterialPageRoute(builder: (context) => const Splash()),
                 );
               },
               style: ElevatedButton.styleFrom(
