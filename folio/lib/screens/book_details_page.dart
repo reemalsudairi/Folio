@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:folio/services/google_books_service.dart';
+import 'package:html/parser.dart'; // For parsing HTML
 
 class BookDetailsPage extends StatefulWidget {
   final String bookId;
@@ -43,16 +44,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   // Helper function to remove HTML tags and star emoji from the description
   String removeHtmlTags(String htmlText) {
-    // Regular expression to remove HTML tags
-    RegExp exp = RegExp(r"<[^>]*>", multiLine: true, caseSensitive: true);
+    final document = parse(htmlText);
+    String parsedText = document.body?.text ?? '';
 
-    // Remove HTML tags
-    String cleanText = htmlText.replaceAll(exp, '');
+    // Keep the existing star removal logic
+    parsedText = parsedText.replaceAll('⭐', ''); // Remove star symbols
 
-    // Remove star emoji ratings
-    cleanText = cleanText.replaceAll('⭐', ''); // Remove star symbols
-
-    return cleanText;
+    return parsedText;
   }
 
   @override
@@ -119,80 +117,88 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                // Your onPressed logic here (if needed)
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF790AD),
-                                foregroundColor: const Color.fromARGB(255, 255,
-                                    255, 255), // Set button background color
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 6,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  // Display the currently selected option
-                                  Text(
-                                    selectedOption, // Use the selectedOption variable as button text
-                                    style: const TextStyle(fontSize: 18),
+                            // Set a fixed width using SizedBox
+                            SizedBox(
+                              width: 250, // Set the fixed width for the button
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  // Your onPressed logic here (if needed)
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF790AD),
+                                  foregroundColor: const Color.fromARGB(255, 255,
+                                      255, 255), // Set button background color
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 6,
                                   ),
-                                  const SizedBox(width: 10),
-                                  PopupMenuButton<String>(
-                                    onSelected: (String value) {
-                                      setState(() {
-                                        selectedOption =
-                                            value; // Update the selected option
-                                      });
-                                    },
-                                    itemBuilder: (BuildContext context) {
-                                      return <PopupMenuEntry<String>>[
-                                        const PopupMenuItem<String>(
-                                          value: 'Save',
-                                          child: ListTile(
-                                            leading: Icon(Icons.bookmark),
-                                            title: Text('Save'),
-                                          ),
-                                        ),
-                                        const PopupMenuItem<String>(
-                                          value: 'Currently reading',
-                                          child: ListTile(
-                                            leading:
-                                                Icon(Icons.menu_book_sharp),
-                                            title: Text('Currently reading'),
-                                          ),
-                                        ),
-                                        const PopupMenuItem<String>(
-                                          value: 'Finished',
-                                          child: ListTile(
-                                            leading: Icon(Icons.check_circle),
-                                            title: Text('Finished'),
-                                          ),
-                                        ),
-                                      ];
-                                    },
-                                    icon: const Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Colors.white,
-                                    ),
-                                    color: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                ],
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center, // Center the content
+                                  children: [
+                                    // Display the currently selected option in the center
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        selectedOption, // Use the selectedOption variable as button text
+                                        style: const TextStyle(fontSize: 18),
+                                      ),
+                                    ),
+                                    // Dropdown icon aligned to the right
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: PopupMenuButton<String>(
+                                        onSelected: (String value) {
+                                          setState(() {
+                                            selectedOption = value; // Update the selected option
+                                          });
+                                        },
+                                        itemBuilder: (BuildContext context) {
+                                          return <PopupMenuEntry<String>>[
+                                            const PopupMenuItem<String>(
+                                              value: 'Save',
+                                              child: ListTile(
+                                                leading: Icon(Icons.bookmark),
+                                                title: Text('Save'),
+                                              ),
+                                            ),
+                                            const PopupMenuItem<String>(
+                                              value: 'Currently reading',
+                                              child: ListTile(
+                                                leading:
+                                                    Icon(Icons.menu_book_sharp),
+                                                title: Text('Currently reading'),
+                                              ),
+                                            ),
+                                            const PopupMenuItem<String>(
+                                              value: 'Finished',
+                                              child: ListTile(
+                                                leading: Icon(Icons.check_circle),
+                                                title: Text('Finished'),
+                                              ),
+                                            ),
+                                          ];
+                                        },
+                                        icon: const Icon(
+                                          Icons.arrow_drop_down,
+                                          color: Colors.white,
+                                        ),
+                                        color: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 20),
-                        // Display selected option (for testing purposes)
-                    
                         // Tabs (About, Reviews, Clubs)
                         DefaultTabController(
                           length: 3,
@@ -219,7 +225,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        // Release year, number of pages, rating
+                                        // Release year, number of pages, custom rating
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
@@ -265,18 +271,20 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                                 const Text('Ratings'),
                                                 Row(
                                                   children: [
-                                                    const Icon(
-                                                      Icons.star,
-                                                      color: Color(0xFFF790AD),
-                                                      size: 18,
+                                                    // Display frontend-only rating with 1 pink star
+                                                    Row(
+                                                      children: const [
+                                                        Icon(
+                                                          Icons.star,
+                                                          color: Color(0xFFF790AD), // Pink color for one filled star
+                                                          size: 18,
+                                                        ),
+                                                      ],
                                                     ),
-                                                    Text(
-                                                      bookDetails?['volumeInfo']
-                                                                  [
-                                                                  'averageRating']
-                                                              ?.toString() ??
-                                                          'N/A',
-                                                      style: const TextStyle(
+                                                    const SizedBox(width: 5),
+                                                    const Text(
+                                                      '0', // Set the rating to 1 star
+                                                      style: TextStyle(
                                                         fontWeight:
                                                             FontWeight.bold,
                                                         fontSize: 16,
@@ -301,10 +309,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                         const SizedBox(
                                             height:
                                                 10), // Adds some space between "Description" and the actual content
-                                        // Description with HTML tags and stars removed
+                                        // Full Description with HTML tags removed
                                         SizedBox(
-                                          height:
-                                              200, // Set the maximum height for the description
+                                          height: 200, // Set a height for the description
                                           child: SingleChildScrollView(
                                             child: Text(
                                               removeHtmlTags(bookDetails?[
