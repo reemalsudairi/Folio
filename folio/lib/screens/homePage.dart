@@ -158,7 +158,8 @@ class HomeContent extends StatelessWidget {
     // Remove the leading back button
     automaticallyImplyLeading: false,
     actions: [
-      IconButton(
+      IgnorePointer(
+      child: IconButton(
         icon: const Icon(Icons.notifications_active, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
         onPressed: () {
           Navigator.push(
@@ -166,7 +167,9 @@ class HomeContent extends StatelessWidget {
             MaterialPageRoute(builder: (context) => const SettingsPage()),
           );
         },      ),
-      IconButton(
+         ),
+         IgnorePointer(
+     child: IconButton(
         icon: const Icon(Icons.person_2, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
         onPressed: () {
           Navigator.push(
@@ -175,6 +178,7 @@ class HomeContent extends StatelessWidget {
           );
         },
       ),
+         )
     ],
   ),
 ),
@@ -332,7 +336,7 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Text(
-        'Library Page Content',
+        'Clubs Page',
         style: TextStyle(fontSize: 24),
       ),
     );

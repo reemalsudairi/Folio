@@ -91,7 +91,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
         _booksGoal = result['books'] ?? _booksGoal;
       });
-      widget.onEdit;
+      widget.onEdit();
     }
   }
 
@@ -107,11 +107,11 @@ class _ProfilePageState extends State<ProfilePage> {
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
-              icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
               onPressed: _navigateToEditProfile,
             ),
             IconButton(
-              icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23), size: 30,),
               onPressed: () {
                 Navigator.push(
                   context,
