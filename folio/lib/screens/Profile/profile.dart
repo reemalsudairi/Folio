@@ -91,7 +91,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
         _booksGoal = result['books'] ?? _booksGoal;
       });
-      widget.onEdit
+      widget.onEdit;
     }
   }
 

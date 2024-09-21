@@ -78,7 +78,8 @@ ProfilePage(onEdit: _fetchUserData),    ];
           userId: FirebaseAuth.instance.currentUser!.uid,
           name: _name,
           profilePhotoUrl: _profilePhotoUrl,
-          booksGoal: _booksGoal, bio: '',
+          booksGoal: _booksGoal, bio: '', 
+          email: '',
         ),
       ),
     );
