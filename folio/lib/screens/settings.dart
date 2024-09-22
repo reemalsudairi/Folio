@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -168,10 +167,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         centerTitle: true,
       ),
-      body: SizedBox(
-        child: Center(
-          child: Container(
-            color: const Color(0xFFFDF8F4),
+      body: Stack(
+        children: [
+          Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,38 +231,38 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                const Spacer(),
-               Center(
-  child: Padding(
-    padding: const EdgeInsets.only(top: 150), // Reduced by 50 pixels
-    child: ElevatedButton(
-      onPressed: () {
-        _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFF790AD),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30.0),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-        minimumSize: const Size(410, 48), // Add minimum size
-      ),
-      child: const Text(
-        'Delete Account',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontFamily: 'Nunito',
-        ),
-      ),
-    ),
-  ),
-),
-
               ],
             ),
           ),
-        ),
+          Positioned(
+            bottom: 50, // Set the "Delete Account" button 50px from the bottom
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF790AD),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  minimumSize: const Size(410, 48), // Add minimum size
+                ),
+                child: const Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
