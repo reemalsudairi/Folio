@@ -234,32 +234,33 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 const Spacer(),
-                Center(
-                  child: Padding(
-                    padding : const EdgeInsets.only(top: 200),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF790AD),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                        minimumSize: const Size(410, 48), // Add minimum size
-                      ),
-                      child: const Text(
-                        'Delete Account',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: 'Nunito',
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+               Center(
+  child: Padding(
+    padding: const EdgeInsets.only(top: 150), // Reduced by 50 pixels
+    child: ElevatedButton(
+      onPressed: () {
+        _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFF790AD),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+        minimumSize: const Size(410, 48), // Add minimum size
+      ),
+      child: const Text(
+        'Delete Account',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontFamily: 'Nunito',
+        ),
+      ),
+    ),
+  ),
+),
+
               ],
             ),
           ),
