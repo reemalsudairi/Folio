@@ -151,7 +151,8 @@ class HomePageContent extends StatelessWidget {
           elevation: 0,
           automaticallyImplyLeading: false,
           actions: [
-            IconButton(
+            IgnorePointer(
+            child: IconButton(
               icon: const Icon(
                 Icons.notifications_active,
                 color: Color.fromARGB(255, 35, 23, 23),
@@ -163,8 +164,9 @@ class HomePageContent extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => const SettingsPage()),
                 );
               },
-            ),
-            IconButton(
+            ), ),
+            IgnorePointer(
+            child: IconButton(
               icon: const Icon(
                 Icons.person_2,
                 color: Color.fromARGB(255, 35, 23, 23),
@@ -176,7 +178,7 @@ class HomePageContent extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => const SettingsPage()),
                 );
               },
-            ),
+            ),)
           ],
         ),
       ),

@@ -8,7 +8,8 @@ import 'package:folio/screens/edit_profile.dart'; // Import for EditProfilePage
 import 'package:folio/screens/settings.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, required void Function() onEdit});
+  final VoidCallback onEdit;
+  const ProfilePage({super.key, required this.onEdit});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -95,6 +96,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _profilePhotoUrl = result['profilePhoto'] ?? _profilePhotoUrl;
         _booksGoal = result['books'] ?? _booksGoal;
       });
+      widget.onEdit();
     }
   }
 
@@ -133,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage> {
               radius: 50,
               backgroundImage: _profilePhotoUrl.isNotEmpty
                   ? NetworkImage(_profilePhotoUrl)
-                  : const AssetImage('assets/avatar.png') as ImageProvider,
+                  : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
             ),
             const SizedBox(height: 5),
             Text(
@@ -146,8 +148,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             Text(
               '@$_username', // Use the username variable here
-              style: TextStyle(
-                color: const Color.fromARGB(255, 88, 71, 71),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 88, 71, 71),
                 fontWeight: FontWeight.bold,
               ),
             ),
