@@ -325,21 +325,29 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: const Text(
                     'Login',
-                    style: TextStyle(fontSize: 20, color: Colors.white),
+                    style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
                 const SizedBox(height: 20),
-                RichText(
-                  text: TextSpan(
-                    text: "Don't have an account? ",
-                    style: const TextStyle(color: Color(0XFF695555)),
-                    children: [
-                      TextSpan(
-                        text: 'Sign up',
-                        style: const TextStyle(
-                          color: Color(0xFFF790AD),
-                          fontWeight: FontWeight.bold,
-                        ),
+                 RichText(
+                            text: TextSpan(
+                              children: [
+                                const TextSpan(
+                                  text: "Don't have an account? ",
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    color: Color(0XFF695555),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: "Signup",
+                                  style: const TextStyle(
+                                    fontFamily: 'Roboto',
+                                    color: Color(0xFFF790AD),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                    
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
                             Navigator.push(

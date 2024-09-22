@@ -160,7 +160,7 @@ class _SignUpState extends State<SignUp> {
                       Align(
                         alignment: Alignment.topLeft,
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios),
+                          icon: const Icon(Icons.arrow_back),
                           iconSize: 40,
                           onPressed: () {
                             Navigator.push(
@@ -415,7 +415,7 @@ class _SignUpState extends State<SignUp> {
                                     _obscurePassword
                                         ? Icons.visibility
                                         : Icons.visibility_off,
-                                    color: const Color(0xFF695555),
+                                    color: const Color(0xFFF790AD),
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -485,7 +485,7 @@ class _SignUpState extends State<SignUp> {
                                     _obscureConfirmPassword
                                         ? Icons.visibility
                                         : Icons.visibility_off,
-                                    color: const Color(0xFF695555),
+                                    color: const Color(0xFFF790AD),
                                   ),
                                   onPressed: () {
                                     setState(() {
