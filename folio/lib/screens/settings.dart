@@ -135,7 +135,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // Function to launch the email client
   void _launchEmailClient() async {
-    final url = 'mailto:Follio@gmail.com';
+    final url = 'mailto:Follio444@gmail.com';
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -167,9 +167,10 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          Padding(
+      body: SizedBox(
+        child: Center(
+          child: Container(
+            color: const Color(0xFFFDF8F4),
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,63 +208,64 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   onTap: _launchEmailClient,
                 ),
-                const SizedBox(height: 16),
+                const Spacer(),
                 Center(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      _showSignOutConfirmationDialog(); // Show the sign-out confirmation dialog
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFF790AD)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.0),
+                  child: Column(
+                    children: [
+                      OutlinedButton(
+                        onPressed: () {
+                          _showSignOutConfirmationDialog(); // Show the sign-out confirmation dialog
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFF790AD)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                          minimumSize: const Size(410, 48), // Add minimum size
+                        ),
+                        child: const Text(
+                          'Sign Out',
+                          style: TextStyle(
+                            color: Color(0xFFF790AD),
+                            fontSize: 16,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                      minimumSize: const Size(410, 48), // Add minimum size
-                    ),
-                    child: const Text(
-                      'Sign Out',
-                      style: TextStyle(
-                        color: Color(0xFFF790AD),
-                        fontSize: 16,
-                        fontFamily: 'Nunito',
+                      const SizedBox(height: 16), // Space between the buttons
+                      ElevatedButton(
+                        onPressed: () {
+                          _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF790AD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                          minimumSize: const Size(410, 48), // Add minimum size
+                        ),
+                        child: const Text(
+                          'Delete Account',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 50), // Space from the bottom
               ],
             ),
           ),
-          Positioned(
-            bottom: 50, // Set the "Delete Account" button 50px from the bottom
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF790AD),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                  minimumSize: const Size(410, 48), // Add minimum size
-                ),
-                child: const Text(
-                  'Delete Account',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontFamily: 'Nunito',
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
+
+
