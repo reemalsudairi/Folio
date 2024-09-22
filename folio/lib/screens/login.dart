@@ -148,6 +148,9 @@ class _LoginPageState extends State<LoginPage> {
         validator: validator,
         focusNode: focusNode,
         maxLength: maxLength,
+        inputFormatters: [
+          FilteringTextInputFormatter.deny(RegExp(r'\s')), // Prevent spaces
+        ],
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: const TextStyle(
@@ -312,29 +315,31 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: emailController.text.isNotEmpty &&
                           passwordController.text.isNotEmpty
                       ? signUserIn
-                      : null, // Disable button if fields are empty
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF790AD),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 150), // Increased width
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(40),
                     ),
+                    minimumSize: const Size(350, 60),
                   ),
                   child: const Text(
                     'Login',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    style: TextStyle(fontSize: 20, color: Colors.white),
                   ),
                 ),
                 const SizedBox(height: 20),
                 RichText(
                   text: TextSpan(
                     text: "Don't have an account? ",
-                    style: const TextStyle(color: Color(0xFF695555)),
+                    style: const TextStyle(color: Color(0XFF695555)),
                     children: [
                       TextSpan(
                         text: 'Sign up',
-                        style: const TextStyle(color: Color(0xFFF790AD)),
+                        style: const TextStyle(
+                          color: Color(0xFFF790AD),
+                          fontWeight: FontWeight.bold,
+                        ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
                             Navigator.push(
