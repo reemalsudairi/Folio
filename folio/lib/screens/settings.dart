@@ -1,7 +1,9 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/first.page.dart'; // Import the WelcomePage
+import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -132,6 +134,16 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  // Function to launch the email client
+  void _launchEmailClient() async {
+    final url = 'mailto:Follio@gmail.com';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,9 +197,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     activeTrackColor: const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ),
-                const ListTile(
-                  leading: Icon(Icons.chat, color: Color(0xFF4A2E2B)),
-                  title: Text(
+                ListTile(
+                  leading: const Icon(Icons.chat, color: Color(0xFF4A2E2B)),
+                  title: const Text(
                     'Contact Us',
                     style: TextStyle(
                       color: Color(0xFF4A2E2B),
@@ -195,6 +207,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontFamily: 'Nunito',
                     ),
                   ),
+                  onTap: _launchEmailClient,
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -208,6 +221,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         borderRadius: BorderRadius.circular(30.0),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                      minimumSize: const Size(410, 48), // Add minimum size
                     ),
                     child: const Text(
                       'Sign Out',
@@ -222,7 +236,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Spacer(),
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 200),
+                    padding : const EdgeInsets.only(top: 200),
                     child: ElevatedButton(
                       onPressed: () {
                         _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
@@ -233,7 +247,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           borderRadius: BorderRadius.circular(30.0),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                        minimumSize: const Size(280, 48),
+                        minimumSize: const Size(410, 48), // Add minimum size
                       ),
                       child: const Text(
                         'Delete Account',
@@ -254,4 +268,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-
