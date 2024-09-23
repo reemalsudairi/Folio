@@ -5,10 +5,16 @@ class LibraryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Clubs Page',
-        style: TextStyle(fontSize: 24),
+    return SingleChildScrollView(
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          _buildGridItem(Icons.hourglass_empty, 'Currently reading'),
+          _buildGridItem(Icons.bookmark_border, 'Saved'),
+          _buildGridItem(Icons.check_circle_outline, 'Finished'),
+        ],
       ),
     );
   }

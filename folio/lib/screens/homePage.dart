@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
     const Center(
         child: CircularProgressIndicator()), // Placeholder while loading
     const CategoriesPage(),
-    const LibraryPage(),
+    const Clubs(),
     const Center(
         child:
             CircularProgressIndicator()), // Placeholder while loading profile
@@ -74,7 +74,7 @@ class _HomePageState extends State<HomePage> {
           onEdit: _fetchUserData, // Pass the update method
         ),
         const CategoriesPage(),
-        const LibraryPage(),
+        const Clubs(),
         ProfilePage(onEdit: _fetchUserData),
       ];
     });
@@ -325,6 +325,20 @@ class HomePageContent extends StatelessWidget {
             borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class Clubs extends StatelessWidget {
+  const Clubs({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        'Clubs Page',
+        style: TextStyle(fontSize: 24),
       ),
     );
   }
