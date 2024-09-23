@@ -235,26 +235,27 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       const SizedBox(height: 16), // Space between the buttons
                       ElevatedButton(
-                        onPressed: () {
-                          _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF790AD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.0),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                          minimumSize: const Size(410, 48), // Add minimum size
-                        ),
-                        child: const Text(
-                          'Delete Account',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: 'Nunito',
-                          ),
-                        ),
-                      ),
+  onPressed: () {
+    _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.red, // Set background color to red
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(30.0),
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+    minimumSize: const Size(410, 48), // Add minimum size
+  ),
+  child: const Text(
+    'Delete Account',
+    style: TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontFamily: 'Nunito',
+    ),
+  ),
+),
+
                     ],
                   ),
                 ),

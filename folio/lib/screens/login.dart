@@ -1,10 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:folio/screens/homePage.dart';
-
-import 'ResetPasswordPage.dart'; // Import the reset password page
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'ResetPasswordPage.dart';
+import 'homePage.dart';
 import 'Signup.dart';
+import 'first.page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,53 +36,62 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isEmailValid = true;
-  bool _obscurePassword = true; // To toggle password visibility
+  final FocusNode emailFocusNode = FocusNode();
+  bool _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
-    emailController.addListener(() {
-      setState(() {
-        _isEmailValid = _validateEmail(emailController.text);
-      });
+    emailFocusNode.addListener(() {
+      if (!emailFocusNode.hasFocus) {
+        _formKey.currentState?.validate();
+      }
     });
+
+    emailController.addListener(_updateButtonState);
+    passwordController.addListener(_updateButtonState);
+  }
+
+  void _updateButtonState() {
+    setState(() {});
   }
 
   Future<void> signUserIn() async {
     if (_formKey.currentState?.validate() ?? false) {
-      FocusScope.of(context).unfocus(); // Dismiss keyboard
+      FocusScope.of(context).unfocus();
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: emailController.text.trim(),
-          password: passwordController.text,
+          password: passwordController.text.trim(),
         );
-        Navigator.pop(context); // Dismiss loading dialog
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const HomePage(
-                    userId: '',
-                  )), // Ensure HomePage is the correct widget
-        );
+
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text("Login Successful!"),
               backgroundColor: Colors.green),
         );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  HomePage(userId: userCredential.user?.uid ?? '')),
+        );
       } on FirebaseAuthException catch (e) {
-        Navigator.pop(context); // Dismiss loading dialog on error
+        Navigator.pop(context);
         String errorMessage = _handleAuthError(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       } catch (e) {
-        Navigator.pop(context); // Dismiss loading dialog on error
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text("An unexpected error occurred."),
@@ -88,17 +99,13 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } else {
+      // Show snackbar if form is invalid
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Please enter a valid email and password."),
+            content: Text("Please fill in all fields correctly."),
             backgroundColor: Colors.red),
       );
     }
-  }
-
-  bool _validateEmail(String email) {
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    return emailRegex.hasMatch(email);
   }
 
   String _handleAuthError(FirebaseAuthException error) {
@@ -127,45 +134,46 @@ class _LoginPageState extends State<LoginPage> {
     required String hintText,
     bool obscureText = false,
     required String? Function(String?) validator,
-    bool isPassword = false,
+    Widget? suffixIcon,
+    FocusNode? focusNode,
+    int? maxLength,
   }) {
     return Container(
-      width: 410, // Match the width of the fields on the SignUp page
-      height: 50, // Match the height of the fields on the SignUp page
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(
-            color: const Color(0xFFF790AD),
-            width: 2), // Default border thickness
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-            vertical: 8.0, horizontal: 20.0), // Adjusted padding
-        child: TextFormField(
-          controller: controller,
-          obscureText: isPassword ? _obscurePassword : obscureText,
-          cursorColor: const Color(0xFFF790AD), // Pink cursor color
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFF9B9B9B)),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  )
-                : null,
+      width: 350,
+      height: 70,
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText ? _obscurePassword : false,
+        cursorColor: const Color(0xFFF790AD),
+        validator: validator,
+        focusNode: focusNode,
+        maxLength: maxLength,
+        inputFormatters: [
+          FilteringTextInputFormatter.deny(RegExp(r'\s')), // Prevent spaces
+        ],
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(
+              color: Color(0xFF695555),
+              fontWeight: FontWeight.w400,
+              fontSize: 20),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(40),
+            borderSide: const BorderSide(color: Color(0xFFF790AD)),
           ),
-          validator: validator,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(40),
+            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(40),
+            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+          ),
+          counterText: '${controller.text.length}/$maxLength',
+          counterStyle: const TextStyle(color: Color(0xFF695555), fontSize: 12),
+          suffixIcon: suffixIcon,
         ),
       ),
     );
@@ -181,16 +189,32 @@ class _LoginPageState extends State<LoginPage> {
           child: Form(
             key: _formKey,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Stack(
-                  alignment: Alignment.center,
                   children: [
-                    Image.asset(
-                      "assets/images/Logo.png",
-                      width: 500,
-                      height: 300,
-                      fit: BoxFit.cover,
+                    Align(
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        "assets/images/Logo.png",
+                        width: 500,
+                        height: 300,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        iconSize: 40,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => WelcomePage()),
+                          );
+                        },
+                      ),
                     ),
                     const Positioned(
                       bottom: 10,
@@ -214,91 +238,125 @@ class _LoginPageState extends State<LoginPage> {
                 _buildTextField(
                   controller: emailController,
                   hintText: 'Email',
+                  focusNode: emailFocusNode,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an email.';
-                    } else if (!_isEmailValid) {
-                      return 'Invalid email address.';
+                    if (value == null || value.trim().isEmpty) {
+                      return "Please enter an email.";
+                    }
+                    if (value.trim().contains(' ')) {
+                      return "Email cannot contain spaces.";
+                    }
+                    if (value.trim().length > 254) {
+                      return "Email can't exceed 254 characters.";
+                    }
+                    if (!RegExp(
+                            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                        .hasMatch(value.trim())) {
+                      return "Enter a valid email address.";
                     }
                     return null;
                   },
+                  maxLength: 254,
                 ),
                 const SizedBox(height: 20),
-                _buildTextField(
-                  controller: passwordController,
-                  hintText: 'Password',
-                  obscureText: true,
-                  isPassword: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ResetPasswordPage(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTextField(
+                      controller: passwordController,
+                      hintText: 'Password',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a password.';
+                        }
+                        if (value.trim().length > 16) {
+                          return 'Password cannot exceed 16 characters.';
+                        }
+                        return null;
+                      },
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: const Color(0xFFF790AD),
                         ),
-                      );
-                    },
-                    child: const Text(
-                      'Forgot password?',
-                      style: TextStyle(
-                        color: Color(0xFF695555),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      maxLength: 16,
+                    ),
+                    const SizedBox(height: 5),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ResetPasswordPage()),
+                        );
+                      },
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: Color(0XFF695555),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: 410, // Match the width of the fields
-                  height: 50, // Match the height of the fields
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF790AD),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: emailController.text.isNotEmpty &&
+                          passwordController.text.isNotEmpty
+                      ? signUserIn
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF790AD),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
                     ),
-                    onPressed: signUserIn,
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                    minimumSize: const Size(350, 60),
+                  ),
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
                 const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignUp(),
+                 RichText(
+                            text: TextSpan(
+                              children: [
+                                const TextSpan(
+                                  text: "Don't have an account? ",
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    color: Color(0XFF695555),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: "Signup",
+                                  style: const TextStyle(
+                                    fontFamily: 'Roboto',
+                                    color: Color(0xFFF790AD),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                    
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => SignUp()),
+                            );
+                          },
                       ),
-                    );
-                  },
-                  child: const Text.rich(
-                    TextSpan(
-                      text: "Don't have an account? ",
-                      style: TextStyle(color: Color(0xFF695555)),
-                      children: [
-                        TextSpan(
-                          text: 'Sign up',
-                          style: TextStyle(
-                            color: Color(0xFFF790AD),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ],
