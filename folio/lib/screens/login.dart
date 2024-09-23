@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -147,58 +146,67 @@ class _LoginPageState extends State<LoginPage> {
         return 'Invalid email/password. Please try again.';
     }
   }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    bool obscureText = false,
-    required String? Function(String?) validator,
-    Widget? suffixIcon,
-    FocusNode? focusNode,
-    int? maxLength,
-    bool isValid = true,
-  }) {
-    return Container(
-      width: 350,
-      height: 70,
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText ? _obscurePassword : false,
-        cursorColor: const Color(0xFFF790AD),
-        validator: validator,
-        focusNode: focusNode,
-        maxLength: maxLength,
-        inputFormatters: [
-          FilteringTextInputFormatter.deny(RegExp(r'\s')), // Prevent spaces
-        ],
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(
-              color: Color(0xFF695555),
-              fontWeight: FontWeight.w400,
-              fontSize: 20),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String hintText,
+  bool obscureText = false,
+  required String? Function(String?) validator,
+  Widget? suffixIcon,
+  FocusNode? focusNode,
+  int? maxLength,
+  bool isValid = true,
+}) {
+  return Container(
+    width: 350,
+    // Remove fixed height to avoid overflow issues
+    child: Column(
+      children: [
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText ? _obscurePassword : false,
+          cursorColor: const Color(0xFFF790AD),
+          validator: validator,
+          focusNode: focusNode,
+          maxLength: maxLength,
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'\s')), // Prevent spaces
+          ],
+          onChanged: (value) {
+            setState(() {}); // Call setState to update the UI
+          },
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(
+                color: Color(0xFF695555),
+                fontWeight: FontWeight.w400,
+                fontSize: 20),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            counterText: '${controller.text.length}/$maxLength', // Show character count
+            counterStyle: const TextStyle(color: Color(0xFF695555), fontSize: 12),
+            suffixIcon: suffixIcon,
+            errorText: isValid ? null : "Please enter a password.",
+            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20), // Adjust padding
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFFF790AD)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFFF790AD)),
-          ),
-          counterText: '${controller.text.length}/$maxLength',
-          counterStyle: const TextStyle(color: Color(0xFF695555), fontSize: 12),
-          suffixIcon: suffixIcon,
-          errorText: isValid ? null : "please enter a password.",
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
+
+    
 
   @override
   Widget build(BuildContext context) {
@@ -297,7 +305,7 @@ class _LoginPageState extends State<LoginPage> {
                               ? Icons.visibility_off
                               : Icons.visibility,
                         ),
-                        color: const Color(0xFF695555),
+                        color: const Color(0xFFF790AD),
                         onPressed: () {
                           setState(() {
                             _obscurePassword = !_obscurePassword;
@@ -344,7 +352,7 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
-                          fontSize: 24,
+                          fontSize: 20,
                         ),
                       ),
                     ),
@@ -359,7 +367,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontWeight: FontWeight.w400,
-                        fontSize: 18,
+                        fontSize: 17,
                         color: Color(0xFF695555),
                       ),
                     ),
@@ -376,7 +384,7 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontWeight: FontWeight.w500,
-                          fontSize: 18,
+                          fontSize: 17,
                           color: Color(0xFFF790AD),
                         ),
                       ),
@@ -391,4 +399,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
