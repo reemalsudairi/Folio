@@ -5,11 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:folio/screens/LoginPage.dart';
+import 'package:folio/screens/login.dart';
 import 'package:folio/screens/ProfileSetup.dart';
 import 'package:folio/screens/first.page.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/homePage.dart';
+import 'package:folio/screens/login.dart';
 import 'package:image_picker/image_picker.dart';
 
 class SignUp extends StatefulWidget {
