@@ -1,6 +1,6 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'ResetPasswordPage.dart';
@@ -37,27 +37,46 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final FocusNode emailFocusNode = FocusNode();
+  final FocusNode passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
+  bool _isPasswordFieldValid = true;
 
   @override
   void initState() {
     super.initState();
+
+    // Adding listeners to focus nodes to validate when user leaves the fields
     emailFocusNode.addListener(() {
       if (!emailFocusNode.hasFocus) {
         _formKey.currentState?.validate();
       }
     });
 
-    emailController.addListener(_updateButtonState);
-    passwordController.addListener(_updateButtonState);
+    passwordFocusNode.addListener(() {
+      if (!passwordFocusNode.hasFocus) {
+        _validatePasswordField();  // Validate password field only when focus is lost
+      }
+    });
   }
 
-  void _updateButtonState() {
-    setState(() {});
+  @override
+  void dispose() {
+    emailFocusNode.dispose();
+    passwordFocusNode.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  void _validatePasswordField() {
+    setState(() {
+      _isPasswordFieldValid = passwordController.text.isNotEmpty &&
+          passwordController.text.trim().length <= 16;
+    });
   }
 
   Future<void> signUserIn() async {
-    if (_formKey.currentState?.validate() ?? false) {
+    if (_formKey.currentState?.validate() ?? false && _isPasswordFieldValid) {
       FocusScope.of(context).unfocus();
       showDialog(
         context: context,
@@ -137,6 +156,7 @@ class _LoginPageState extends State<LoginPage> {
     Widget? suffixIcon,
     FocusNode? focusNode,
     int? maxLength,
+    bool isValid = true,
   }) {
     return Container(
       width: 350,
@@ -174,6 +194,7 @@ class _LoginPageState extends State<LoginPage> {
           counterText: '${controller.text.length}/$maxLength',
           counterStyle: const TextStyle(color: Color(0xFF695555), fontSize: 12),
           suffixIcon: suffixIcon,
+          errorText: isValid ? null : "please enter a password.",
         ),
       ),
     );
@@ -267,21 +288,16 @@ class _LoginPageState extends State<LoginPage> {
                       hintText: 'Password',
                       obscureText: true,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a password.';
-                        }
-                        if (value.trim().length > 16) {
-                          return 'Password cannot exceed 16 characters.';
-                        }
-                        return null;
+                        return null; // Disable default validator
                       },
+                      focusNode: passwordFocusNode,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
                               ? Icons.visibility_off
                               : Icons.visibility,
-                          color: const Color(0xFFF790AD),
                         ),
+                        color: const Color(0xFF695555),
                         onPressed: () {
                           setState(() {
                             _obscurePassword = !_obscurePassword;
@@ -289,75 +305,83 @@ class _LoginPageState extends State<LoginPage> {
                         },
                       ),
                       maxLength: 16,
+                      isValid: _isPasswordFieldValid,
                     ),
-                    const SizedBox(height: 5),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => ResetPasswordPage()),
+                              builder: (context) => const ResetPasswordPage()),
                         );
                       },
                       child: const Text(
                         'Forgot Password?',
                         style: TextStyle(
-                          color: Color(0XFF695555),
-                          fontSize: 12,
+                          color: Color(0xFF695555),
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: emailController.text.isNotEmpty &&
-                          passwordController.text.isNotEmpty
-                      ? signUserIn
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF790AD),
-                    shape: RoundedRectangleBorder(
+                const SizedBox(height: 30),
+                GestureDetector(
+                  onTap: signUserIn,
+                  child: Container(
+                    width: 350,
+                    height: 60,
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(40),
+                      color: emailController.text.isNotEmpty &&
+                              passwordController.text.isNotEmpty
+                          ? const Color(0xFFF790AD)
+                          : const Color(0xFFFCC5D8),
                     ),
-                    minimumSize: const Size(350, 60),
-                  ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    child: const Center(
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 24,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                 RichText(
-                            text: TextSpan(
-                              children: [
-                                const TextSpan(
-                                  text: "Don't have an account? ",
-                                  style: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    color: Color(0XFF695555),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: "Signup",
-                                  style: const TextStyle(
-                                    fontFamily: 'Roboto',
-                                    color: Color(0xFFF790AD),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                    
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => SignUp()),
-                            );
-                          },
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Don't have an account?",
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 18,
+                        color: Color(0xFF695555),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUp()),
+                        );
+                      },
+                      child: const Text(
+                        "Sign up",
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          color: Color(0xFFF790AD),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -367,3 +391,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+
