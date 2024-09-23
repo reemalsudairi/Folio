@@ -144,10 +144,10 @@ Future<void> _pickImage(ImageSource source) async {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // email icon
-                  Icon(Icons.email, size: 48.0, color: Color(0xFFF790AD)),
+                  Icon(Icons.email, size: 50.0, color: Color(0xFFF790AD)),
                   SizedBox(height: 16.0),
                   Text(
-                    'Email Confirmation',
+                    'check your Email !',
                     style: TextStyle(
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
@@ -156,7 +156,7 @@ Future<void> _pickImage(ImageSource source) async {
                   SizedBox(height: 16.0),
                  Text.rich(
   TextSpan(
-    text: 'We have sent an email to ', // Default text before the email
+    text: 'Almost there! We have sent you a verification email to ', // Default text before the email
     style: TextStyle(color: Colors.black), // Default style for the text
     children: [
       TextSpan(
@@ -168,7 +168,7 @@ Future<void> _pickImage(ImageSource source) async {
       ),
       TextSpan(
         text:
-            ' to confirm the validity of your email address. After receiving the email, follow the link provided to complete your registration.', // Remaining text after the email
+            ' you need to verify your email address to log into Folio ', // Remaining text after the email
         style: TextStyle(color: Colors.black), // Default style for the remaining text
       ),
     ],
@@ -182,13 +182,21 @@ Future<void> _pickImage(ImageSource source) async {
                     onPressed: () async {
                       try {
                       
-                      await _auth.currentUser!.sendEmailVerification();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Verification email resent")),
-                        );
+                      User? user = _auth.currentUser;
+      if (user != null && !user.emailVerified) {
+        // Resend verification email
+        await user.sendEmailVerification();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Verification email resent")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Unable to resend email. Please try again.")),
+        );
+      }
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Error resending email: ${e.toString()}")),
+                          SnackBar(content: Text("please wait 1 minute before Resend verification email ")),
                         );
                       }
                     },
@@ -200,7 +208,7 @@ Future<void> _pickImage(ImageSource source) async {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Text('Resend confirmation mail'),
+                    child: Text('Resend verification email'),
                   ),
                 ],
               ),
@@ -212,7 +220,10 @@ Future<void> _pickImage(ImageSource source) async {
               child: IconButton(
                 icon: Icon(Icons.close),
                 onPressed: () {
-                  Navigator.of(dialogContext).pop(); // Close the dialog
+                  Navigator.of(dialogContext).pop();
+                  setState(() {
+                    isLoading = false; // Reset loading state when the dialog is closed
+                  }); // Close the dialog
                 },
               ),
             ),
@@ -278,18 +289,12 @@ Future<void> _pickImage(ImageSource source) async {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Email verified! Please log in.")),
       );
-      Navigator.pushReplacementNamed(context, '/LoginPage');  // Assuming '/login' is your login route
 
        
          }};
 
         
-         
-
-        // Show a message to inform the user to verify their email
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("A verification email has been sent to ${_emailController.text.trim()}. Please verify your email before logging in.")),
-        );
+  
 
         // Poll to check if the email is verified, and prevent profile setup navigation until verified
         _auth.currentUser!.reload();
@@ -297,9 +302,9 @@ Future<void> _pickImage(ImageSource source) async {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ProfileSetup(userId: userCredential.user!.uid),
-            ),
-          );
+              builder: (context) => LoginPage()),
+            );
+          
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Please verify your email to continue.")),
@@ -808,38 +813,7 @@ TextFormField(
 
               const SizedBox(height: 15),
 
-              // Footer with terms and conditions link
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text.rich(
-                    TextSpan(
-                      text: "By signing up, you agree to our ",
-                      style: const TextStyle(
-                        fontFamily: 'Roboto',
-                        color: Color(0xFF695555),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'terms & conditions',
-                          style: const TextStyle(
-                            decoration: TextDecoration.underline,
-                            fontFamily: 'Roboto',
-                            color: Color(0xFF695555),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          recognizer: TapGestureRecognizer()..onTap = () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-               const SizedBox(height: 20),
+            
                // Already have an account? Login
                       RichText(
                         text: TextSpan(
