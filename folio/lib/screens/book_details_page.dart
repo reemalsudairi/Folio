@@ -16,9 +16,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   Map<String, dynamic>? bookDetails;
   bool _isLoading = true;
   String _errorMessage = '';
-
-  // This will store the selected option from the dropdown
+  
   String selectedOption = 'Save'; // The default selected option
+  int _selectedIndex = 0; // To track selected tab
 
   @override
   void initState() {
@@ -26,7 +26,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     _loadBookDetails();
   }
 
-  // Fetch book details using the book ID
   void _loadBookDetails() async {
     try {
       final details = await _googleBooksService.getBookDetails(widget.bookId);
@@ -42,15 +41,17 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
   }
 
-  // Helper function to remove HTML tags and star emoji from the description
   String removeHtmlTags(String htmlText) {
     final document = parse(htmlText);
     String parsedText = document.body?.text ?? '';
-
-    // Keep the existing star removal logic
     parsedText = parsedText.replaceAll('⭐', ''); // Remove star symbols
-
     return parsedText;
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
@@ -80,15 +81,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       children: [
                         // Book cover image
                         Image.network(
-                          bookDetails?['volumeInfo']['imageLinks']
-                                  ?['thumbnail'] ??
-                              'https://via.placeholder.com/150',
+                          bookDetails?['volumeInfo']['imageLinks']?['thumbnail'] ?? 'https://via.placeholder.com/150',
                           height: 250,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Icons.error),
-                            );
+                            return const Center(child: Icon(Icons.error));
                           },
                         ),
                         const SizedBox(height: 20),
@@ -106,129 +103,164 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         // Author
                         Text(
                           'By ${bookDetails?['volumeInfo']['authors']?.join(', ') ?? 'Unknown Author'}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Color(0xFF9b9b9b),
-                          ),
+                          style: const TextStyle(fontSize: 18, color: Color(0xFF9b9b9b)),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 20),
                         // Save button with dropdown
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    SizedBox(
+      width: 250, // Fixed width for button
+      child: ElevatedButton(
+        onPressed: () {
+          // Your onPressed logic here
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFF790AD), // Pink background
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6), // Padding
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // Rounded corners
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align text and dropdown
+          children: [
+            Text(
+              selectedOption, // Current selected option (Save, Currently reading, Finished)
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.white, // White text
+                fontWeight: FontWeight.bold, // Bold text
+              ),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (String value) {
+                setState(() {
+                  selectedOption = value; // Update selected option
+                });
+              },
+              itemBuilder: (BuildContext context) {
+                return <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'Save',
+                    child: ListTile(
+                      leading: Icon(Icons.bookmark),
+                      title: Text('Save'),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'Currently reading',
+                    child: ListTile(
+                      leading: Icon(Icons.menu_book_sharp),
+                      title: Text('Currently reading'),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'Finished',
+                    child: ListTile(
+                      leading: Icon(Icons.check_circle),
+                      title: Text('Finished'),
+                    ),
+                  ),
+                ];
+              },
+              icon: const Icon(
+                Icons.arrow_drop_down, // Dropdown icon
+                color: Colors.white, // White icon to match the button color
+              ),
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10), // Dropdown menu rounding
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  ],
+),
+
+                        const SizedBox(height: 20),
+                        // Custom TabBar design
+                        Column(
                           children: [
-                            // Set a fixed width using SizedBox
-                            SizedBox(
-                              width: 250, // Set the fixed width for the button
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  // Your onPressed logic here (if needed)
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF790AD),
-                                  foregroundColor: const Color.fromARGB(
-                                      255,
-                                      255,
-                                      255,
-                                      255), // Set button background color
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 6,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                                child: Stack(
-                                  alignment:
-                                      Alignment.center, // Center the content
-                                  children: [
-                                    // Display the currently selected option in the center
-                                    Align(
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        selectedOption, // Use the selectedOption variable as button text
-                                        style: const TextStyle(fontSize: 18),
-                                      ),
-                                    ),
-                                    // Dropdown icon aligned to the right
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: PopupMenuButton<String>(
-                                        onSelected: (String value) {
-                                          setState(() {
-                                            selectedOption =
-                                                value; // Update the selected option
-                                          });
-                                        },
-                                        itemBuilder: (BuildContext context) {
-                                          return <PopupMenuEntry<String>>[
-                                            const PopupMenuItem<String>(
-                                              value: 'Save',
-                                              child: ListTile(
-                                                leading: Icon(Icons.bookmark),
-                                                title: Text('Save'),
-                                              ),
-                                            ),
-                                            const PopupMenuItem<String>(
-                                              value: 'Currently reading',
-                                              child: ListTile(
-                                                leading:
-                                                    Icon(Icons.menu_book_sharp),
-                                                title:
-                                                    Text('Currently reading'),
-                                              ),
-                                            ),
-                                            const PopupMenuItem<String>(
-                                              value: 'Finished',
-                                              child: ListTile(
-                                                leading:
-                                                    Icon(Icons.check_circle),
-                                                title: Text('Finished'),
-                                              ),
-                                            ),
-                                          ];
-                                        },
-                                        icon: const Icon(
-                                          Icons.arrow_drop_down,
-                                          color: Colors.white,
-                                        ),
-                                        color: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                TextButton(
+                                  onPressed: () => _onItemTapped(0),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'About',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600],
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
+                                TextButton(
+                                  onPressed: () => _onItemTapped(1),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Clubs',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => _onItemTapped(2),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Reviews',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Stack(
+                              fit: StackFit.passthrough,
+                              children: [
+                                Container(
+                                  height: 2,
+                                  color: Colors.grey[300],
+                                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                                ),
+                                AnimatedPositioned(
+                                  duration: const Duration(milliseconds: 300),
+                                  left: _selectedIndex * (412 / 3) + 16,
+                                  top: -1,
+                                  child: Container(
+                                    height: 4,
+                                    width: 100,
+                                    color: Colors.brown[800],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 20),
-                        // Tabs (About, Reviews, Clubs)
-                        DefaultTabController(
-                          length: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const TabBar(
-                                labelColor: Color(0xFF351F1F),
-                                unselectedLabelColor: Color(0xFF351F1F),
-                                indicatorColor: Color(0xFF351F1F),
-                                tabs: [
-                                  Tab(text: 'About'),
-                                  Tab(text: 'Reviews'),
-                                  Tab(text: 'Clubs'),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                height: 300,
-                                child: TabBarView(
-                                  children: [
-                                    // About Tab
+                        // Tab content based on selected index
+                        if (_selectedIndex == 0)
                                     Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -336,21 +368,20 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                         ),
                                       ],
                                     ),
-                                    // Reviews Tab
-                                    const Center(
-                                      child: Text('No reviews available.'),
-                                    ),
-                                    // Clubs Tab
-                                    const Center(
-                                      child: Text(
-                                          'No clubs discussing this book currently.'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        if (_selectedIndex == 1)
+                          Center(child: Text('No clubs discussing this book currently.',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown[800],
+            ),)),
+                        if (_selectedIndex == 2)
+                           Center(child: Text('No reviews available.', 
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown[800],
+            ),)),
                       ],
                     ),
                   ),
