@@ -9,7 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // ignore: unused_import
 import 'package:flutter_pw_validator/flutter_pw_validator.dart';
+import 'package:folio/screens/ProfileSetup.dart';
 import 'package:folio/screens/first.page.dart';
+import 'package:folio/screens/homePage.dart';
 import 'package:folio/screens/login.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -26,11 +28,11 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _booksController = TextEditingController();
-  File? _imageFile;
-  final ImagePicker _picker = ImagePicker();
+  // final TextEditingController _nameController = TextEditingController();
+  // final TextEditingController _bioController = TextEditingController();
+  // final TextEditingController _booksController = TextEditingController();
+  // File? _imageFile;
+  // final ImagePicker _picker = ImagePicker();
 
   bool isLoading = false;
   bool _obscurePassword = true; // Password visibility state
@@ -40,13 +42,13 @@ class _SignUpState extends State<SignUp> {
   final FirebaseAuth _auth = FirebaseAuth.instance; // Firebase Auth instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;// Firestore instance
 
-@override
-  void dispose() {
-    _nameController.dispose();
-    _bioController.dispose();
-    _booksController.dispose();
-    super.dispose();
-  }
+// @override
+//   void dispose() {
+//     _nameController.dispose();
+//     _bioController.dispose();
+//     _booksController.dispose();
+//     super.dispose();
+//   }
 
 
   // Check if username or email already exists
@@ -69,116 +71,6 @@ class _SignUpState extends State<SignUp> {
     final List<DocumentSnapshot> documents = result.docs;
     return documents.isNotEmpty; // Returns true if email exists
   }
-
-  // show dialg function
-  void showEmailConfirmationDialog(BuildContext context, String email) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext dialogContext) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        contentPadding: EdgeInsets.all(24.0),
-        content: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 32.0), // To add space for the X icon
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // email icon
-                  Icon(Icons.email, size: 50.0, color: Color(0xFFF790AD)),
-                  SizedBox(height: 16.0),
-                  Text(
-                    'check your Email !',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 16.0),
-                 Text.rich(
-  TextSpan(
-    text: 'Almost there! We have sent you a verification email to ', // Default text before the email
-    style: TextStyle(color: Colors.black), // Default style for the text
-    children: [
-      TextSpan(
-        text: email, // The email that should be in pink
-        style: TextStyle(
-          color: Color(0xFFF790AD), // Pink color for the email
-          fontWeight: FontWeight.bold, // Optional: make the email bold
-        ),
-      ),
-      TextSpan(
-        text:
-            ' you need to verify your email address to log into Folio ', // Remaining text after the email
-        style: TextStyle(color: Colors.black), // Default style for the remaining text
-      ),
-    ],
-  ),
-  textAlign: TextAlign.center, // Align the text to the center
-),
-
-                  SizedBox(height: 24.0),
-                  // Resend button
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                      
-                      User? user = _auth.currentUser;
-      if (user != null && !user.emailVerified) {
-        // Resend verification email
-        await user.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Verification email resent")),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Unable to resend email. Please try again.")),
-        );
-      }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("please wait 1 minute before Resend verification email ")),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFF790AD),
-                      padding: EdgeInsets.symmetric(horizontal: 48.0, vertical: 16.0),
-                      textStyle: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    child: Text('Resend verification email'),
-                  ),
-                ],
-              ),
-            ),
-            // Close (X) icon on the top-right corner
-            Positioned(
-              top: 0,
-              right: 0,
-              child: IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  setState(() {
-                    isLoading = false; // Reset loading state when the dialog is closed
-                  }); // Close the dialog
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
 
 
   // Sign up function
@@ -207,54 +99,24 @@ class _SignUpState extends State<SignUp> {
           password: _passwordController.text.trim(),
         );
 
-        // Send email verification
-        await userCredential.user!.sendEmailVerification();
-        // Show a dialog to inform the user to verify their email
-         showEmailConfirmationDialog(context, _emailController.text.trim());
-       
-        // Periodically check if the email is verified
-        bool isVerified = false;
-         while (!isVerified) {
-           await Future.delayed(Duration(seconds: 5)); // Wait 5 seconds between checks
-          await _auth.currentUser!.reload();
-          isVerified = _auth.currentUser!.emailVerified;
 
-          if (isVerified) {
              // Add user data to Firestore "reader" collection
         await _firestore.collection('reader').doc(userCredential.user!.uid).set({
           'username': _usernameController.text.trim(),
           'email': _emailController.text.trim(),
           'uid': userCredential.user!.uid,
-           'name': _nameController.text.trim(),
-         'bio': _bioController.text.trim(),
-        'books': _booksController.text.trim(),
+        //    'name': _nameController.text.trim(),
+        //  'bio': _bioController.text.trim(),
+        // 'books': _booksController.text.trim(),
           'createdAt': Timestamp.now(),
           });
-         // Direct the user to the login page after successful verification
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Email verified! Please log in.")),
-      );
 
-       
-         }};
-
-        
-  
-
-        // Poll to check if the email is verified, and prevent profile setup navigation until verified
-        _auth.currentUser!.reload();
-        if (_auth.currentUser!.emailVerified) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => LoginPage()),
+              builder: (context) =>  ProfileSetup(userId: userCredential.user!.uid)),
             );
           
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Please verify your email to continue.")),
-          );
-        }
       } on FirebaseAuthException catch (e) {
         // Handle Firebase Auth errors
         String message = 'An error occurred';
@@ -295,9 +157,20 @@ class _SignUpState extends State<SignUp> {
               BoxConstraints(minHeight: MediaQuery.of(context).size.height),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
+            
             children: [
                 Stack(
                 children: [
+                                     Align(
+                        alignment: Alignment.center,
+                        child: Image.asset(
+                          "assets/images/Logo.png",
+                          width: 500,
+                          height: 300,
+                          fit: BoxFit
+                              .cover, // Ensures the image fits within the container
+                        ),
+                      ),
                  // Back arrow button positioned at the top left
                   Align(
                     alignment: Alignment.topLeft,
@@ -319,13 +192,13 @@ class _SignUpState extends State<SignUp> {
                 ],
               ),
               const SizedBox(height: 10),
-             ProfilePhotoWidget(
-  onImagePicked: (File? imageFile) {
-    setState(() {
-      _imageFile = imageFile; // Handle null when deleting the photo
-    });
-  },
-),
+//              ProfilePhotoWidget(
+//   onImagePicked: (File? imageFile) {
+//     setState(() {
+//       _imageFile = imageFile; // Handle null when deleting the photo
+//     });
+//   },
+// ),
               const SizedBox(height: 20),
  // Introductory text at the bottom of the image
                   const Positioned(
@@ -345,9 +218,6 @@ class _SignUpState extends State<SignUp> {
                     ),
                   ),
 
-              
-
-
               // Form fields
               Container(
                 width: 410,
@@ -363,58 +233,58 @@ class _SignUpState extends State<SignUp> {
                       const SizedBox(height: 20),
  const SizedBox(height: 40),
                     // Name
-                          TextFormField(
-                            controller: _nameController,
-                            keyboardType: TextInputType.name,
-                            autovalidateMode: AutovalidateMode.always,
-                        validator: (value) {
-    if (value == null || value.isEmpty) {
-      return "*"; // Name is required
-    }
-    if (value.trim().isEmpty) {
-      return "Name cannot contain only spaces";
-    }
-    if (value.startsWith(' ')) {
-      return "Name cannot start with spaces";
-    }
-    return null; // Input is valid
-  },
-                            maxLength: 50, // Set maximum length of name field
-                            decoration: InputDecoration(
-                              hintText: "Name",
+  //                         TextFormField(
+  //                           controller: _nameController,
+  //                           keyboardType: TextInputType.name,
+  //                           autovalidateMode: AutovalidateMode.always,
+  //                       validator: (value) {
+  //   if (value == null || value.isEmpty) {
+  //     return "*"; // Name is required
+  //   }
+  //   if (value.trim().isEmpty) {
+  //     return "Name cannot contain only spaces";
+  //   }
+  //   if (value.startsWith(' ')) {
+  //     return "Name cannot start with spaces";
+  //   }
+  //   return null; // Input is valid
+  // },
+  //                           maxLength: 50, // Set maximum length of name field
+  //                           decoration: InputDecoration(
+  //                             hintText: "Name",
                               
-                              hintStyle: const TextStyle(
-                                color: Color(0xFF695555),
-                                fontWeight: FontWeight.w400,
-                                fontSize: 20,
-                              ),
-                               filled: true, // Make sure the field is filled with the color
-                               fillColor: Colors.white, 
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(40),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFF790AD)),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(40),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFF790AD)),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFF790AD)),
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(40),
-                              borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(40),
-      borderSide: const BorderSide(color: Color(0xFFF790AD)),
-    ),
-                            ),
-                          ),
+  //                             hintStyle: const TextStyle(
+  //                               color: Color(0xFF695555),
+  //                               fontWeight: FontWeight.w400,
+  //                               fontSize: 20,
+  //                             ),
+  //                              filled: true, // Make sure the field is filled with the color
+  //                              fillColor: Colors.white, 
+  //                             border: OutlineInputBorder(
+  //                               borderRadius: BorderRadius.circular(40),
+  //                               borderSide:
+  //                                   const BorderSide(color: Color(0xFFF790AD)),
+  //                             ),
+  //                             focusedBorder: OutlineInputBorder(
+  //                               borderRadius: BorderRadius.circular(40),
+  //                               borderSide:
+  //                                   const BorderSide(color: Color(0xFFF790AD)),
+  //                             ),
+  //                             enabledBorder: OutlineInputBorder(
+  //                               borderSide:
+  //                                   const BorderSide(color: Color(0xFFF790AD)),
+  //                               borderRadius: BorderRadius.circular(40),
+  //                             ),
+  //                             errorBorder: OutlineInputBorder(
+  //                             borderRadius: BorderRadius.circular(40),
+  //                             borderSide: const BorderSide(color: Color(0xFFF790AD)),
+  //                             ),
+  //                             focusedErrorBorder: OutlineInputBorder(
+  //     borderRadius: BorderRadius.circular(40),
+  //     borderSide: const BorderSide(color: Color(0xFFF790AD)),
+  //   ),
+  //                           ),
+  //                         ),
  
                     const SizedBox(height: 20),
                        
@@ -682,65 +552,65 @@ new FlutterPwValidator(
 
                       const SizedBox(height: 20),
 
-                      // Bio
-                    TextFormField(
-                      controller: _bioController,
-                      keyboardType: TextInputType.text,
-                      maxLines: 4,
-                      maxLength: 152,
-                      decoration: InputDecoration(
-                        hintText: "Bio",
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF695555),
-                          fontSize: 20,
-                        ), filled: true, // Make sure the field is filled with the color
-                               fillColor: Colors.white, 
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(40),
-                          borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(40),
-                          borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFFF790AD)),
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                      ),
-                    ),
+//                       // Bio
+//                     TextFormField(
+//                       controller: _bioController,
+//                       keyboardType: TextInputType.text,
+//                       maxLines: 4,
+//                       maxLength: 152,
+//                       decoration: InputDecoration(
+//                         hintText: "Bio",
+//                         hintStyle: const TextStyle(
+//                           color: Color(0xFF695555),
+//                           fontSize: 20,
+//                         ), filled: true, // Make sure the field is filled with the color
+//                                fillColor: Colors.white, 
+//                         border: OutlineInputBorder(
+//                           borderRadius: BorderRadius.circular(40),
+//                           borderSide: const BorderSide(color: Color(0xFFF790AD)),
+//                         ),
+//                         focusedBorder: OutlineInputBorder(
+//                           borderRadius: BorderRadius.circular(40),
+//                           borderSide: const BorderSide(color: Color(0xFFF790AD)),
+//                         ),
+//                         enabledBorder: OutlineInputBorder(
+//                           borderSide: const BorderSide(color: Color(0xFFF790AD)),
+//                           borderRadius: BorderRadius.circular(40),
+//                         ),
+//                       ),
+//                     ),
 
 
-                     const SizedBox(height: 20),
+//                      const SizedBox(height: 20),
  
                    
-// Books number input field
-TextFormField(
-  controller: _booksController,
-  keyboardType: TextInputType.number,
-   inputFormatters: [FilteringTextInputFormatter.digitsOnly], // This ensures only numbers are allowed
-  decoration: InputDecoration(
-    hintText: "How many books do you want to read in this year?",
-    hintStyle: const TextStyle(
-      color: Color(0xFF695555),
-      fontWeight: FontWeight.w400,
-      fontSize: 15,
-    ), filled: true, // Make sure the field is filled with the color
-                               fillColor: Colors.white, 
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(40),
-      borderSide: const BorderSide(color: Color(0xFFF790AD)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(40),
-      borderSide: const BorderSide(color: Color(0xFFF790AD)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Color(0xFFF790AD)),
-      borderRadius: BorderRadius.circular(40),
-    ),
-  ),
-),
+// // Books number input field
+// TextFormField(
+//   controller: _booksController,
+//   keyboardType: TextInputType.number,
+//    inputFormatters: [FilteringTextInputFormatter.digitsOnly], // This ensures only numbers are allowed
+//   decoration: InputDecoration(
+//     hintText: "How many books do you want to read in this year?",
+//     hintStyle: const TextStyle(
+//       color: Color(0xFF695555),
+//       fontWeight: FontWeight.w400,
+//       fontSize: 15,
+//     ), filled: true, // Make sure the field is filled with the color
+//                                fillColor: Colors.white, 
+//     border: OutlineInputBorder(
+//       borderRadius: BorderRadius.circular(40),
+//       borderSide: const BorderSide(color: Color(0xFFF790AD)),
+//     ),
+//     focusedBorder: OutlineInputBorder(
+//       borderRadius: BorderRadius.circular(40),
+//       borderSide: const BorderSide(color: Color(0xFFF790AD)),
+//     ),
+//     enabledBorder: OutlineInputBorder(
+//       borderSide: const BorderSide(color: Color(0xFFF790AD)),
+//       borderRadius: BorderRadius.circular(40),
+//     ),
+//   ),
+// ),
  
                     const SizedBox(height: 20),
 

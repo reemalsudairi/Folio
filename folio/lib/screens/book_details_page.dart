@@ -108,80 +108,79 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         ),
                         const SizedBox(height: 20),
                         // Save button with dropdown
-Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    SizedBox(
-      width: 250, // Fixed width for button
-      child: ElevatedButton(
-        onPressed: () {
-          // Your onPressed logic here
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFF790AD), // Pink background
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6), // Padding
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20), // Rounded corners
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align text and dropdown
-          children: [
-            Text(
-              selectedOption, // Current selected option (Save, Currently reading, Finished)
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.white, // White text
-                fontWeight: FontWeight.bold, // Bold text
-              ),
-            ),
-            PopupMenuButton<String>(
-              onSelected: (String value) {
-                setState(() {
-                  selectedOption = value; // Update selected option
-                });
-              },
-              itemBuilder: (BuildContext context) {
-                return <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'Save',
-                    child: ListTile(
-                      leading: Icon(Icons.bookmark),
-                      title: Text('Save'),
-                    ),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'Currently reading',
-                    child: ListTile(
-                      leading: Icon(Icons.menu_book_sharp),
-                      title: Text('Currently reading'),
-                    ),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'Finished',
-                    child: ListTile(
-                      leading: Icon(Icons.check_circle),
-                      title: Text('Finished'),
-                    ),
-                  ),
-                ];
-              },
-              icon: const Icon(
-                Icons.arrow_drop_down, // Dropdown icon
-                color: Colors.white, // White icon to match the button color
-              ),
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10), // Dropdown menu rounding
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  ],
-),
-
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 250, // Fixed width for button
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  // Your onPressed logic here
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF790AD), // Pink background
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6), // Padding
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20), // Rounded corners
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center, // Align text and dropdown
+                                  children: [
+                                    Text(
+                                      selectedOption, // Current selected option (Save, Currently reading, Finished)
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white, // White text
+                                        fontWeight: FontWeight.bold, // Bold text
+                                      ),
+                                    ),
+                                    PopupMenuButton<String>(
+                                      onSelected: (String value) {
+                                        setState(() {
+                                          selectedOption = value; // Update selected option
+                                        });
+                                      },
+                                      itemBuilder: (BuildContext context) {
+                                        return <PopupMenuEntry<String>>[
+                                          const PopupMenuItem<String>(
+                                            value: 'Save',
+                                            child: ListTile(
+                                              leading: Icon(Icons.bookmark),
+                                              title: Text('Save'),
+                                            ),
+                                          ),
+                                          const PopupMenuItem<String>(
+                                            value: 'Currently reading',
+                                            child: ListTile(
+                                              leading: Icon(Icons.menu_book_sharp),
+                                              title: Text('Currently reading'),
+                                            ),
+                                          ),
+                                          const PopupMenuItem<String>(
+                                            value: 'Finished',
+                                            child: ListTile(
+                                              leading: Icon(Icons.check_circle),
+                                              title: Text('Finished'),
+                                            ),
+                                          ),
+                                        ];
+                                      },
+                                      icon: const Icon(
+                                        Icons.arrow_drop_down, // Dropdown icon
+                                        color: Colors.white, // White icon to match the button color
+                                      ),
+                                      color: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10), // Dropdown menu rounding
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 20),
                         // Custom TabBar design
                         Column(
@@ -261,127 +260,117 @@ Row(
                         const SizedBox(height: 20),
                         // Tab content based on selected index
                         if (_selectedIndex == 0)
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Release year, number of pages, custom rating
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text('Released in'),
-                                                Text(
-                                                  bookDetails?['volumeInfo']
-                                                              ['publishedDate']
-                                                          ?.substring(0, 4) ??
-                                                      'N/A',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                const Text('Number of pages'),
-                                                Text(
-                                                  bookDetails?['volumeInfo']
-                                                              ['pageCount']
-                                                          ?.toString() ??
-                                                      'N/A',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                Text('Ratings'),
-                                                Row(
-                                                  children: [
-                                                    // Display frontend-only rating with 1 pink star
-                                                    Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons.star,
-                                                          color: Color(
-                                                              0xFFF790AD), // Pink color for one filled star
-                                                          size: 18,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(width: 5),
-                                                    Text(
-                                                      '0', // Set the rating to 1 star
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 16,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Release year, number of pages, custom rating
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Released in'),
+                                      Text(
+                                        bookDetails?['volumeInfo']['publishedDate']?.substring(0, 4) ?? 'N/A',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
                                         ),
-                                        const SizedBox(height: 10),
-                                        // Description label and content
-                                        const Text(
-                                          'Description',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: Colors.grey,
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      const Text('Number of pages'),
+                                      Text(
+                                        bookDetails?['volumeInfo']['pageCount']?.toString() ?? 'N/A',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text('Ratings'),
+                                      Row(
+                                        children: [
+                                          // Display frontend-only rating with 1 pink star
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.star,
+                                                color: Color(0xFFF790AD), // Pink color for one filled star
+                                                size: 18,
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        const SizedBox(
-                                            height:
-                                                10), // Adds some space between "Description" and the actual content
-                                        // Full Description with HTML tags removed
-                                        SizedBox(
-                                          height:
-                                              200, // Set a height for the description
-                                          child: SingleChildScrollView(
-                                            child: Text(
-                                              removeHtmlTags(bookDetails?[
-                                                          'volumeInfo']
-                                                      ['description'] ??
-                                                  'No description available.'),
-                                              style:
-                                                  const TextStyle(fontSize: 16),
-                                              textAlign: TextAlign.justify,
+                                          SizedBox(width: 5),
+                                          Text(
+                                            '-', // Set the rating to 1 star
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              // Description label and content
+                              const Text(
+                                'Description',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 10), // Adds some space between "Description" and the actual content
+                              // Full Description with HTML tags removed
+                              SizedBox(
+                                height: 200, // Set a height for the description
+                                child: SingleChildScrollView(
+                                  child: Text(
+                                    removeHtmlTags(bookDetails?['volumeInfo']['description'] ?? 'No description available.'),
+                                    style: const TextStyle(fontSize: 16),
+                                    textAlign: TextAlign.justify,
+                                    softWrap: true, // Ensure text wraps naturally at word boundaries
+                                    overflow: TextOverflow.clip, // Clip any overflowing text
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         if (_selectedIndex == 1)
-                          Center(child: Text('No clubs discussing this book currently.',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.brown[800],
-            ),)),
+                          Center(
+                            child: Text(
+                              'No clubs discussing this book currently.',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.brown[800],
+                              ),
+                            ),
+                          ),
                         if (_selectedIndex == 2)
-                           Center(child: Text('No reviews available.', 
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.brown[800],
-            ),)),
+                          Center(
+                            child: Text(
+                              'No reviews available.',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.brown[800],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
