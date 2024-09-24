@@ -59,7 +59,7 @@ class WelcomePage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white, // Button background color
                 side: const BorderSide(
-                    color: Color(0xFFFFA1C9),
+                    color: const Color(0xFFF790AD),
                     width: 2), // Border color and width
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -70,7 +70,7 @@ class WelcomePage extends StatelessWidget {
               child: const Text(
                 'Sign up',
                 style: TextStyle(
-                  color: Color(0xFFFFA1C9), // Text color
+                  color:const Color(0xFFF790AD), // Text color
                   fontSize: 18,
                 ),
               ),
@@ -86,7 +86,7 @@ class WelcomePage extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    const Color(0xFFFFA1C9), // Button background color
+                    const Color(0xFFF790AD), // Button background color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
