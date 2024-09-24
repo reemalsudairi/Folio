@@ -165,14 +165,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     final searchTerm =
         value.isEmpty ? _searchController.text.trim() : value.trim();
 
-    if (searchTerm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a book name.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
+    if (searchTerm.isNotEmpty) {
       Navigator.push(
         context,
         MaterialPageRoute(
