@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'ResetPasswordPage.dart';
-import 'homePage.dart';
 import 'Signup.dart';
 import 'first.page.dart';
+import 'homePage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,17 +16,26 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
+
   final passwordController = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
+
   final FocusNode emailFocusNode = FocusNode();
+
   final FocusNode passwordFocusNode = FocusNode();
+
   bool _obscurePassword = true;
+
   bool _isPasswordFieldValid = true;
+
+  String? _errorMessage; // Variable to hold error messages
 
   @override
   void initState() {
     super.initState();
 
+    // Adding listeners to focus nodes to validate when user leaves the fields
     emailFocusNode.addListener(() {
       if (!emailFocusNode.hasFocus) {
         _formKey.currentState?.validate();
@@ -35,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
 
     passwordFocusNode.addListener(() {
       if (!passwordFocusNode.hasFocus) {
-        _validatePasswordField();
+        _validatePasswordField(); // Validate password field only when focus is lost
       }
     });
   }
@@ -51,7 +60,8 @@ class _LoginPageState extends State<LoginPage> {
 
   void _validatePasswordField() {
     setState(() {
-      _isPasswordFieldValid = passwordController.text.isNotEmpty &&
+      _isPasswordFieldValid =
+          passwordController.text.isNotEmpty &&
           passwordController.text.trim().length <= 16;
     });
   }
@@ -60,7 +70,6 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState?.validate() ?? false && _isPasswordFieldValid) {
       FocusScope.of(context).unfocus();
 
-      // Show loading indicator while signing in
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -68,43 +77,38 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       try {
-        // Sign in with FirebaseAuth
-        UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithEmailAndPassword(
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
 
-        Navigator.pop(context); // Close the loading dialog
+        Navigator.pop(context);
 
-        // Navigate to user's HomePage
+        setState(() {
+          _errorMessage = null;
+        });
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  HomePage(userId: userCredential.user!.uid )),
+          MaterialPageRoute(builder: (context) => HomePage(userId: userCredential.user?.uid ?? '')),
         );
       } on FirebaseAuthException catch (e) {
-        Navigator.pop(context); // Close the loading dialog
-        String errorMessage = _handleAuthError(e);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-        );
+        Navigator.pop(context);
+
+        setState(() {
+          _errorMessage = _handleAuthError(e);
+        });
       } catch (e) {
-        Navigator.pop(context); // Close the loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("An unexpected error occurred."),
-              backgroundColor: Colors.red),
-        );
+        Navigator.pop(context);
+
+        setState(() {
+          _errorMessage = "An unexpected error occurred.";
+        });
       }
     } else {
-      // Show snackbar if form is invalid
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Please fill in all fields correctly."),
-            backgroundColor: Colors.red),
-      );
+      setState(() {
+        _errorMessage = "Please fill in all fields correctly.";
+      });
     }
   }
 
@@ -141,6 +145,7 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return Container(
       width: 350,
+      // Remove fixed height to avoid overflow issues
       child: Column(
         children: [
           TextFormField(
@@ -219,8 +224,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                                builder: (context) => WelcomePage()),
+                            MaterialPageRoute(builder: (context) => WelcomePage()),
                           );
                         },
                       ),
@@ -244,6 +248,26 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
+
+                // Red rectangle for error messages
+                if (_errorMessage != null)
+                  Container(
+                    width: 350,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 20),
+
                 _buildTextField(
                   controller: emailController,
                   hintText: 'Email',
@@ -275,98 +299,101 @@ class _LoginPageState extends State<LoginPage> {
                       controller: passwordController,
                       hintText: 'Password',
                       obscureText: true,
-                      validator: (value) {
-                        return null; // Disable default validator
-                      },
                       focusNode: passwordFocusNode,
-                      maxLength: 16,
-                      isValid: _isPasswordFieldValid,  // Use validation state
                       suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        color: const Color(0xFFF790AD),
                         onPressed: () {
                           setState(() {
                             _obscurePassword = !_obscurePassword;
                           });
                         },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                        ),
                       ),
+                      maxLength: 16,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter a password.";
+                        }
+                        if (value.trim().length < 6 || value.trim().length > 16) {
+                          return "Password must be between 6 and 16 characters.";
+                        }
+                        return null;
+                      },
+                      isValid: _isPasswordFieldValid,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const ResetPasswordPage(),
-                          ),
+                          MaterialPageRoute(builder: (context) => ResetPasswordPage()),
                         );
                       },
                       child: const Text(
-                        'Forgot your password?',
+                        "Forget Password?",
                         style: TextStyle(
-                          fontSize: 14,
                           color: Color(0xFFF790AD),
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
                 Container(
-                  height: 60,
-                  width: 250,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: ElevatedButton(
-                    onPressed: signUserIn,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF790AD),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                    ),
-                    child: const Text(
-                      'Sign In',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignUp()),
-                    );
-                  },
-                  child: RichText(
-                    text: const TextSpan(
-                      text: 'Don\'t have an account? ',
+  width: 350,
+  height: 50, // Set the width to 350
+  child: ElevatedButton(
+    onPressed: signUserIn,
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFF790AD),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30),
+      ),
+    ),
+    child: const Text(
+      'Login',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.w300,
+      ),
+    ),
+  ),
+),
+
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Don''t have an account?',
                       style: TextStyle(
                         color: Color(0xFF695555),
                         fontSize: 16,
+                        fontWeight: FontWeight.w400,
                       ),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'Sign up',
-                          style: TextStyle(
-                            color: Color(0xFFF790AD),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUp()),
+                        );
+                      },
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          color: Color(0xFFF790AD),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -376,3 +403,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+
