@@ -320,33 +320,36 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 const SizedBox(height: 20),
-                _buildTextField(
-                  controller: passwordController,
-                  hintText: 'Password',
-                  obscureText: true,
-                  focusNode: passwordFocusNode,
-                  maxLength: 16,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Please enter a password.";
-                    }
-                    if (!_isPasswordFieldValid) {
-                      return "Password must be between 6 and 16 characters.";
-                    }
-                    return null;
-                  },
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      color: const Color(0xFF695555),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
+               _buildTextField(
+  controller: passwordController,
+  hintText: 'Password',
+  obscureText: true,
+  focusNode: passwordFocusNode,
+  maxLength: 16,
+  validator: (value) {
+    if (value == null || value.isEmpty) {
+      return "Please enter a password.";
+    }
+    if (!_isPasswordFieldValid) {
+      return "Password must be between 6 and 16 characters.";
+    }
+    return null;
+  },
+ suffixIcon: IconButton(
+  icon: Icon(
+    _obscurePassword ? Icons.visibility_off : Icons.visibility, // Toggle between open/close eye icon
+    color: const Color(0xFFF790AD), // Make the eye pink
+  ),
+  onPressed: () {
+    setState(() {
+      _obscurePassword = !_obscurePassword; // Toggle password visibility
+    });
+  },
+),
+
+),
+
+
                 const SizedBox(height: 20),
                 Container(
                   width: 350,
