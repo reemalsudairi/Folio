@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+
 class EditProfile extends StatefulWidget {
   final String userId;
   final String name;
@@ -13,6 +14,7 @@ class EditProfile extends StatefulWidget {
   final String profilePhotoUrl;
   final int booksGoal;
   final String email; // Add email parameter
+
 
   const EditProfile({
     super.key,
@@ -24,9 +26,11 @@ class EditProfile extends StatefulWidget {
     required this.email, // Accept email
   });
 
+
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
 }
+
 
 class _EditProfilePageState extends State<EditProfile> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -35,6 +39,7 @@ class _EditProfilePageState extends State<EditProfile> {
   final TextEditingController _booksController = TextEditingController();
   File? _imageFile;
   late String _currentPhotoUrl;
+
 
   @override
   void initState() {
@@ -45,6 +50,7 @@ class _EditProfilePageState extends State<EditProfile> {
     _currentPhotoUrl = widget.profilePhotoUrl;
   }
 
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -53,18 +59,104 @@ class _EditProfilePageState extends State<EditProfile> {
     super.dispose();
   }
 
+
   // Method to save profile
+// Method to save profile
+// Method to save profile
+// Method to show the confirmation message
+// Method to show the confirmation message
+// Method to show the confirmation message
+// Method to show the confirmation message
+void _showConfirmationMessage(String message) {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Prevent closing by tapping outside
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: Colors.transparent, // Make the dialog background transparent
+        content: Container(
+          width: 300, // Outer container width
+          height: 200, // Outer container height
+          decoration: BoxDecoration(
+            color: Colors.transparent, // Outer background transparent
+          ),
+          child: Center(
+            child: Container(
+              width: 280, // Match inner container size
+              height: 120, // Match inner container size
+              decoration: BoxDecoration(
+                color: Colors.lightGreen.withOpacity(0.7), // Light green background with transparency
+                borderRadius: BorderRadius.circular(30), // Rounded corners
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.check_circle, // Checkmark icon
+                    color: Colors.white,
+                    size: 40, // Adjust size as needed
+                  ),
+                  const SizedBox(height: 10), // Space between icon and text
+                  Text(
+                    message,
+                    style: const TextStyle(color: Colors.white, fontSize: 18), // Change text color to white
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+
+  // Close the dialog after 2 seconds
+  Future.delayed(const Duration(seconds: 2), () {
+    Navigator.of(context).pop(); // Close the dialog
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Method to save profile
 Future<void> _saveProfile() async {
   if (_formKey.currentState?.validate() ?? false) {
     try {
       final userId = widget.userId;
       String? profilePhotoUrl;
 
+
       // If a new image is picked, upload it
       if (_imageFile != null) {
         profilePhotoUrl = await _uploadProfilePhoto(userId);
         if (profilePhotoUrl == null) {
-          // Show error if the upload fails
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to upload profile photo')),
           );
@@ -77,6 +169,7 @@ Future<void> _saveProfile() async {
         profilePhotoUrl = ''; // If no photo exists, set an empty string
       }
 
+
       // Prepare the profile data
       final userProfile = {
         'name': _nameController.text,
@@ -85,6 +178,7 @@ Future<void> _saveProfile() async {
         'profilePhoto': profilePhotoUrl,
         'email': widget.email,
       };
+
 
       // Show a confirmation dialog before saving the profile
       final confirmed = await _showConfirmationDialog();
@@ -95,6 +189,13 @@ Future<void> _saveProfile() async {
             .doc(userId)
             .set(userProfile, SetOptions(merge: true));
 
+
+        // Show success message
+        _showConfirmationMessage('Profile updated successfully!');
+        
+        // Delay before navigating back to give the user time to see the message
+        await Future.delayed(const Duration(seconds: 2));
+        
         // Return the updated data to the previous screen
         Navigator.pop(context, userProfile);
       }
@@ -108,27 +209,33 @@ Future<void> _saveProfile() async {
 }
 
 
-  // New method to show a confirmation dialog
-  Future<bool> _showConfirmationDialog() async {
-    return await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Confirm Changes'),
-            content: const Text('Are you sure you want to save these changes?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Save'),
-              ),
-            ],
+// Method to handle the confirmation dialog
+Future<bool> _showConfirmationDialog() {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Confirm Changes'),
+        content: const Text('Do you want to save the changes?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false), // Cancel
+            child: const Text('Cancel'),
           ),
-        ) ??
-        false;
-  }
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true), // Confirm
+            child: const Text('Confirm'),
+          ),
+        ],
+      );
+    },
+  ).then((value) => value ?? false);
+}
+
+
+
+
+
 
 Future<String?> _uploadProfilePhoto(String userId) async {
   if (_imageFile != null) {
@@ -146,6 +253,8 @@ Future<String?> _uploadProfilePhoto(String userId) async {
   }
   return null;
 }
+
+
 
 
   @override
@@ -245,6 +354,7 @@ Future<String?> _uploadProfilePhoto(String userId) async {
     );
   }
 
+
   // Custom method to build text fields with dynamic color changes
   Widget _buildTextField({
     required TextEditingController controller,
@@ -256,6 +366,7 @@ Future<String?> _uploadProfilePhoto(String userId) async {
     bool optional = false, // Add optional parameter
   }) {
     bool isFocused = false;
+
 
     return Focus(
       onFocusChange: (hasFocus) {
@@ -301,6 +412,7 @@ Future<String?> _uploadProfilePhoto(String userId) async {
     );
   }
 
+
   // New method for the unchangeable email field
   Widget _buildEmailField(String email) {
     return TextFormField(
@@ -323,9 +435,11 @@ Future<String?> _uploadProfilePhoto(String userId) async {
   }
 }
 
+
 class ProfilePhotoWidget extends StatefulWidget {
   final ImageProvider<Object>? initialImage;
   final ValueChanged<File?> onImagePicked;
+
 
   const ProfilePhotoWidget({
     super.key,
@@ -333,14 +447,17 @@ class ProfilePhotoWidget extends StatefulWidget {
     required this.onImagePicked,
   });
 
+
   @override
   _ProfilePhotoWidgetState createState() => _ProfilePhotoWidgetState();
 }
+
 
 class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   late ImageProvider<Object> _currentImage;
+
 
   @override
   void initState() {
@@ -349,10 +466,12 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
         const AssetImage('assets/images/profile_pic.png');
   }
 
+
   Future<void> _showImagePickerOptions(BuildContext context) async {
     bool isDefaultImage = _currentImage is AssetImage &&
         (_currentImage as AssetImage).assetName ==
             'assets/images/profile_pic.png';
+
 
     showModalBottomSheet(
       context: context,
@@ -395,6 +514,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 
+
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
@@ -406,6 +526,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     }
   }
 
+
   void _deletePhoto() {
     setState(() {
       _imageFile = null;
@@ -413,6 +534,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     });
     widget.onImagePicked(null);
   }
+
 
   @override
   Widget build(BuildContext context) {

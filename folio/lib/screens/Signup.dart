@@ -1,15 +1,15 @@
 // ignore_for_file: prefer_const_constructors
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:folio/screens/login.dart';
-import 'package:folio/screens/ProfileSetup.dart';
-import 'package:folio/screens/first.page.dart';
 import 'package:flutter/services.dart';
-import 'package:folio/screens/homePage.dart';
+// ignore: unused_import
+import 'package:flutter_pw_validator/flutter_pw_validator.dart';
+import 'package:folio/screens/first.page.dart';
 import 'package:folio/screens/login.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -661,6 +661,20 @@ Future<void> _pickImage(ImageSource source) async {
                         ),
                       ),
 
+
+
+new FlutterPwValidator(
+    controller: _passwordController,
+    minLength: 8,
+    uppercaseCharCount: 1,
+    lowercaseCharCount: 1,
+    numericCharCount: 1,
+    specialCharCount: 1,
+    width: 400,
+    height: 165,
+    onSuccess: _nothingg
+),
+
                       const SizedBox(height: 20),
 
 
@@ -854,6 +868,9 @@ TextFormField(
         ),
       ),
     );
+  }
+
+  _nothingg() {
   }
 }
 class ProfilePhotoWidget extends StatefulWidget {
