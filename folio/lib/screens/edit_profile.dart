@@ -551,7 +551,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
             right: 0,
             child: IconButton(
               icon:
-                  const Icon(Icons.camera_alt, color: Color(0xFFF790AD)),
+                  const Icon(Icons.camera_alt,color: Color.fromARGB(255, 53, 31, 31)),
               onPressed: () {
                 _showImagePickerOptions(context);
               },

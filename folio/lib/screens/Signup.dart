@@ -47,63 +47,7 @@ class _SignUpState extends State<SignUp> {
     _booksController.dispose();
     super.dispose();
   }
-   // Function to pick image from gallery or camera
-  Future<void> _showImagePickerOptions(BuildContext context) async {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => BottomSheet(
-        onClosing: () {},
-        builder: (context) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera),
-              title: const Text('Take a Photo'),
-              onTap: () {
-                _pickImage(ImageSource.camera);
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                _pickImage(ImageSource.gallery);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
- 
-  // Function to pick an image
-Future<void> _pickImage(ImageSource source) async {
-  final pickedFile = await _picker.pickImage(source: source);
-  if (pickedFile != null) {
-    setState(() {
-      _imageFile = File(pickedFile.path);
-    });
-  }
-}
-// Upload profile photo to Firebase Storage
-  Future<String?> _uploadProfilePhoto(String userId) async {
-    if (_imageFile != null) {
-      try {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('profile_photos')
-            .child('$userId.jpg');
-       await ref.putFile(_imageFile!);
-        return await ref.getDownloadURL();
-      } catch (e) {
-        print('Error uploading profile photo: $e');
-        return null;
-      }
-    }
-    return null;
-  }
+
 
   // Check if username or email already exists
   Future<bool> checkIfUsernameExists(String username) async {
@@ -374,14 +318,14 @@ Future<void> _pickImage(ImageSource source) async {
                 
                 ],
               ),
-              const SizedBox(height: 100),
-               ProfilePhotoWidget(
-              onImagePicked: (File imageFile) {
-                setState(() {
-                  _imageFile = imageFile;
-                });
-              },
-            ),
+              const SizedBox(height: 10),
+             ProfilePhotoWidget(
+  onImagePicked: (File? imageFile) {
+    setState(() {
+      _imageFile = imageFile; // Handle null when deleting the photo
+    });
+  },
+),
               const SizedBox(height: 20),
  // Introductory text at the bottom of the image
                   const Positioned(
@@ -403,7 +347,6 @@ Future<void> _pickImage(ImageSource source) async {
 
               
 
-              const SizedBox(height: 20),
 
               // Form fields
               Container(
@@ -874,89 +817,108 @@ TextFormField(
   }
 }
 class ProfilePhotoWidget extends StatefulWidget {
-  final Function(File) onImagePicked;
+  final Function(File?) onImagePicked;
+
   const ProfilePhotoWidget({super.key, required this.onImagePicked});
- 
+
   @override
   _ProfilePhotoWidgetState createState() => _ProfilePhotoWidgetState();
 }
- 
+
 class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
- 
-  // Function to pick image from gallery or camera
-Future<void> _showImagePickerOptions(BuildContext context) async {
-  showModalBottomSheet(
-    context: context,
-    builder: (context) => Padding(
-      padding: const EdgeInsets.only(bottom: 50.0), // Add padding for better look
-      child: BottomSheet(
-        onClosing: () {},
-        builder: (context) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera),
-              title: const Text('Take a Photo'),
-              onTap: () {
-                _pickImage(ImageSource.camera);
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                _pickImage(ImageSource.gallery);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+  late ImageProvider<Object> _currentImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentImage = const AssetImage('assets/images/profile_pic.png');
+  }
+
+  // Function to show options for picking an image
+  Future<void> _showImagePickerOptions(BuildContext context) async {
+    // Check if the current image is the default image
+    bool isDefaultImage = _imageFile == null;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(bottom: 50.0),
+        child: BottomSheet(
+          onClosing: () {},
+          builder: (context) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  _pickImage(ImageSource.camera);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  _pickImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              if (!isDefaultImage)
+                ListTile(
+                  leading: const Icon(Icons.delete),
+                  title: const Text('Delete Photo'),
+                  onTap: () {
+                    _deletePhoto();
+                    Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-
-  // Function to pick an image
+  // Function to pick an image from the camera or gallery
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
-        widget.onImagePicked(_imageFile!);
+        _currentImage = FileImage(_imageFile!);
       });
-      widget.onImagePicked(_imageFile!); // Notify parent widget
+      widget.onImagePicked(_imageFile); // Notify parent widget with the picked image
     }
   }
- 
+
+  // Function to delete the selected photo and revert to the default image
+  void _deletePhoto() {
+    setState(() {
+      _imageFile = null;
+      _currentImage = const AssetImage('assets/images/profile_pic.png');
+    });
+    widget.onImagePicked(null); // Notify parent widget that the photo is deleted
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Profile photo with thin border
-CircleAvatar(
-  radius: 64,
-  backgroundImage: _imageFile != null
-      ? FileImage(_imageFile!)
-      : const AssetImage("assets/images/profile_pic.png") as ImageProvider,
-  backgroundColor: const Color(0xFFF790AD),
-  child: Container(
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(color: const Color(0xFFF790AD), width: 3),
-    ),
-  ),
-),
- 
-        // Pencil icon for editing
+        // Display profile photo with a border
+        CircleAvatar(
+          radius: 64,
+          backgroundImage: _currentImage,
+          backgroundColor: const Color(0xFFF790AD),
+        ),
+        // Button to edit or change the photo
         Positioned(
           bottom: 0,
           right: 0,
           child: IconButton(
-            icon: const Icon(Icons.camera_alt),
+            icon: const Icon(Icons.camera_alt, color: Color.fromARGB(255, 53, 31, 31)),
             onPressed: () => _showImagePickerOptions(context),
           ),
         ),
