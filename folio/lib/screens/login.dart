@@ -313,13 +313,13 @@ class _LoginPageState extends State<LoginPage> {
                     if (value.trim().contains(' ')) {
                       return "Email cannot contain spaces.";
                     }
-                    if (value.trim().length > 254 || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    if (value.trim().length > 254 || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
                       return "Please enter a valid email.";
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
                 _buildTextField(
                   controller: passwordController,
                   hintText: 'Password',
@@ -327,58 +327,70 @@ class _LoginPageState extends State<LoginPage> {
                   focusNode: passwordFocusNode,
                   maxLength: 16,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.isEmpty) {
                       return "Please enter a password.";
+                    }
+                    if (!_isPasswordFieldValid) {
+                      return "Password must be between 6 and 16 characters.";
                     }
                     return null;
                   },
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      color: const Color(0xFF695555),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                 ),
-                const SizedBox(height: 5),
-               Row(
-  mainAxisAlignment: MainAxisAlignment.start,
-  children: [
-    Container(
-      margin: const EdgeInsets.only(left: 50), // Add left margin of 50 pixels
-      child: TextButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ResetPasswordPage()),
-          );
-        },
-        child: const Text(
-          'Forgot Password?',
-          style: TextStyle(
-            color: Color(0xFF695555),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    ),
-  ],
-),
-
-
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 Container(
                   width: 350,
-                  height: 55,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF790AD),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: TextButton(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF790AD),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                    ),
                     onPressed: signUserIn,
                     child: const Text(
                       "Login",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontFamily: 'Roboto',
                         fontWeight: FontWeight.w700,
+                        fontSize: 20,
                         color: Colors.white,
                       ),
                     ),
                   ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 70), // Add some space on the left
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ResetPasswordPage()),
+                        );
+                      },
+                      child: const Text(
+                        "Forgot Password?",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF695555),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -399,11 +411,11 @@ class _LoginPageState extends State<LoginPage> {
                         );
                       },
                       child: const Text(
-                        "Sign Up",
+                        "Signup",
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
                           color: Color(0xFFF790AD),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
