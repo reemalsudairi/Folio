@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:folio/screens/Profile/library_page.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
 import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
 import 'package:folio/screens/settings.dart'; // Import for SettingsPage
@@ -152,33 +151,37 @@ class HomePageContent extends StatelessWidget {
           automaticallyImplyLeading: false,
           actions: [
             IgnorePointer(
-            child: IconButton(
-              icon: const Icon(
-                Icons.notifications_active,
-                color: Color.fromARGB(255, 35, 23, 23),
-                size: 30,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.notifications_active,
+                  color: Color.fromARGB(255, 35, 23, 23),
+                  size: 30,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()),
+                  );
+                },
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-            ), ),
+            ),
             IgnorePointer(
-            child: IconButton(
-              icon: const Icon(
-                Icons.person_2,
-                color: Color.fromARGB(255, 35, 23, 23),
-                size: 30,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.person_2,
+                  color: Color.fromARGB(255, 35, 23, 23),
+                  size: 30,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()),
+                  );
+                },
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-            ),)
+            )
           ],
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'ResetPasswordPage.dart';
 import 'Signup.dart';
 import 'first.page.dart';
@@ -20,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   final FocusNode emailFocusNode = FocusNode();
   final FocusNode passwordFocusNode = FocusNode();
 
-  bool _obscurePassword = true;
+  final bool _obscurePassword = true;
   bool _isPasswordFieldValid = true;
   String? _errorMessage;
 
@@ -38,7 +39,8 @@ class _LoginPageState extends State<LoginPage> {
     passwordFocusNode.addListener(() {
       if (!passwordFocusNode.hasFocus) {
         _validatePasswordField();
-        _formKey.currentState?.validate(); // Trigger validation when focus is lost
+        _formKey.currentState
+            ?.validate(); // Trigger validation when focus is lost
       }
     });
   }
@@ -54,116 +56,115 @@ class _LoginPageState extends State<LoginPage> {
 
   void _validatePasswordField() {
     setState(() {
-      _isPasswordFieldValid =
-          passwordController.text.isNotEmpty &&
+      _isPasswordFieldValid = passwordController.text.isNotEmpty &&
           passwordController.text.trim().length >= 6 &&
           passwordController.text.trim().length <= 16;
     });
   }
 
- Future<void> signUserIn() async {
-  if (_formKey.currentState?.validate() ?? false && _isPasswordFieldValid) {
-    FocusScope.of(context).unfocus();
-    
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+  Future<void> signUserIn() async {
+    if (_formKey.currentState?.validate() ?? false && _isPasswordFieldValid) {
+      FocusScope.of(context).unfocus();
 
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      Navigator.pop(context); // Remove loading dialog
-
-      setState(() {
-        _errorMessage = null;
-      });
-
-      _showConfirmationMessage(); // Show login confirmation
-
-      // Delay navigation AFTER confirmation dialog is shown and closed
-      Future.delayed(const Duration(seconds: 2), () {
-        // Close confirmation dialog and navigate to the home page
-        Navigator.pop(context); // Close the confirmation dialog
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(userId: userCredential.user?.uid ?? ''),
-          ),
+      try {
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
         );
-      });
 
-    } on FirebaseAuthException catch (e) {
-      Navigator.pop(context); // Remove loading dialog on error
+        Navigator.pop(context); // Remove loading dialog
 
+        setState(() {
+          _errorMessage = null;
+        });
+
+        _showConfirmationMessage(); // Show login confirmation
+
+        // Delay navigation AFTER confirmation dialog is shown and closed
+        Future.delayed(const Duration(seconds: 2), () {
+          // Close confirmation dialog and navigate to the home page
+          Navigator.pop(context); // Close the confirmation dialog
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  HomePage(userId: userCredential.user?.uid ?? ''),
+            ),
+          );
+        });
+      } on FirebaseAuthException catch (e) {
+        Navigator.pop(context); // Remove loading dialog on error
+
+        setState(() {
+          _errorMessage = _handleAuthError(e);
+        });
+      } catch (e) {
+        Navigator.pop(context);
+
+        setState(() {
+          _errorMessage = "An unexpected error occurred.";
+        });
+      }
+    } else {
       setState(() {
-        _errorMessage = _handleAuthError(e);
-      });
-    } catch (e) {
-      Navigator.pop(context);
-
-      setState(() {
-        _errorMessage = "An unexpected error occurred.";
+        _errorMessage = "Please fill in all fields correctly.";
       });
     }
-  } else {
-    setState(() {
-      _errorMessage = "Please fill in all fields correctly.";
-    });
   }
-}
 
-void _showConfirmationMessage() {
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Disable dismissal by clicking outside
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.lightGreen.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.check,
-              color: Colors.white,
-              size: 40,
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Login Successful!',
-              style: TextStyle(
+  void _showConfirmationMessage() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check,
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                size: 40,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              SizedBox(height: 10),
+              Text(
+                'Login Successful!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
 
-  // Automatically close the confirmation dialog after 2 seconds
-  Future.delayed(const Duration(seconds: 2), () {
-    Navigator.pop(context); // Close the confirmation dialog
-  });
-}
-
+    // Automatically close the confirmation dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context); // Close the confirmation dialog
+    });
+  }
 
   String _handleAuthError(FirebaseAuthException error) {
     switch (error.code) {
-     /* case 'user-not-found':
+      /* case 'user-not-found':
         return 'No user found for that email.';
       case 'wrong-password':
         return 'Wrong password provided.';
@@ -193,7 +194,7 @@ void _showConfirmationMessage() {
     bool isValid = true,
     bool isPassword = false,
   }) {
-    return Container(
+    return SizedBox(
       width: 350,
       child: Column(
         children: [
@@ -233,11 +234,14 @@ void _showConfirmationMessage() {
                 borderRadius: BorderRadius.circular(40),
                 borderSide: const BorderSide(color: Color(0xFFF790AD)),
               ),
-              counterText: '${controller.text.length}/$maxLength', // Show character count
-              counterStyle: const TextStyle(color: Color(0xFF695555), fontSize: 12),
+              counterText:
+                  '${controller.text.length}/$maxLength', // Show character count
+              counterStyle:
+                  const TextStyle(color: Color(0xFF695555), fontSize: 12),
               suffixIcon: suffixIcon,
               //errorText: !isValid ? "Please enter a valid $hintText." : null,
-              contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20), // Adjust padding
+              contentPadding: const EdgeInsets.symmetric(
+                  vertical: 15, horizontal: 20), // Adjust padding
             ),
           ),
         ],
@@ -276,7 +280,8 @@ void _showConfirmationMessage() {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => WelcomePage()),
+                            MaterialPageRoute(
+                                builder: (context) => const WelcomePage()),
                           );
                         },
                       ),
@@ -330,64 +335,67 @@ void _showConfirmationMessage() {
                     }
 
                     // Check for valid email format using regex
-                    if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|mil|info)$').hasMatch(value.trim())) {
-      return "Please enter a valid email."; // Specific error message
-    }
-    return null; // Return null if valid
-  },
-                  
+                    if (!RegExp(
+                            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|mil|info)$')
+                        .hasMatch(value.trim())) {
+                      return "Please enter a valid email."; // Specific error message
+                    }
+                    return null; // Return null if valid
+                  },
                   maxLength: 254,
                   isValid: _formKey.currentState?.validate() ?? true,
                 ),
                 const SizedBox(height: 10),
-               _buildTextField(
-  controller: passwordController,
-  hintText: 'Password',
-  obscureText: _obscurePassword,
-  focusNode: passwordFocusNode,
-  validator: (value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Please enter a password.";
-    }
-    return null; // Return null if valid
-  },
-  maxLength: 16,
-  isValid: _isPasswordFieldValid,
-  isPassword: true,
-),
-const SizedBox(height: 5), // Space between password field and link
-Align(
-  alignment: Alignment.centerLeft, // Align to the left
-  child: TextButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ResetPasswordPage()),
-      );
-    },
-    child: const Text(
-      'Forgot Password?',
-      style: TextStyle(color: Color(0xFFF790AD)),
-    ),
-  ),
-),
-const SizedBox(height: 10), // Space before the login button
-ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: const Color(0xFFF790AD),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(40),
-    ),
-    minimumSize: const Size(350, 50), // Width and height
-  ),
-  onPressed: signUserIn,
-  child: const Text(
-    'Login',
-    style: TextStyle(fontSize: 20, color: Colors.white),
-  ),
-),
+                _buildTextField(
+                  controller: passwordController,
+                  hintText: 'Password',
+                  obscureText: _obscurePassword,
+                  focusNode: passwordFocusNode,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Please enter a password.";
+                    }
+                    return null; // Return null if valid
+                  },
+                  maxLength: 16,
+                  isValid: _isPasswordFieldValid,
+                  isPassword: true,
+                ),
+                const SizedBox(
+                    height: 5), // Space between password field and link
+                Align(
+                  alignment: Alignment.centerLeft, // Align to the left
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const ResetPasswordPage()),
+                      );
+                    },
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(color: Color(0xFFF790AD)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10), // Space before the login button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF790AD),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    minimumSize: const Size(350, 50), // Width and height
+                  ),
+                  onPressed: signUserIn,
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 20, color: Colors.white),
+                  ),
+                ),
                 const SizedBox(height: 10),
-                
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -396,7 +404,8 @@ ElevatedButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignUp()),
+                          MaterialPageRoute(
+                              builder: (context) => const SignUp()),
                         );
                       },
                       child: const Text(

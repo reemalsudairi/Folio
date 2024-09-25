@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/Signup.dart';
 import 'package:folio/screens/login.dart';
 
-
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
@@ -59,7 +58,7 @@ class WelcomePage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white, // Button background color
                 side: const BorderSide(
-                    color: const Color(0xFFF790AD),
+                    color: Color(0xFFF790AD),
                     width: 2), // Border color and width
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -70,7 +69,7 @@ class WelcomePage extends StatelessWidget {
               child: const Text(
                 'Sign up',
                 style: TextStyle(
-                  color:const Color(0xFFF790AD), // Text color
+                  color: Color(0xFFF790AD), // Text color
                   fontSize: 18,
                 ),
               ),

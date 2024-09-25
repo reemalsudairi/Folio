@@ -36,7 +36,8 @@ class _SettingsPageState extends State<SettingsPage> {
               },
               child: const Text(
                 'Sign Out',
-                style: TextStyle(color: Colors.red), // Optional: make the text red
+                style:
+                    TextStyle(color: Colors.red), // Optional: make the text red
               ),
             ),
           ],
@@ -73,7 +74,8 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Delete Account'),
-          content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+          content: const Text(
+              'Are you sure you want to delete your account? This action cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -135,7 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // Function to launch the email client
   void _launchEmailClient() async {
-    final url = 'mailto:Follio444@gmail.com';
+    const url = 'mailto:Follio444@gmail.com';
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -176,7 +178,8 @@ class _SettingsPageState extends State<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.notifications, color: Color(0xFF4A2E2B)),
+                  leading:
+                      const Icon(Icons.notifications, color: Color(0xFF4A2E2B)),
                   title: const Text(
                     'Notifications',
                     style: TextStyle(
@@ -221,7 +224,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30.0),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 12),
                           minimumSize: const Size(410, 48), // Add minimum size
                         ),
                         child: const Text(
@@ -235,27 +239,28 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       const SizedBox(height: 16), // Space between the buttons
                       ElevatedButton(
-  onPressed: () {
-    _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
-  },
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.red, // Set background color to red
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(30.0),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-    minimumSize: const Size(410, 48), // Add minimum size
-  ),
-  child: const Text(
-    'Delete Account',
-    style: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontFamily: 'Nunito',
-    ),
-  ),
-),
-
+                        onPressed: () {
+                          _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Colors.red, // Set background color to red
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 12),
+                          minimumSize: const Size(410, 48), // Add minimum size
+                        ),
+                        child: const Text(
+                          'Delete Account',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -268,5 +273,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-
-

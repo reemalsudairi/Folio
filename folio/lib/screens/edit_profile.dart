@@ -14,7 +14,8 @@ class NumberRangeFormatter extends TextInputFormatter {
   NumberRangeFormatter({required this.min, required this.max});
 
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.text.isEmpty) {
       return newValue;
     }
@@ -26,7 +27,6 @@ class NumberRangeFormatter extends TextInputFormatter {
     return newValue; // Accept the new value if it's valid
   }
 }
-
 
 class EditProfile extends StatefulWidget {
   final String userId;
@@ -67,8 +67,6 @@ class _EditProfilePageState extends State<EditProfile> {
     _currentPhotoUrl = widget.profilePhotoUrl;
   }
 
-  
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -84,170 +82,161 @@ class _EditProfilePageState extends State<EditProfile> {
 // Method to show the confirmation message
 // Method to show the confirmation message
 // Method to show the confirmation message
-void _showConfirmationMessage(String message) {
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Prevent closing by tapping outside
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.transparent, // Make the dialog background transparent
-        content: Container(
-          width: 300, // Outer container width
-          height: 200, // Outer container height
-          decoration: BoxDecoration(
-            color: Colors.transparent, // Outer background transparent
-          ),
-          child: Center(
-            child: Container(
-              width: 280, // Match inner container size
-              height: 120, // Match inner container size
-              decoration: BoxDecoration(
-                color: Colors.lightGreen.withOpacity(0.7), // Light green background with transparency
-                borderRadius: BorderRadius.circular(30), // Rounded corners
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.check_circle, // Checkmark icon
-                    color: Colors.white,
-                    size: 40, // Adjust size as needed
-                  ),
-                  const SizedBox(height: 10), // Space between icon and text
-                  Text(
-                    message,
-                    style: const TextStyle(color: Colors.white, fontSize: 18), // Change text color to white
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+  void _showConfirmationMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing by tapping outside
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor:
+              Colors.transparent, // Make the dialog background transparent
+          content: Container(
+            width: 300, // Outer container width
+            height: 200, // Outer container height
+            decoration: const BoxDecoration(
+              color: Colors.transparent, // Outer background transparent
+            ),
+            child: Center(
+              child: Container(
+                width: 280, // Match inner container size
+                height: 120, // Match inner container size
+                decoration: BoxDecoration(
+                  color: Colors.lightGreen.withOpacity(
+                      0.7), // Light green background with transparency
+                  borderRadius: BorderRadius.circular(30), // Rounded corners
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.check_circle, // Checkmark icon
+                      color: Colors.white,
+                      size: 40, // Adjust size as needed
+                    ),
+                    const SizedBox(height: 10), // Space between icon and text
+                    Text(
+                      message,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18), // Change text color to white
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
+        );
+      },
+    );
 
-  // Close the dialog after 2 seconds
-  Future.delayed(const Duration(seconds: 2), () {
-    Navigator.of(context).pop(); // Close the dialog
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // Close the dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.of(context).pop(); // Close the dialog
+    });
+  }
 
 // Method to save profile
-Future<void> _saveProfile() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    try {
-      final userId = widget.userId;
-      String? profilePhotoUrl;
+  Future<void> _saveProfile() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      try {
+        final userId = widget.userId;
+        String? profilePhotoUrl;
 
-      // If a new image is picked, upload it
-      if (_imageFile != null) {
-        profilePhotoUrl = await _uploadProfilePhoto(userId);
-        if (profilePhotoUrl == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to upload profile photo')),
-          );
-          return; // Exit the method if photo upload fails
+        // If a new image is picked, upload it
+        if (_imageFile != null) {
+          profilePhotoUrl = await _uploadProfilePhoto(userId);
+          if (profilePhotoUrl == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to upload profile photo')),
+            );
+            return; // Exit the method if photo upload fails
+          }
+        } else if (_currentPhotoUrl.isNotEmpty &&
+            _currentPhotoUrl != 'assets/images/profile_pic.png') {
+          // Keep the current photo URL if no new photo is selected
+          profilePhotoUrl = _currentPhotoUrl;
+        } else {
+          profilePhotoUrl = ''; // If no photo exists, set an empty string
         }
-      } else if (_currentPhotoUrl.isNotEmpty && _currentPhotoUrl != 'assets/images/profile_pic.png') {
-        // Keep the current photo URL if no new photo is selected
-        profilePhotoUrl = _currentPhotoUrl;
-      } else {
-        profilePhotoUrl = ''; // If no photo exists, set an empty string
+
+        // Prepare the profile data
+        final userProfile = {
+          'name': _nameController.text,
+          'bio': _bioController.text,
+          'books': _booksController.text.isEmpty
+              ? 0
+              : int.parse(_booksController.text),
+          'profilePhoto': profilePhotoUrl,
+          'email': widget.email,
+        };
+
+        // Show a confirmation dialog before saving the profile
+        final confirmed = await _showConfirmationDialog();
+        if (confirmed) {
+          // Update the Firestore document
+          await FirebaseFirestore.instance
+              .collection('reader')
+              .doc(userId)
+              .set(userProfile, SetOptions(merge: true));
+
+          // Show success message
+          _showConfirmationMessage('Profile updated successfully!');
+
+          // Delay before navigating back to give the user time to see the message
+          await Future.delayed(const Duration(seconds: 2));
+
+          // Return the updated data to the previous screen
+          Navigator.pop(context, userProfile);
+        }
+      } catch (e) {
+        print('Error saving profile: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save profile: $e')),
+        );
       }
-
-      // Prepare the profile data
-      final userProfile = {
-        'name': _nameController.text,
-        'bio': _bioController.text,
-        'books': _booksController.text.isEmpty ? 0 : int.parse(_booksController.text),
-        'profilePhoto': profilePhotoUrl,
-        'email': widget.email,
-      };
-
-      // Show a confirmation dialog before saving the profile
-      final confirmed = await _showConfirmationDialog();
-      if (confirmed) {
-        // Update the Firestore document
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .set(userProfile, SetOptions(merge: true));
-
-        // Show success message
-        _showConfirmationMessage('Profile updated successfully!');
-        
-        // Delay before navigating back to give the user time to see the message
-        await Future.delayed(const Duration(seconds: 2));
-        
-        // Return the updated data to the previous screen
-        Navigator.pop(context, userProfile);
-      }
-    } catch (e) {
-      print('Error saving profile: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save profile: $e')),
-      );
     }
   }
-}
 
 // Method to handle the confirmation dialog
-Future<bool> _showConfirmationDialog() {
-  return showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Confirm Changes'),
-        content: const Text('Do you want to save the changes?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false), // Cancel
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true), // Confirm
-            child: const Text('Confirm'),
-          ),
-        ],
-      );
-    },
-  ).then((value) => value ?? false);
-}
-
-
-
-Future<String?> _uploadProfilePhoto(String userId) async {
-  if (_imageFile != null) {
-    try {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('profile_photos')
-          .child('$userId.jpg');
-      await ref.putFile(_imageFile!);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      print('Error uploading profile photo: $e');
-      return null;
-    }
+  Future<bool> _showConfirmationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm Changes'),
+          content: const Text('Do you want to save the changes?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // Cancel
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true), // Confirm
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    ).then((value) => value ?? false);
   }
-  return null;
-}
 
+  Future<String?> _uploadProfilePhoto(String userId) async {
+    if (_imageFile != null) {
+      try {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('profile_photos')
+            .child('$userId.jpg');
+        await ref.putFile(_imageFile!);
+        return await ref.getDownloadURL();
+      } catch (e) {
+        print('Error uploading profile photo: $e');
+        return null;
+      }
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -300,16 +289,16 @@ Future<String?> _uploadProfilePhoto(String userId) async {
                       optional: true, // Make bio optional
                     ),
                     const SizedBox(height: 20),
-                  _buildTextField(
-  controller: _booksController,
-  hintText: "How many books do you want to read this year?",
-  keyboardType: TextInputType.number,
-  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,
-    NumberRangeFormatter(min: 1, max: 1000),
-  ],
-  optional: true, // Make this field optional
-),
+                    _buildTextField(
+                      controller: _booksController,
+                      hintText: "How many books do you want to read this year?",
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        NumberRangeFormatter(min: 1, max: 1000),
+                      ],
+                      optional: true, // Make this field optional
+                    ),
 
                     const SizedBox(height: 40),
                     _buildEmailField(widget.email), // Add email field
@@ -339,22 +328,22 @@ Future<String?> _uploadProfilePhoto(String userId) async {
         ),
       ),
       appBar: AppBar(
-  title: const Text(
-    'Edit Profile',
-    style: TextStyle(
-      color: Color.fromARGB(255, 37, 30, 30), // Optional: Ensure the text is black
-      fontWeight: FontWeight.bold, // Optional: Make the text bold
-    ),
-  ),
-  backgroundColor: const Color(0xFFF8F8F3),
-  centerTitle: true, // Center the title in the AppBar
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    color: const Color.fromARGB(255, 47, 35, 35),
-    onPressed: () => Navigator.of(context).pop(),
-  ),
-),
-
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(
+            color: Color.fromARGB(
+                255, 37, 30, 30), // Optional: Ensure the text is black
+            fontWeight: FontWeight.bold, // Optional: Make the text bold
+          ),
+        ),
+        backgroundColor: const Color(0xFFF8F8F3),
+        centerTitle: true, // Center the title in the AppBar
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: const Color.fromARGB(255, 47, 35, 35),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
     );
   }
 
@@ -434,8 +423,6 @@ Future<String?> _uploadProfilePhoto(String userId) async {
       ),
     );
   }
-  
-
 }
 
 class ProfilePhotoWidget extends StatefulWidget {
@@ -471,41 +458,41 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
 
     showModalBottomSheet(
       context: context,
-      builder: (context) => Padding( padding:
-            const EdgeInsets.only(bottom: 50.0), 
-      child: BottomSheet(
-        onClosing: () {},
-        builder: (context) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera),
-              title: const Text('Take a Photo'),
-              onTap: () {
-                _pickImage(ImageSource.camera);
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                _pickImage(ImageSource.gallery);
-                Navigator.of(context).pop();
-              },
-            ),
-            if (!isDefaultImage)
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(bottom: 50.0),
+        child: BottomSheet(
+          onClosing: () {},
+          builder: (context) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ListTile(
-                leading: const Icon(Icons.delete),
-                title: const Text('Delete Photo'),
+                leading: const Icon(Icons.camera),
+                title: const Text('Take a Photo'),
                 onTap: () {
-                  _deletePhoto();
+                  _pickImage(ImageSource.camera);
                   Navigator.of(context).pop();
                 },
               ),
-          ],
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  _pickImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              if (!isDefaultImage)
+                ListTile(
+                  leading: const Icon(Icons.delete),
+                  title: const Text('Delete Photo'),
+                  onTap: () {
+                    _deletePhoto();
+                    Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -543,8 +530,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
             bottom: 0,
             right: 0,
             child: IconButton(
-              icon:
-                  const Icon(Icons.camera_alt, color: Color(0xFFF790AD)),
+              icon: const Icon(Icons.camera_alt, color: Color(0xFFF790AD)),
               onPressed: () {
                 _showImagePickerOptions(context);
               },
