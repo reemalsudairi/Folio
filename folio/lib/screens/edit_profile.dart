@@ -68,6 +68,8 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfile> {
+  bool _isLoading = false;
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
@@ -154,66 +156,76 @@ class _EditProfilePageState extends State<EditProfile> {
   }
 
 // Method to save profile
-  Future<void> _saveProfile() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      try {
-        final userId = widget.userId;
-        String? profilePhotoUrl;
+Future<void> _saveProfile() async {
+  if (_formKey.currentState?.validate() ?? false) {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final userId = widget.userId;
+      String? profilePhotoUrl;
 
-        // If a new image is picked, upload it
-        if (_imageFile != null) {
-          profilePhotoUrl = await _uploadProfilePhoto(userId);
-          if (profilePhotoUrl == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to upload profile photo')),
-            );
-            return; // Exit the method if photo upload fails
-          }
-        } else if (_currentPhotoUrl.isNotEmpty &&
-            _currentPhotoUrl != 'assets/images/profile_pic.png') {
-          // Keep the current photo URL if no new photo is selected
-          profilePhotoUrl = _currentPhotoUrl;
-        } else {
-          profilePhotoUrl = ''; // If no photo exists, set an empty string
+      // If a new image is picked, upload it
+      if (_imageFile != null) {
+        profilePhotoUrl = await _uploadProfilePhoto(userId);
+        if (profilePhotoUrl == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload profile photo')),
+          );
+          setState(() {
+            _isLoading = false;
+          });
+          return; // Exit the method if photo upload fails
         }
-
-        // Prepare the profile data
-        final userProfile = {
-          'name': _nameController.text,
-          'bio': _bioController.text,
-          'books': _booksController.text.isEmpty
-              ? 0
-              : int.parse(_booksController.text),
-          'profilePhoto': profilePhotoUrl,
-          'email': widget.email,
-        };
-
-        // Show a confirmation dialog before saving the profile
-        final confirmed = await _showConfirmationDialog();
-        if (confirmed) {
-          // Update the Firestore document
-          await FirebaseFirestore.instance
-              .collection('reader')
-              .doc(userId)
-              .set(userProfile, SetOptions(merge: true));
-
-          // Show success message
-          _showConfirmationMessage('Profile updated successfully!');
-
-          // Delay before navigating back to give the user time to see the message
-          await Future.delayed(const Duration(seconds: 2));
-
-          // Return the updated data to the previous screen
-          Navigator.pop(context, userProfile);
-        }
-      } catch (e) {
-        print('Error saving profile: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save profile: $e')),
-        );
+      } else if (_currentPhotoUrl.isNotEmpty &&
+          _currentPhotoUrl != 'assets/images/profile_pic.png') {
+        // Keep the current photo URL if no new photo is selected
+        profilePhotoUrl = _currentPhotoUrl;
+      } else {
+        profilePhotoUrl = ''; // If no photo exists, set an empty string
       }
+
+      // Prepare the profile data
+      final userProfile = {
+        'name': _nameController.text,
+        'bio': _bioController.text,
+        'books': _booksController.text.isEmpty
+            ? 0
+            : int.parse(_booksController.text),
+        'profilePhoto': profilePhotoUrl,
+        'email': widget.email,
+      };
+
+      // Show a confirmation dialog before saving the profile
+      final confirmed = await _showConfirmationDialog();
+      if (confirmed) {
+        // Update the Firestore document
+        await FirebaseFirestore.instance
+            .collection('reader')
+            .doc(userId)
+            .set(userProfile, SetOptions(merge: true));
+
+        // Show success message
+        _showConfirmationMessage('Profile updated successfully!');
+
+        // Delay before navigating back to give the user time to see the message
+        await Future.delayed(const Duration(seconds: 2));
+
+        // Return the updated data to the previous screen
+        Navigator.pop(context, userProfile);
+      }
+    } catch (e) {
+      print('Error saving profile: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save profile: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
+}
 
 // Method to handle the confirmation dialog
   Future<bool> _showConfirmationDialog() {
@@ -284,7 +296,7 @@ class _EditProfilePageState extends State<EditProfile> {
               width: 410,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
+                color: const Color(0xFFF8F8F3),
                 borderRadius: BorderRadius.circular(40),
               ),
               child: Form(
@@ -306,36 +318,43 @@ class _EditProfilePageState extends State<EditProfile> {
                       optional: true, // Make bio optional
                     ),
                     const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _booksController,
-                      hintText: "Yearly books goal (Max: 1000)",
-                      keyboardType: TextInputType.number,
-                       inputFormatters: [
+                   _buildTextField(
+  controller: _booksController,
+  hintText: "Yearly books goal (Max: 1000)",
+  keyboardType: TextInputType.number,
+  inputFormatters: [
     FilteringTextInputFormatter.digitsOnly,
     CustomTextInputFormatter(),
   ],
-                      optional: true, // Make this field optional
-                    ),
+  optional: true, // Make this field optional
+),
 
                     const SizedBox(height: 40),
                     _buildEmailField(widget.email), // Add email field
                     const SizedBox(height: 40),
+                   
+                  
+                   
                     SizedBox(
-                      width: 410,
-                      child: MaterialButton(
-                        color: const Color(0xFFF790AD),
-                        textColor: const Color(0xFFFFFFFF),
-                        height: 50,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                        onPressed: _saveProfile,
-                        child: const Text(
-                          "Save",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
+  width: 410,
+  child: MaterialButton(
+    color: const Color(0xFFF790AD),
+    textColor: const Color(0xFFFFFFFF),
+    height: 50,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(40),
+    ),
+    onPressed: _isLoading ? null : _saveProfile,
+    child: _isLoading
+        ? const CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation(Colors.white),
+          )
+        : const Text(
+            "Save",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+  ),
+),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -364,69 +383,78 @@ class _EditProfilePageState extends State<EditProfile> {
     );
   }
 
-  // Custom method to build text fields with dynamic color changes
   Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    int maxLength = 0,
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-    List<TextInputFormatter>? inputFormatters,
-    bool optional = false, // Add optional parameter
-  }) {
-    bool isFocused = false;
+  required TextEditingController controller,
+  required String hintText,
+  int maxLength = 0,
+  int maxLines = 1,
+  TextInputType keyboardType = TextInputType.text,
+  List<TextInputFormatter>? inputFormatters,
+  bool optional = false, // Add optional parameter
+}) {
+  bool isFocused = false;
 
-    return Focus(
-      onFocusChange: (hasFocus) {
-        setState(() {
-          isFocused = hasFocus;
-        });
+  return Focus(
+    onFocusChange: (hasFocus) {
+      setState(() {
+        isFocused = hasFocus;
+      });
+    },
+    child: TextFormField(
+      controller: controller,
+      maxLength: maxLength > 0 ? maxLength : null,
+      maxLines: maxLines,
+      onChanged: (text) {
+        if (controller == _booksController && text.isEmpty) {
+          _booksController.text = '';
+        }
       },
-      child: TextFormField(
-        controller: controller,
-        maxLength: maxLength > 0 ? maxLength : null,
-        maxLines: maxLines,
-         onChanged: (text) {
-    if (text.isEmpty) {
-      _booksController.text = '';
-    }
-  },
- inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,
-    CustomTextInputFormatter(),
-  ],
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(
-            color: Color(0xFF9B9B9B),
-            fontSize: 20,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide(
-              color:
-                  isFocused ? const Color(0xFF9B9B9B) : const Color(0xFFF790AD),
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFF9B9B9B)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFFF790AD)),
+      inputFormatters: inputFormatters,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(
+          color: Color(0xFF9B9B9B),
+          fontSize: 20,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(40),
+          borderSide: BorderSide(
+            color:
+                isFocused ? const Color(0xFF9B9B9B) : const Color(0xFFF790AD),
           ),
         ),
-        validator: (value) {
-          if (!optional && (value == null || value.isEmpty)) {
-            return 'Please enter your $hintText';
-          }
-          return null;
-        },
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(40),
+          borderSide: const BorderSide(color: Color(0xFF9B9B9B)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(40),
+          borderSide: const BorderSide(color: Color(0xFFF790AD)),
+        ),
+        suffixIcon: hintText == "Name"
+            ? Padding(
+                padding: const EdgeInsets.only(right: 45.0, top: 10.0), // Right padding
+                child: RichText(
+                  text: TextSpan(
+                    text: '*',
+                    style: TextStyle(color: Colors.red, fontSize: 20),
+                  ),
+                ),
+              )
+            : null,
       ),
-    );
-  }
+      validator: (value) {
+        if (!optional && (value == null || value.isEmpty)) {
+          return 'Please enter your $hintText';
+        }
+        return null;
+      },
+    ),
+  );
+}
 
   // New method for the unchangeable email field
   Widget _buildEmailField(String email) {
@@ -566,4 +594,3 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 }
-

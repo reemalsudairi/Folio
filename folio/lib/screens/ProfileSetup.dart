@@ -10,6 +10,25 @@ import 'package:folio/screens/homePage.dart';
 import 'package:folio/screens/login.dart';
 import 'package:image_picker/image_picker.dart';
 
+class CustomTextInputFormatter extends TextInputFormatter {
+ @override
+ TextEditingValue formatEditUpdate(
+     TextEditingValue oldValue, TextEditingValue newValue) {
+   if (newValue.text.isEmpty) {
+     return newValue;
+   }
+
+   int? value = int.tryParse(newValue.text);
+   if (value == null || value < 0 || value > 1000) {
+     return oldValue;
+   }
+
+   return newValue;
+ }
+}
+
+                    
+
 class ProfileSetup extends StatefulWidget {
  final String userId;
  const ProfileSetup({super.key, required this.userId});
@@ -157,11 +176,10 @@ void _showConfirmationMessage() {
      } catch (e) {
        print('Error saving profile: $e');
        // display an error message to the user
-       setState(() {
-       _errorMessage = 'Failed to save profile ';
-     });
+       updateErrorMessage('Failed to save profile');
        
      }
+    
    }
  }
 
@@ -182,6 +200,15 @@ void _showConfirmationMessage() {
    }
    return null;
  }
+void updateErrorMessage(String message) {
+ 
+   WidgetsBinding.instance.addPostFrameCallback((_) {
+   setState(() {
+     _errorMessage = message;
+   });
+ });
+ 
+}
 
  @override
  Widget build(BuildContext context) {
@@ -239,9 +266,8 @@ const SizedBox(height: 20),
                    
                      validator: (value) {
                        if (value == null || value.isEmpty) {
-                          setState(() {
-                          _errorMessage = "Name is required";  });
-                         return "Name is required"; // Name is required
+                     
+                         return "Please enter your Name"; // Name is required
                        }
                        if (value.trim().isEmpty) {
                          return "Name cannot contain only spaces";
@@ -249,6 +275,7 @@ const SizedBox(height: 20),
                        if (value.startsWith(' ')) {
                          return "Name cannot start with spaces";
                        }
+                       
                        return null; // Input is valid
                      },
                      maxLength: 50, // Set maximum length of name field
@@ -278,6 +305,15 @@ const SizedBox(height: 20),
                              const BorderSide(color: Color(0xFFF790AD)),
                          borderRadius: BorderRadius.circular(40),
                        ),
+                        suffixIcon: Padding(
+     padding: const EdgeInsets.only(right: 45.0,top: 10.0), // Right padding
+     child: RichText(
+       text: TextSpan(
+         text: '*',
+         style: TextStyle(color: Colors.red, fontSize: 20),
+       ),
+     ),
+ ),
                      ),
                    ),
 
@@ -323,11 +359,11 @@ const SizedBox(height: 20),
                      controller: _booksController,
                      keyboardType: TextInputType.number,
                      inputFormatters: [
-                       FilteringTextInputFormatter.digitsOnly
+                       FilteringTextInputFormatter.digitsOnly, CustomTextInputFormatter(),
                      ], 
                      // This ensures only numbers are allowed
                      decoration: InputDecoration(
-                       hintText:"How many books do you want to read in this year?",
+                       hintText:"Yearly books goal (Max: 1000)",
                        hintStyle: const TextStyle(
                          color: Color(0xFF695555),
                          fontWeight: FontWeight.w400,
@@ -378,46 +414,15 @@ const SizedBox(height: 20),
                        onPressed: _saveProfile,
                        child: const Text(
                          "Save",
-                         style: TextStyle(fontWeight: FontWeight.bold),
+                         style: TextStyle(fontFamily: 'Roboto',
+                               fontWeight: FontWeight.w700,
+                               fontSize: 20,
+                               color: Colors.white,),
                        ),
                      ),
                    ),
 
-                   const SizedBox(height: 20),
 
-                   // Skip profile setup for now?
-                   RichText(
-                     text: TextSpan(
-                       children: [
-                         const TextSpan(
-                           text: "Skip profile setup for now? ",
-                           style: TextStyle(
-                               fontFamily: 'Roboto',
-                               color: Color(0XFF695555),
-                               fontWeight: FontWeight.bold),
-                         ),
-                         TextSpan(
-                           text: "Skip",
-                           style: const TextStyle(
-                             fontFamily: 'Roboto',
-                             color: Color(0xFFF790AD),
-                             fontWeight: FontWeight.bold,
-                           ),
-                           recognizer: TapGestureRecognizer()
-                             ..onTap = () {
-                               Navigator.pushReplacement(
-                                 context,
-                                 MaterialPageRoute(
-                                   builder: (context) => const HomePage(
-                                     userId: '',
-                                   ),
-                                 ),
-                               );
-                             },
-                         ),
-                       ],
-                     ),
-                   ),
                    const SizedBox(height: 150), // Additional space after the text
                  ],
                ),

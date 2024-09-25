@@ -274,8 +274,19 @@ String _handleAuthError(FirebaseAuthException error) {
      borderRadius: BorderRadius.circular(40),
      borderSide: const BorderSide(color: Color(0xFFF790AD)), // Pink border when focused
    ),
+  suffixIcon: Padding(
+     padding: const EdgeInsets.only(right: 45.0,top: 10.0), // Right padding
+     child: RichText(
+       text: TextSpan(
+         text: '*',
+         style: TextStyle(color: Colors.red, fontSize: 20),
+       ),
+     ),
  ),
+  
+  
 ),
+ ),
                      
 const SizedBox(height: 20),
 
@@ -321,6 +332,15 @@ const SizedBox(height: 20),
      borderRadius: BorderRadius.circular(40),
      borderSide: const BorderSide(color: Color(0xFFF790AD)), // Pink border when focused
    ),
+   suffixIcon: Padding(
+     padding: const EdgeInsets.only(right: 45.0,top: 10.0), // Right padding
+     child: RichText(
+       text: TextSpan(
+         text: '*',
+         style: TextStyle(color: Colors.red, fontSize: 20),
+       ),
+     ),
+ ),
  ),
 ),
 
@@ -383,18 +403,35 @@ fontSize: 20,
  borderRadius: BorderRadius.circular(40),
  borderSide: const BorderSide(color: Color(0xFFF790AD)),
  ),
- suffixIcon: IconButton(
- icon: Icon(
-   _obscurePassword ? Icons.visibility_off : Icons.visibility,
-    color: const Color(0xFFF790AD),
-   ),
-   onPressed: () {
-   setState(() {
-   _obscurePassword = !_obscurePassword;
-    });
-   }
-    ),
-   ),
+ suffixIcon: Padding(
+ padding: const EdgeInsets.only(right: 8.0), // Right padding for the icon
+ child: Row(
+   mainAxisSize: MainAxisSize.min, // Ensure the row takes minimal space
+   children: [
+     // Asterisk on the left side of the icon
+     RichText(
+       text: TextSpan(
+         text: '*',
+         style: TextStyle(color: Colors.red, fontSize: 20),
+       ),
+     ),
+     // Icon button for visibility toggle
+     IconButton(
+       icon: Icon(
+         _obscurePassword ? Icons.visibility_off : Icons.visibility,
+         color: const Color(0xFFF790AD),
+       ),
+       onPressed: () {
+         setState(() {
+           _obscurePassword = !_obscurePassword;
+         });
+       },
+     ),
+   ],
+ ),
+),
+
+   ),//input decoration
   ),
 
 
@@ -450,17 +487,33 @@ fontWeight: FontWeight.w400,
  borderRadius: BorderRadius.circular(40),
  borderSide: const BorderSide(color: Color(0xFFF790AD)),
    ),
-    suffixIcon: IconButton(
-   icon: Icon(
-     _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-     color: const Color(0xFFF790AD),
-   ),
-   onPressed: () {
-   setState(() {
-    _obscureConfirmPassword = !_obscureConfirmPassword;
-    });
-   }
-    ),
+    suffixIcon: Padding(
+ padding: const EdgeInsets.only(right: 8.0), // Right padding for the icon
+ child: Row(
+   mainAxisSize: MainAxisSize.min, // Ensure the row takes minimal space
+   children: [
+     // Asterisk on the left side of the icon
+     RichText(
+       text: TextSpan(
+         text: '*',
+         style: TextStyle(color: Colors.red, fontSize: 20),
+       ),
+     ),
+     // Icon button for visibility toggle
+     IconButton(
+       icon: Icon(
+         _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+         color: const Color(0xFFF790AD),
+       ),
+       onPressed: () {
+         setState(() {
+           _obscureConfirmPassword = !_obscureConfirmPassword;
+         });
+       },
+     ),
+   ],
+ ),
+),
    ),
   ),
 
@@ -493,38 +546,25 @@ fontWeight: FontWeight.w400,
                            ),
                          ),
                        ),
-                 const SizedBox(height: 20),
-                 RichText(
-                   text: TextSpan(
-                     children: [
-                       const TextSpan(
-                         text: "Already have an account? ",
-                         style: TextStyle(
-                           fontFamily: 'Roboto',
-                           color: Color(0XFF695555),
-                           fontWeight: FontWeight.bold,
-                         ),
-                       ),
-                       TextSpan(
-                         text: "Login",
-                         style: const TextStyle(
-                           fontSize: 16,
-                           color: Color(0xFFF790AD),
-                           fontWeight: FontWeight.bold,
-                         ),
-                         recognizer: TapGestureRecognizer()
-                           ..onTap = () {
-                             Navigator.push(
-                               context,
-                               MaterialPageRoute(
-                                 builder: (context) => const LoginPage(),
-                                ),
-                             );
-                           },
-                       ),
-                     ],
-                   ),
-                 ),
+                   Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Already have an account?"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginPage()),
+                        );
+                      },
+                      child: const Text(
+                        'Log in',
+                        style: TextStyle(color: Color(0xFFF790AD)),
+                      ),
+                    ),
+                  ],
+                ),
+                                 const SizedBox(height: 20),
                ],
              ),
            ),
