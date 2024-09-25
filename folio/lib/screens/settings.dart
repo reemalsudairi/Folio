@@ -177,28 +177,27 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ListTile(
-                  leading:
-                      const Icon(Icons.notifications, color: Color(0xFF4A2E2B)),
-                  title: const Text(
-                    'Notifications',
-                    style: TextStyle(
-                      color: Color(0xFF4A2E2B),
-                      fontSize: 18,
-                      fontFamily: 'Nunito',
-                    ),
-                  ),
-                  trailing: Switch(
-                    value: _notificationOn,
-                    onChanged: (value) {
-                      setState(() {
-                        _notificationOn = value;
-                      });
-                    },
-                    activeColor: const Color(0xFFF790AD),
-                    activeTrackColor: const Color.fromARGB(255, 255, 255, 255),
-                  ),
-                ),
+            ListTile(
+  leading: const Icon(Icons.notifications, color: Color(0xFF4A2E2B)),
+  title: const Text(
+    'Notifications',
+    style: TextStyle(
+      color: Color(0xFF4A2E2B),
+      fontSize: 18,
+      fontFamily: 'Nunito',
+    ),
+  ),
+  trailing: IgnorePointer(
+    child: Switch(
+      value: _notificationOn,
+      onChanged: null, // Set onChanged to null to disable the switch
+      activeColor: const Color(0xFFF790AD),
+      activeTrackColor: const Color.fromARGB(255, 255, 255, 255),
+      inactiveThumbColor: Colors.grey, // Set inactive thumb color to grey
+      inactiveTrackColor: Colors.grey, // Set inactive track color to grey
+    ),
+  ),
+),
                 ListTile(
                   leading: const Icon(Icons.chat, color: Color(0xFF4A2E2B)),
                   title: const Text(
@@ -273,3 +272,4 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
+
