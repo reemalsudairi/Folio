@@ -268,6 +268,8 @@ void _togglePasswordVisibility() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
+                            const SizedBox(height: 10),
+
                 Stack(
                   children: [
                     Align(
@@ -283,7 +285,6 @@ void _togglePasswordVisibility() {
                       alignment: Alignment.topLeft,
                       child: IconButton(
                         icon: const Icon(Icons.arrow_back),
-                        iconSize: 40,
                         onPressed: () {
                           Navigator.push(
                             context,

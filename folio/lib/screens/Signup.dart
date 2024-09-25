@@ -153,6 +153,7 @@ String _handleAuthError(FirebaseAuthException error) {
            mainAxisAlignment: MainAxisAlignment.spaceBetween,
            crossAxisAlignment: CrossAxisAlignment.center,
            children: [
+            const SizedBox(height: 30),
                Stack(
                  children:[  Align(
                        alignment: Alignment.center,
@@ -169,7 +170,6 @@ String _handleAuthError(FirebaseAuthException error) {
                    alignment: Alignment.topLeft,
                    child: IconButton(
                      icon: const Icon(Icons.arrow_back),
-                     iconSize: 40,
                      onPressed: () {
                        Navigator.push(
                          context,
