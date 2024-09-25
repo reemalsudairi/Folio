@@ -6,6 +6,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+class CustomTextInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    int? value = int.tryParse(newValue.text);
+    if (value == null || value < 0 || value > 1000) {
+      return oldValue;
+    }
+
+    return newValue;
+  }
+}
+
 // Custom InputFormatter for restricting the number range
 class NumberRangeFormatter extends TextInputFormatter {
   final int min;
@@ -63,7 +80,7 @@ class _EditProfilePageState extends State<EditProfile> {
     super.initState();
     _nameController.text = widget.name;
     _bioController.text = widget.bio;
-    _booksController.text = widget.booksGoal.toString();
+    _booksController.text = widget.booksGoal == 0 ? '' : widget.booksGoal.toString();
     _currentPhotoUrl = widget.profilePhotoUrl;
   }
 
@@ -291,12 +308,12 @@ class _EditProfilePageState extends State<EditProfile> {
                     const SizedBox(height: 20),
                     _buildTextField(
                       controller: _booksController,
-                      hintText: "How many books do you want to read this year?",
+                      hintText: "Yearly books goal (Max: 1000)",
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        NumberRangeFormatter(min: 1, max: 1000),
-                      ],
+                       inputFormatters: [
+    FilteringTextInputFormatter.digitsOnly,
+    CustomTextInputFormatter(),
+  ],
                       optional: true, // Make this field optional
                     ),
 
@@ -369,8 +386,16 @@ class _EditProfilePageState extends State<EditProfile> {
         controller: controller,
         maxLength: maxLength > 0 ? maxLength : null,
         maxLines: maxLines,
+         onChanged: (text) {
+    if (text.isEmpty) {
+      _booksController.text = '';
+    }
+  },
+ inputFormatters: [
+    FilteringTextInputFormatter.digitsOnly,
+    CustomTextInputFormatter(),
+  ],
         keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: const TextStyle(
@@ -541,3 +566,4 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 }
+

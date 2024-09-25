@@ -147,7 +147,10 @@ String _handleAuthError(FirebaseAuthException error) {
        child: ConstrainedBox(
         constraints:
          BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+         child: IntrinsicHeight(
+
          child: Column(
+           mainAxisAlignment: MainAxisAlignment.spaceBetween,
            crossAxisAlignment: CrossAxisAlignment.center,
            children: [
                Stack(
@@ -464,70 +467,80 @@ fontWeight: FontWeight.w400,
   const SizedBox(height: 20),
 
                     // Sign up button
-                     isLoading
-                         ? const CircularProgressIndicator()
-                         : SizedBox(
-                             width: 410,
-                             child: MaterialButton(
-                               color: const Color(0xFFF790AD),
-                               textColor: const Color(0xFFFFFFFF),
-                               height: 50,
-                               shape: RoundedRectangleBorder(
-                                 borderRadius: BorderRadius.circular(40),
-                               ),
-                               onPressed: _signUp,
-                               child: const Text("Sign up",style: TextStyle( fontFamily: 'Roboto',
-                       fontWeight: FontWeight.w700,
-                       fontSize: 20,
-                       color: Colors.white,),),
-                             ),
+                     Padding(padding:const EdgeInsets.symmetric(vertical: 20),
+                     child: Column(
+                       children: [
+                          isLoading
+                     ? const CircularProgressIndicator()
+                     : SizedBox(
+                         width: 410,
+                         child: MaterialButton(
+                           color: const Color(0xFFF790AD),
+                           textColor: const Color(0xFFFFFFFF),
+                           height: 50,
+                           shape: RoundedRectangleBorder(
+                             borderRadius: BorderRadius.circular(40),
                            ),
-
-                     const SizedBox(height: 70),
-                     // Already have an account? Login
-                     RichText(
-                       text: TextSpan(
-                         children: [
-                           const TextSpan(
-                             text: "Already have an account? ",
-                             style: const TextStyle(
+                           onPressed: _signUp,
+                           child: const Text(
+                             "Sign up",
+                             style: TextStyle(
                                fontFamily: 'Roboto',
-                               color: Color(0XFF695555),
-                               fontWeight: FontWeight.bold,
+                               fontWeight: FontWeight.w700,
+                               fontSize: 20,
+                               color: Colors.white,
                              ),
                            ),
-                           TextSpan(
-                             text: "Login",
-                             style: const TextStyle(
-                               fontSize: 16,
-                         color: Color(0xFFF790AD),
-                         fontWeight: FontWeight.bold,
-                             ),
-                             recognizer: TapGestureRecognizer()
-                               ..onTap = () {
-                                 Navigator.push(
-                                   context,
-                                   MaterialPageRoute(
-                                     builder: (context) => const LoginPage(),
-                                   ),
-                                 );
-                               },
-                           ),
-                         ],
+                         ),
                        ),
-                     ),
-
-                   ],
+                 const SizedBox(height: 20),
+                 RichText(
+                   text: TextSpan(
+                     children: [
+                       const TextSpan(
+                         text: "Already have an account? ",
+                         style: TextStyle(
+                           fontFamily: 'Roboto',
+                           color: Color(0XFF695555),
+                           fontWeight: FontWeight.bold,
+                         ),
+                       ),
+                       TextSpan(
+                         text: "Login",
+                         style: const TextStyle(
+                           fontSize: 16,
+                           color: Color(0xFFF790AD),
+                           fontWeight: FontWeight.bold,
+                         ),
+                         recognizer: TapGestureRecognizer()
+                           ..onTap = () {
+                             Navigator.push(
+                               context,
+                               MaterialPageRoute(
+                                 builder: (context) => const LoginPage(),
+                                ),
+                             );
+                           },
+                       ),
+                     ],
+                   ),
                  ),
-               ),
+               ],
              ),
-
- 
-           ],
-         ),
-       ),
+           ),
+         ],
        ),
      ),
+   ),
+           ]
+         
+ ),
+       ),
+       ),
+   
+     ),
+   
+   ),
    );
  }
 //مدري وش فايدته 
