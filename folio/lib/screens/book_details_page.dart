@@ -183,80 +183,75 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         ),
                         const SizedBox(height: 20),
                         // Custom TabBar design
-                        Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                TextButton(
-                                  onPressed: () => _onItemTapped(0),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'About',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => _onItemTapped(1),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Clubs',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => _onItemTapped(2),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Reviews',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Stack(
-                              fit: StackFit.passthrough,
-                              children: [
-                                Container(
-                                  height: 2,
-                                  color: Colors.grey[300],
-                                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                                ),
-                                AnimatedPositioned(
-                                  duration: const Duration(milliseconds: 300),
-                                  left: _selectedIndex * (412 / 3) + 16,
-                                  top: -1,
-                                  child: Container(
-                                    height: 4,
-                                    width: 100,
-                                    color: Colors.brown[800],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      Column(
+  children: [
+    Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        TextButton(
+          onPressed: () => _onItemTapped(0),
+          child: Text(
+            'About',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600],
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () => _onItemTapped(1),
+          child: Text(
+            'Clubs',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600],
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () => _onItemTapped(2),
+          child: Text(
+            'Reviews',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600],
+            ),
+          ),
+        ),
+      ],
+    ),
+    Stack(
+      fit: StackFit.passthrough,
+      children: [
+        Container(
+          height: 2,
+          color: Colors.grey[300],
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+        AnimatedPositioned(
+  duration: const Duration(milliseconds: 300),
+  left: _getWordMiddlePosition(_selectedIndex, MediaQuery.of(context).size.width) - _calculateTextWidth(
+      _selectedIndex == 0
+          ? 'About'
+          : _selectedIndex == 1
+              ? 'Clubs'
+              : 'Reviews') /
+      2, // Position in the middle of the selected word
+  top: -1,
+  child: Container(
+    height: 4,
+    width: _calculateTextWidth(
+      _selectedIndex == 0 ? 'About' : _selectedIndex == 1 ? 'Clubs' : 'Reviews'),
+    color: Colors.brown[800],
+  ),
+),
+      ],
+    ),
+  ],
+),
                         const SizedBox(height: 20),
                         // Tab content based on selected index
                         if (_selectedIndex == 0)
@@ -377,4 +372,41 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 ),
     );
   }
+   double _calculateTextWidth(String text) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return textPainter.width;
+  }
+
+ double _getWordMiddlePosition(int index, double screenWidth) {
+  // Widths of each word using the same text style
+  final wordWidths = [
+    _calculateTextWidth('About'),
+    _calculateTextWidth('Clubs'),
+    _calculateTextWidth('Reviews'),
+  ];
+
+  // Calculate the total width occupied by the words
+  double totalWordsWidth = wordWidths.reduce((a, b) => a + b);
+  // Calculate the space left to distribute between the words (padding)
+  double spaceBetweenWords = (screenWidth - totalWordsWidth) / 3; // 3 words, 3 spaces (between words)
+
+  // Position based on index (for left margin)
+  double position = spaceBetweenWords / 2; // Start from the middle of the first space
+  for (int i = 0; i < index; i++) {
+    position += wordWidths[i] + spaceBetweenWords;
+  }
+
+  // Return middle of the word
+  return position + (wordWidths[index] / 2);
+}
 }
