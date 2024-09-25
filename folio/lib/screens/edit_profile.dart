@@ -356,7 +356,17 @@ Future<void> _saveProfile() async {
   ),
 ),
                     const SizedBox(height: 20),
+
+                    SizedBox(
+  height: 100,
+  width: double.infinity,
+  child: Container(
+    color: const Color(0xFFF8F8F3),
+  ),
+)
                   ],
+
+                  
                 ),
               ),
             ),
@@ -583,7 +593,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
             bottom: 0,
             right: 0,
             child: IconButton(
-              icon: const Icon(Icons.camera_alt, color: Color.fromARGB(255, 53, 31, 31)),
+              icon: const Icon(Icons.camera_alt, color: Color(0xFFF790AD)),
               onPressed: () {
                 _showImagePickerOptions(context);
               },
