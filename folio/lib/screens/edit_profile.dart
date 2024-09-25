@@ -128,7 +128,7 @@ class _EditProfilePageState extends State<EditProfile> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons.check_circle, // Checkmark icon
+                      Icons.check, // Checkmark icon
                       color: Colors.white,
                       size: 40, // Adjust size as needed
                     ),
