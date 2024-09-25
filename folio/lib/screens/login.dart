@@ -155,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
       case 'wrong-password':
         return 'Wrong password provided.';
       case 'invalid-email':
-        return 'The email address is badly formatted.';
+        return 'Please fill in all fields correctly.';
       case 'user-disabled':
         return 'This user has been disabled.';
       case 'network-request-failed':
@@ -169,65 +169,76 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    bool obscureText = false,
-    required String? Function(String?) validator,
-    Widget? suffixIcon,
-    FocusNode? focusNode,
-    int? maxLength,
-    bool isValid = true,
-  }) {
-    return Container(
-      width: 350,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: controller,
-            obscureText: obscureText ? _obscurePassword : false,
-            cursorColor: const Color(0xFFF790AD),
-            validator: validator,
-            focusNode: focusNode,
-            maxLength: maxLength,
-            inputFormatters: [
-              FilteringTextInputFormatter.deny(RegExp(r'\s')),
-            ],
-            onChanged: (value) {
-              setState(() {});
-            },
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: const TextStyle(
-                color: Color(0xFF695555),
-                fontWeight: FontWeight.w400,
-                fontSize: 20,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(40),
-                borderSide: const BorderSide(color: Color(0xFFF790AD)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(40),
-                borderSide: const BorderSide(color: Color(0xFFF790AD)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(40),
-                borderSide: const BorderSide(color: Color(0xFFF790AD)),
-              ),
-              counterText: '${controller.text.length}/$maxLength',
-              counterStyle: const TextStyle(color: Color(0xFF695555), fontSize: 12),
-              suffixIcon: suffixIcon,
-              errorText: isValid ? null : "Please enter a password.",
-              contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String hintText,
+  bool obscureText = false,
+  required String? Function(String?) validator,
+  Widget? suffixIcon,
+  FocusNode? focusNode,
+  int? maxLength,
+  bool isValid = true,
+  String? errorMessage, // Add error message parameter
+  bool showErrorBorder = false, // Add show error border parameter
+  void Function(String)? onChanged, // Add onChanged parameter
+}) {
+  return Container(
+    width: 350,
+    child: Column(
+      children: [
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText ? _obscurePassword : false,
+          cursorColor: const Color(0xFFF790AD),
+          validator: validator,
+          focusNode: focusNode,
+          maxLength: maxLength,
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'\s')),
+          ],
+          onChanged: onChanged, // Add onChanged property
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(
+              color: Color(0xFF695555),
+              fontWeight: FontWeight.w400,
+              fontSize: 20,
             ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            enabledBorder: showErrorBorder
+                ? OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(40),
+                    borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                  )
+                : OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(40),
+                    borderSide: const BorderSide(color: Color(0xFF695555)),
+                  ),
+            counterText: '${controller.text.length}/$maxLength',
+            counterStyle: const TextStyle(color: Color(0xFF695555), fontSize: 12),
+            suffixIcon: suffixIcon,
+            errorText: isValid ? null : errorMessage, // Use error message
+            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        if (errorMessage != null) // Show error message
+          Text(
+            errorMessage,
+            style: const TextStyle(color: Colors.red, fontSize: 12),
+          ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -238,6 +249,7 @@ class _LoginPageState extends State<LoginPage> {
           padding: const EdgeInsets.all(20.0),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -301,53 +313,61 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 const SizedBox(height: 20),
-                _buildTextField(
-                  controller: emailController,
-                  hintText: 'Email',
-                  focusNode: emailFocusNode,
-                  maxLength: 254,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Please enter an email.";
-                    }
-                    if (value.trim().contains(' ')) {
-                      return "Email cannot contain spaces.";
-                    }
-                    if (value.trim().length > 254 || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
-                      return "Please enter a valid email.";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
                _buildTextField(
+  controller: emailController,
+  hintText: 'Email',
+  focusNode: emailFocusNode,
+  maxLength: 254,
+  validator: (value) {
+    if (value != null && value.trim().isNotEmpty) {
+      if (value.trim().contains(' ')) {
+        return "Email cannot contain spaces.";
+      }
+      if (value.trim().length > 254 || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
+        return "Invalid email address";
+      }
+    }
+    return null; // Remove "Please enter an email" message
+  },
+  showErrorBorder: emailController.text.isEmpty,
+),
+
+                const SizedBox(height: 20),
+_buildTextField(
   controller: passwordController,
   hintText: 'Password',
   obscureText: true,
   focusNode: passwordFocusNode,
   maxLength: 16,
   validator: (value) {
-    if (value == null || value.isEmpty) {
-      return "Please enter a password.";
+    if (value != null && value.trim().isNotEmpty) {
+      if (value.trim().length < 6 || value.trim().length > 16) {
+        return "Password must be between 6 and 16 characters.";
+      }
     }
-    if (!_isPasswordFieldValid) {
-      return "Password must be between 6 and 16 characters.";
-    }
-    return null;
+    return null; // Remove "Please enter a password" message
   },
- suffixIcon: IconButton(
-  icon: Icon(
-    _obscurePassword ? Icons.visibility_off : Icons.visibility, // Toggle between open/close eye icon
-    color: const Color(0xFFF790AD), // Make the eye pink
+  suffixIcon: IconButton(
+    icon: Icon(
+      _obscurePassword ? Icons.visibility_off : Icons.visibility, // Toggle between open/close eye icon
+      color: const Color(0xFFF790AD), // Make the eye pink
+    ),
+    onPressed: () {
+      setState(() {
+        _obscurePassword = !_obscurePassword; // Toggle password visibility
+      });
+    },
   ),
-  onPressed: () {
+  showErrorBorder: passwordController.text.isEmpty,
+  onChanged: (value) {
     setState(() {
-      _obscurePassword = !_obscurePassword; // Toggle password visibility
+      _isPasswordFieldValid = value.isNotEmpty &&
+          value.trim().length >= 6 &&
+          value.trim().length <= 16;
     });
   },
 ),
 
-),
 
 
                 const SizedBox(height: 20),
