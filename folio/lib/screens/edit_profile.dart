@@ -6,6 +6,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+// Custom InputFormatter for restricting the number range
+class NumberRangeFormatter extends TextInputFormatter {
+  final int min;
+  final int max;
+
+  NumberRangeFormatter({required this.min, required this.max});
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    int? value = int.tryParse(newValue.text);
+    if (value == null || value < min || value > max) {
+      return oldValue; // Keep the old value if it's out of range or invalid
+    }
+    return newValue; // Accept the new value if it's valid
+  }
+}
+
 
 class EditProfile extends StatefulWidget {
   final String userId;
@@ -14,7 +35,6 @@ class EditProfile extends StatefulWidget {
   final String profilePhotoUrl;
   final int booksGoal;
   final String email; // Add email parameter
-
 
   const EditProfile({
     super.key,
@@ -26,11 +46,9 @@ class EditProfile extends StatefulWidget {
     required this.email, // Accept email
   });
 
-
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
 }
-
 
 class _EditProfilePageState extends State<EditProfile> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -39,7 +57,6 @@ class _EditProfilePageState extends State<EditProfile> {
   final TextEditingController _booksController = TextEditingController();
   File? _imageFile;
   late String _currentPhotoUrl;
-
 
   @override
   void initState() {
@@ -50,6 +67,7 @@ class _EditProfilePageState extends State<EditProfile> {
     _currentPhotoUrl = widget.profilePhotoUrl;
   }
 
+  
 
   @override
   void dispose() {
@@ -58,7 +76,6 @@ class _EditProfilePageState extends State<EditProfile> {
     _booksController.dispose();
     super.dispose();
   }
-
 
   // Method to save profile
 // Method to save profile
@@ -111,26 +128,11 @@ void _showConfirmationMessage(String message) {
     },
   );
 
-
   // Close the dialog after 2 seconds
   Future.delayed(const Duration(seconds: 2), () {
     Navigator.of(context).pop(); // Close the dialog
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -152,7 +154,6 @@ Future<void> _saveProfile() async {
       final userId = widget.userId;
       String? profilePhotoUrl;
 
-
       // If a new image is picked, upload it
       if (_imageFile != null) {
         profilePhotoUrl = await _uploadProfilePhoto(userId);
@@ -169,7 +170,6 @@ Future<void> _saveProfile() async {
         profilePhotoUrl = ''; // If no photo exists, set an empty string
       }
 
-
       // Prepare the profile data
       final userProfile = {
         'name': _nameController.text,
@@ -179,7 +179,6 @@ Future<void> _saveProfile() async {
         'email': widget.email,
       };
 
-
       // Show a confirmation dialog before saving the profile
       final confirmed = await _showConfirmationDialog();
       if (confirmed) {
@@ -188,7 +187,6 @@ Future<void> _saveProfile() async {
             .collection('reader')
             .doc(userId)
             .set(userProfile, SetOptions(merge: true));
-
 
         // Show success message
         _showConfirmationMessage('Profile updated successfully!');
@@ -207,7 +205,6 @@ Future<void> _saveProfile() async {
     }
   }
 }
-
 
 // Method to handle the confirmation dialog
 Future<bool> _showConfirmationDialog() {
@@ -234,9 +231,6 @@ Future<bool> _showConfirmationDialog() {
 
 
 
-
-
-
 Future<String?> _uploadProfilePhoto(String userId) async {
   if (_imageFile != null) {
     try {
@@ -253,8 +247,6 @@ Future<String?> _uploadProfilePhoto(String userId) async {
   }
   return null;
 }
-
-
 
 
   @override
@@ -308,13 +300,17 @@ Future<String?> _uploadProfilePhoto(String userId) async {
                       optional: true, // Make bio optional
                     ),
                     const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _booksController,
-                      hintText: "How many books do you want to read this year?",
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      optional: true, // Make this field optional
-                    ),
+                  _buildTextField(
+  controller: _booksController,
+  hintText: "How many books do you want to read this year?",
+  keyboardType: TextInputType.number,
+  inputFormatters: [
+    FilteringTextInputFormatter.digitsOnly,
+    NumberRangeFormatter(min: 1, max: 1000),
+  ],
+  optional: true, // Make this field optional
+),
+
                     const SizedBox(height: 40),
                     _buildEmailField(widget.email), // Add email field
                     const SizedBox(height: 40),
@@ -343,17 +339,24 @@ Future<String?> _uploadProfilePhoto(String userId) async {
         ),
       ),
       appBar: AppBar(
-        title: const Text('Edit Profile'),
-        backgroundColor: const Color(0xFFF8F8F3),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: const Color(0xFF000000),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+  title: const Text(
+    'Edit Profile',
+    style: TextStyle(
+      color: Color.fromARGB(255, 37, 30, 30), // Optional: Ensure the text is black
+      fontWeight: FontWeight.bold, // Optional: Make the text bold
+    ),
+  ),
+  backgroundColor: const Color(0xFFF8F8F3),
+  centerTitle: true, // Center the title in the AppBar
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    color: const Color.fromARGB(255, 47, 35, 35),
+    onPressed: () => Navigator.of(context).pop(),
+  ),
+),
+
     );
   }
-
 
   // Custom method to build text fields with dynamic color changes
   Widget _buildTextField({
@@ -366,7 +369,6 @@ Future<String?> _uploadProfilePhoto(String userId) async {
     bool optional = false, // Add optional parameter
   }) {
     bool isFocused = false;
-
 
     return Focus(
       onFocusChange: (hasFocus) {
@@ -412,7 +414,6 @@ Future<String?> _uploadProfilePhoto(String userId) async {
     );
   }
 
-
   // New method for the unchangeable email field
   Widget _buildEmailField(String email) {
     return TextFormField(
@@ -433,13 +434,13 @@ Future<String?> _uploadProfilePhoto(String userId) async {
       ),
     );
   }
-}
+  
 
+}
 
 class ProfilePhotoWidget extends StatefulWidget {
   final ImageProvider<Object>? initialImage;
   final ValueChanged<File?> onImagePicked;
-
 
   const ProfilePhotoWidget({
     super.key,
@@ -447,17 +448,14 @@ class ProfilePhotoWidget extends StatefulWidget {
     required this.onImagePicked,
   });
 
-
   @override
   _ProfilePhotoWidgetState createState() => _ProfilePhotoWidgetState();
 }
-
 
 class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   late ImageProvider<Object> _currentImage;
-
 
   @override
   void initState() {
@@ -466,12 +464,10 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
         const AssetImage('assets/images/profile_pic.png');
   }
 
-
   Future<void> _showImagePickerOptions(BuildContext context) async {
     bool isDefaultImage = _currentImage is AssetImage &&
         (_currentImage as AssetImage).assetName ==
             'assets/images/profile_pic.png';
-
 
     showModalBottomSheet(
       context: context,
@@ -514,7 +510,6 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 
-
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
@@ -526,7 +521,6 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     }
   }
 
-
   void _deletePhoto() {
     setState(() {
       _imageFile = null;
@@ -534,7 +528,6 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     });
     widget.onImagePicked(null);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -551,7 +544,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
             right: 0,
             child: IconButton(
               icon:
-                  const Icon(Icons.camera_alt,color: Color.fromARGB(255, 53, 31, 31)),
+                  const Icon(Icons.camera_alt, color: Color(0xFFF790AD)),
               onPressed: () {
                 _showImagePickerOptions(context);
               },

@@ -146,13 +146,13 @@ class _ProfileSetupState extends State<ProfileSetup> {
           children: [
             const SizedBox(height: 100),
             // Profile photo with pencil icon
-            ProfilePhotoWidget(
-              onImagePicked: (File imageFile) {
-                setState(() {
-                  _imageFile = imageFile;
-                });
-              },
-            ),
+             ProfilePhotoWidget(
+  onImagePicked: (File? imageFile) {
+    setState(() {
+      _imageFile = imageFile; // Handle null when deleting the photo
+    });
+  },
+),
             const SizedBox(height: 20),
             Container(
               width: 410,
@@ -359,8 +359,10 @@ class _ProfileSetupState extends State<ProfileSetup> {
 }
 
 class ProfilePhotoWidget extends StatefulWidget {
-  final Function(File) onImagePicked;
+  final Function(File?) onImagePicked;
+
   const ProfilePhotoWidget({super.key, required this.onImagePicked});
+
   @override
   _ProfilePhotoWidgetState createState() => _ProfilePhotoWidgetState();
 }
@@ -368,13 +370,23 @@ class ProfilePhotoWidget extends StatefulWidget {
 class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
-  // Function to pick image from gallery or camera
+  late ImageProvider<Object> _currentImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentImage = const AssetImage('assets/images/profile_pic.png');
+  }
+
+  // Function to show options for picking an image
   Future<void> _showImagePickerOptions(BuildContext context) async {
+    // Check if the current image is the default image
+    bool isDefaultImage = _imageFile == null;
+
     showModalBottomSheet(
       context: context,
       builder: (context) => Padding(
-        padding:
-            const EdgeInsets.only(bottom: 50.0), // Add padding for better look
+        padding: const EdgeInsets.only(bottom: 50.0),
         child: BottomSheet(
           onClosing: () {},
           builder: (context) => Column(
@@ -396,6 +408,15 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
                   Navigator.of(context).pop();
                 },
               ),
+              if (!isDefaultImage)
+                ListTile(
+                  leading: const Icon(Icons.delete),
+                  title: const Text('Delete Photo'),
+                  onTap: () {
+                    _deletePhoto();
+                    Navigator.of(context).pop();
+                  },
+                ),
             ],
           ),
         ),
@@ -403,43 +424,43 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 
-  // Function to pick an image
+  // Function to pick an image from the camera or gallery
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
-        widget.onImagePicked(_imageFile!);
+        _currentImage = FileImage(_imageFile!);
       });
-      widget.onImagePicked(_imageFile!); // Notify parent widget
+      widget.onImagePicked(_imageFile); // Notify parent widget with the picked image
     }
+  }
+
+  // Function to delete the selected photo and revert to the default image
+  void _deletePhoto() {
+    setState(() {
+      _imageFile = null;
+      _currentImage = const AssetImage('assets/images/profile_pic.png');
+    });
+    widget.onImagePicked(null); // Notify parent widget that the photo is deleted
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Profile photo with thin border
+        // Display profile photo with a border
         CircleAvatar(
           radius: 64,
-          backgroundImage: _imageFile != null
-              ? FileImage(_imageFile!)
-              : const AssetImage("assets/images/profile_pic.png")
-                  as ImageProvider,
+          backgroundImage: _currentImage,
           backgroundColor: const Color(0xFFF790AD),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFF790AD), width: 3),
-            ),
-          ),
         ),
-        // Pencil icon for editing
+        // Button to edit or change the photo
         Positioned(
           bottom: 0,
           right: 0,
           child: IconButton(
-            icon: const Icon(Icons.camera_alt),
+            icon: const Icon(Icons.camera_alt, color: Color.fromARGB(255, 53, 31, 31)),
             onPressed: () => _showImagePickerOptions(context),
           ),
         ),
@@ -447,3 +468,4 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     );
   }
 }
+ 
