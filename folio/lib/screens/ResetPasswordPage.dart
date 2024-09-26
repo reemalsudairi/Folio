@@ -132,7 +132,7 @@ Future<void> sendPasswordResetEmail() async {
   } else {
     setState(() {
       _errorMessage = "Invalid email, please check the email format.";
-      emailController.clear(); // Clear email input on invalid format
+      // emailController.clear(); // Clear email input on invalid format
     });
 
     // Clear error message after 1 second
