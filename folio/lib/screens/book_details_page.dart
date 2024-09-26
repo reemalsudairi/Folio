@@ -328,7 +328,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               const SizedBox(height: 10), // Adds some space between "Description" and the actual content
                               // Full Description with HTML tags removed
                               SizedBox(
-                                height: 200, // Set a height for the description
+                                height: 500, // Set a height for the description
                                 child: SingleChildScrollView(
                                   child: Text(
                                     removeHtmlTags(bookDetails?['volumeInfo']['description'] ?? 'No description available.'),
