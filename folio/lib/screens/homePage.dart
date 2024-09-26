@@ -169,7 +169,7 @@ class HomePageContent extends StatelessWidget {
             IgnorePointer(
               child: IconButton(
                 icon: const Icon(
-                  Icons.person_2,
+                  Icons.person_search_rounded,
                   color: Color.fromARGB(255, 35, 23, 23),
                   size: 30,
                 ),

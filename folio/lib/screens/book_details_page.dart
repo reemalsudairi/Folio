@@ -317,28 +317,31 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               ),
                               const SizedBox(height: 10),
                               // Description label and content
-                              const Text(
-                                'Description',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 10), // Adds some space between "Description" and the actual content
-                              // Full Description with HTML tags removed
-                              SizedBox(
-                                height: 500, // Set a height for the description
-                                child: SingleChildScrollView(
-                                  child: Text(
-                                    removeHtmlTags(bookDetails?['volumeInfo']['description'] ?? 'No description available.'),
-                                    style: const TextStyle(fontSize: 16),
-                                    textAlign: TextAlign.justify,
-                                    softWrap: true, // Ensure text wraps naturally at word boundaries
-                                    overflow: TextOverflow.clip, // Clip any overflowing text
-                                  ),
-                                ),
-                              ),
+// Description label and content
+const Text(
+  'Description',
+  style: TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 18,
+    color: Colors.grey,
+  ),
+),
+const SizedBox(height: 10), // Adds some space between "Description" and the actual content
+// Full Description with HTML tags removed
+SingleChildScrollView(
+  child: ListView(
+    shrinkWrap: true, // Allow the ListView to shrink to fit its content
+    physics: NeverScrollableScrollPhysics(), // Disable scrolling on the ListView
+    children: [
+      Text(
+        removeHtmlTags(bookDetails?['volumeInfo']['description'] ?? 'No description available.'),
+        style: const TextStyle(fontSize: 16),
+        textAlign: TextAlign.justify,
+        softWrap: true, // Ensure text wraps naturally at word boundaries
+      ),
+    ],
+  ),
+),
                             ],
                           ),
                         if (_selectedIndex == 1)
@@ -407,4 +410,4 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     // Return middle of the word
     return position + (wordWidths[index] / 2);
   }
-}
+} 
