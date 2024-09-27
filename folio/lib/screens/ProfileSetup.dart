@@ -1,12 +1,11 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, curly_braces_in_flow_control_structures, library_private_types_in_public_api
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:folio/screens/homePage.dart';
 import 'package:folio/screens/login.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -225,7 +224,7 @@ void updateErrorMessage(String message) {
    setState(() {
      _imageFile = imageFile; // Handle null when deleting the photo
    });
- },
+ }, initialImage: '',
 ),
 const SizedBox(height: 20),
            
@@ -438,7 +437,7 @@ const SizedBox(height: 20),
 class ProfilePhotoWidget extends StatefulWidget {
  final Function(File?) onImagePicked;
 
- const ProfilePhotoWidget({super.key, required this.onImagePicked});
+ const ProfilePhotoWidget({super.key, required this.onImagePicked, required Object initialImage});
 
  @override
  _ProfilePhotoWidgetState createState() => _ProfilePhotoWidgetState();

@@ -19,6 +19,11 @@ class CustomTextInputFormatter extends TextInputFormatter {
       return oldValue;
     }
 
+    // Allow a single leading zero
+    if (RegExp(r'^0\d+').hasMatch(newValue.text)) {
+      return oldValue;
+    }
+
     return newValue;
   }
 }
@@ -128,7 +133,7 @@ class _EditProfilePageState extends State<EditProfile> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons.check, // Checkmark icon
+                      Icons.check_circle, // Checkmark icon
                       color: Colors.white,
                       size: 40, // Adjust size as needed
                     ),
@@ -187,7 +192,7 @@ Future<void> _saveProfile() async {
 
       // Prepare the profile data
       final userProfile = {
-        'name': _nameController.text,
+        'name': _nameController.text.trim(), // Trim trailing spaces from name
         'bio': _bioController.text,
         'books': _booksController.text.isEmpty
             ? 0
@@ -268,203 +273,232 @@ Future<void> _saveProfile() async {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F3),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 10),
-            ProfilePhotoWidget(
-              initialImage: _imageFile != null
-                  ? FileImage(_imageFile!)
-                  : _currentPhotoUrl.isNotEmpty
-                      ? NetworkImage(_currentPhotoUrl)
-                      : const AssetImage('assets/images/profile_pic.png'),
-              onImagePicked: (File? imageFile) {
-                setState(() {
-                  _imageFile = imageFile;
-                  if (imageFile == null) {
-                    _currentPhotoUrl = '';
-                  }
-                });
-              },
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8F8F3),
+    body: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 10),
+          ProfilePhotoWidget(
+            initialImage: _imageFile != null
+                ? FileImage(_imageFile!)
+                : _currentPhotoUrl.isNotEmpty
+                    ? NetworkImage(_currentPhotoUrl)
+                    : const AssetImage('assets/images/profile_pic.png'),
+            onImagePicked: (File? imageFile) {
+              setState(() {
+                _imageFile = imageFile;
+                if (imageFile == null) {
+                  _currentPhotoUrl = '';
+                }
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: 410,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F8F3),
+              borderRadius: BorderRadius.circular(40),
             ),
-            const SizedBox(height: 20),
-            Container(
-              width: 410,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8F8F3),
-                borderRadius: BorderRadius.circular(40),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start
+                children: [
+                  const SizedBox(height: 40),
+                  const Text(
+                    "Name",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A4A4A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTextField(
+                    controller: _nameController,
+                    hintText: "Enter your name",
+                    maxLength: 50,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Bio",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A4A4A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTextField(
+                    controller: _bioController,
+                    hintText: "Tell us about yourself..",
+                    maxLength: 152,
+                    maxLines: 4,
+                    optional: true, // Make bio optional
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Yearly books goal (Max: 1000)",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A4A4A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTextField(
+                    controller: _booksController,
+                    hintText: "",
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      CustomTextInputFormatter(),
+                    ],
+                    optional: true, // Make this field optional
+                  ),
+                  const SizedBox(height: 40),
+                  const Text(
+                    "Email",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A4A4A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildEmailField(widget.email), // Add email field
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: 410,
+                    child: MaterialButton(
+                      color: const Color(0xFFF790AD),
+                      textColor: const Color(0xFFFFFFFF),
+                      height: 50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      onPressed: _isLoading ? null : _saveProfile,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            )
+                          : const Text(
+                              "Save",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
-                    _buildTextField(
-                      controller: _nameController,
-                      hintText: "Name",
-                      maxLength: 50,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _bioController,
-                      hintText: "Bio",
-                      maxLength: 152,
-                      maxLines: 4,
-                      optional: true, // Make bio optional
-                    ),
-                    const SizedBox(height: 20),
-                   _buildTextField(
-  controller: _booksController,
-  hintText: "Yearly books goal (Max: 1000)",
-  keyboardType: TextInputType.number,
-  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,
-    CustomTextInputFormatter(),
-  ],
-  optional: true, // Make this field optional
-),
-
-                    const SizedBox(height: 40),
-                    _buildEmailField(widget.email), // Add email field
-                    const SizedBox(height: 40),
-                   
-                  
-                   
-                    SizedBox(
-  width: 410,
-  child: MaterialButton(
-    color: const Color(0xFFF790AD),
-    textColor: const Color(0xFFFFFFFF),
-    height: 50,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(40),
+            ),
+          ),
+        ],
+      ),
     ),
-    onPressed: _isLoading ? null : _saveProfile,
-    child: _isLoading
-        ? const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(Colors.white),
-          )
-        : const Text(
-            "Save",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-  ),
-),
-                    const SizedBox(height: 20),
-
-                    SizedBox(
-  height: 100,
-  width: double.infinity,
-  child: Container(
-    color: const Color(0xFFF8F8F3),
-  ),
-)
-                  ],
-
-                  
-                ),
-              ),
-            ),
-          ],
+    appBar: AppBar(
+      title: const Text(
+        'Edit Profile',
+        style: TextStyle(
+          color: Color.fromARGB(
+              255, 37, 30, 30), // Optional: Ensure the text is black
+          fontWeight: FontWeight.bold, // Optional: Make the text bold
         ),
       ),
-      appBar: AppBar(
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
-            color: Color.fromARGB(
-                255, 37, 30, 30), // Optional: Ensure the text is black
-            fontWeight: FontWeight.bold, // Optional: Make the text bold
-          ),
-        ),
-        backgroundColor: const Color(0xFFF8F8F3),
-        centerTitle: true, // Center the title in the AppBar
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: const Color.fromARGB(255, 47, 35, 35),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      backgroundColor: const Color(0xFFF8F8F3),
+      centerTitle: true, // Center the title in the AppBar
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        color: const Color.fromARGB(255, 47, 35, 35),
+        onPressed: () => Navigator.of(context).pop(),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildTextField({
+
+Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
   int maxLength = 0,
   int maxLines = 1,
   TextInputType keyboardType = TextInputType.text,
   List<TextInputFormatter>? inputFormatters,
-  bool optional = false, // Add optional parameter
+  bool optional = false,
 }) {
-  bool isFocused = false;
-
-  return Focus(
-    onFocusChange: (hasFocus) {
-      setState(() {
-        isFocused = hasFocus;
-      });
+  return TextFormField(
+    controller: controller,
+    maxLength: maxLength > 0 ? maxLength : null,
+    maxLines: maxLines,
+    inputFormatters: [
+      if (hintText == "Name")
+        FilteringTextInputFormatter.deny(RegExp(r'^\s+')), // Deny leading spaces
+      ...?inputFormatters, // Keep existing input formatters if any
+    ],
+    onChanged: (text) {
+      if (hintText == "Name") {
+        // Trim leading spaces while typing
+        if (text.startsWith(' ')) {
+          controller.text = text.trimLeft();
+        }
+        // Set cursor to the end
+        controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: controller.text.length),
+        );
+      }
     },
-    child: TextFormField(
-      controller: controller,
-      maxLength: maxLength > 0 ? maxLength : null,
-      maxLines: maxLines,
-      onChanged: (text) {
-        if (controller == _booksController && text.isEmpty) {
-          _booksController.text = '';
-        }
-      },
-      inputFormatters: inputFormatters,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(
-          color: Color(0xFF9B9B9B),
-          fontSize: 20,
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(40),
-          borderSide: BorderSide(
-            color:
-                isFocused ? const Color(0xFF9B9B9B) : const Color(0xFFF790AD),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(40),
-          borderSide: const BorderSide(color: Color(0xFF9B9B9B)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(40),
-          borderSide: const BorderSide(color: Color(0xFFF790AD)),
-        ),
-        suffixIcon: hintText == "Name"
-            ? Padding(
-                padding: const EdgeInsets.only(right: 45.0, top: 10.0), // Right padding
-                child: RichText(
-                  text: TextSpan(
-                    text: '*',
-                    style: TextStyle(color: Colors.red, fontSize: 20),
-                  ),
-                ),
-              )
-            : null,
+    onFieldSubmitted: (value) {
+      if (hintText == "Name") {
+        controller.text = controller.text.trimRight();
+      }
+    },
+    keyboardType: keyboardType,
+    decoration: InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(
+        color: Color(0xFF9B9B9B),
+        fontSize: 20,
       ),
-      validator: (value) {
-        if (!optional && (value == null || value.isEmpty)) {
-          return 'Please enter your $hintText';
-        }
-        return null;
-      },
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(40),
+        borderSide: const BorderSide(color: Color(0xFFF790AD)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(40),
+        borderSide: const BorderSide(color: Color(0xFF9B9B9B)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(40),
+        borderSide: const BorderSide(color: Color(0xFFF790AD)),
+      ),
+      suffixIcon: hintText == "Name"
+          ? Padding(
+              padding: const EdgeInsets.only(right: 45.0, top: 10.0),
+              child: RichText(
+                text: const TextSpan(
+                  text: '*',
+                  style: TextStyle(color: Colors.red, fontSize: 20),
+                ),
+              ),
+            )
+          : null,
     ),
+    validator: (value) {
+      if (!optional && (value == null || value.isEmpty)) {
+        return 'Please enter your $hintText';
+      }
+      return null;
+    },
   );
 }
+
 
   // New method for the unchangeable email field
   Widget _buildEmailField(String email) {
