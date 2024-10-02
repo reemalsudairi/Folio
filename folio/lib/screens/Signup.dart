@@ -232,7 +232,18 @@ String _handleAuthError(FirebaseAuthException error) {
                    ),
                  ),
                   const SizedBox(height: 20),
-   //username                 
+   //username 
+   Column(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start (left)
+  children: [
+    const Text(
+      "Username",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A4A),
+      ),
+    ),            
  TextFormField(
  controller: _usernameController,
  autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -253,7 +264,9 @@ String _handleAuthError(FirebaseAuthException error) {
  },
  keyboardType: TextInputType.text,
  maxLength: 20,
+  
  decoration: InputDecoration(
+  
  hintText: "@Username",
  hintStyle: const TextStyle(
  color: Color(0xFF695555),
@@ -287,10 +300,22 @@ String _handleAuthError(FirebaseAuthException error) {
   
 ),
  ),
+  ],),
                      
 const SizedBox(height: 20),
 
  // Email
+ Column(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start (left)
+  children: [
+    const Text(
+      "Email",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A4A),
+      ),
+    ),
  TextFormField(
  controller: _emailController,
  autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -343,10 +368,23 @@ const SizedBox(height: 20),
  ),
  ),
 ),
+  ],
+ ),
 
 const SizedBox(height: 20),
 
  // Password
+ Column(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start (left)
+  children: [
+    const Text(
+      "Password",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A4A),
+      ),
+    ),    
  TextFormField(
  controller: _passwordController,
  autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -433,6 +471,8 @@ fontSize: 20,
 
    ),//input decoration
   ),
+  ],
+ ),
 
 
 //مدري هذا وش فايدته 
@@ -452,6 +492,17 @@ new FlutterPwValidator(
 
 
  // Confirm password
+ Column(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start (left)
+  children: [
+    const Text(
+      "Confirm Password",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A4A),
+      ),
+    ),
  TextFormField(
  controller: _confirmPasswordController,
  autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -516,6 +567,8 @@ fontWeight: FontWeight.w400,
 ),
    ),
   ),
+  ],
+ ),
 
   const SizedBox(height: 20),
 
@@ -536,7 +589,7 @@ fontWeight: FontWeight.w400,
                            ),
                            onPressed: _signUp,
                            child: const Text(
-                             "Sign up",
+                             "Next",
                              style: TextStyle(
                                fontFamily: 'Roboto',
                                fontWeight: FontWeight.w700,

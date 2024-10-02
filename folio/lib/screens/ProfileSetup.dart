@@ -212,6 +212,19 @@ void updateErrorMessage(String message) {
  @override
  Widget build(BuildContext context) {
    return Scaffold(
+    appBar: AppBar(
+      title: const Text(
+        'Set Up Profile',
+        style: TextStyle(
+          color: Color.fromARGB(255, 37, 30, 30), // Text color
+          fontWeight: FontWeight.bold, // Bold text
+        ),
+      ),
+      backgroundColor: const Color(0xFFF8F8F3), // Background color
+      centerTitle: true, // Center the title
+      automaticallyImplyLeading: false, // Prevents the back button from showing
+    ),
+
      backgroundColor: const Color(0xFFF8F8F3),
      body: SingleChildScrollView(
        child: Column(
@@ -258,6 +271,17 @@ const SizedBox(height: 20),
 
                    const SizedBox(height: 20),
                    // Name
+                 Column(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start (left)
+  children: [
+    const Text(
+      "Name",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A4A),
+      ),
+    ),  
                    TextFormField(
                      controller: _nameController,
                      keyboardType: TextInputType.name,
@@ -279,7 +303,7 @@ const SizedBox(height: 20),
                      },
                      maxLength: 50, // Set maximum length of name field
                      decoration: InputDecoration(
-                       hintText: "Name",
+                       hintText: "Enter your name",
 
                        hintStyle: const TextStyle(
                          color: Color(0xFF695555),
@@ -315,10 +339,22 @@ const SizedBox(height: 20),
  ),
                      ),
                    ),
+  ],),
 
                    const SizedBox(height: 20),
                    
                    // Bio
+                   Column(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start (left)
+  children: [
+    const Text(
+      "Bio",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A4A),
+      ),
+    ),  
                    TextFormField(
                      controller: _bioController,
                      keyboardType: TextInputType.text,
@@ -326,7 +362,7 @@ const SizedBox(height: 20),
                      maxLines: 4,
                      maxLength: 152,
                      decoration: InputDecoration(
-                       hintText: "Bio",
+                       hintText: "Tell us about yourself..",
                        hintStyle: const TextStyle(
                          color: Color(0xFF695555),
                          fontSize: 20,
@@ -351,9 +387,21 @@ const SizedBox(height: 20),
                        ),
                      ),
                    ),
+  ],),
                    const SizedBox(height: 20),
                    
                   // Books number input field
+                  Column(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the start (left)
+  children: [
+    const Text(
+      "Yearly books goal (Max: 1000)",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A4A),
+      ),
+    ),  
                    TextFormField(
                      controller: _booksController,
                      keyboardType: TextInputType.number,
@@ -397,6 +445,7 @@ const SizedBox(height: 20),
                       return null; // Input is valid
                        },
                    ),
+  ],),
 
                    const SizedBox(height: 20),
 
@@ -429,7 +478,11 @@ const SizedBox(height: 20),
            ),
          ],
        ),
+       
+
      ),
+     
+
    );
  }
 }
