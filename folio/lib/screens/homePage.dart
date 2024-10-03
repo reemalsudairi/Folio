@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
 import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
+import 'package:folio/screens/createClubPage.dart';
 import 'package:folio/screens/settings.dart'; // Import for SettingsPage
 
 class HomePage extends StatefulWidget {
@@ -234,8 +235,38 @@ class HomePageContent extends StatelessWidget {
                   color: Color.fromARGB(255, 53, 31, 31),
                 ),
               ),
+
               const SizedBox(height: 15),
               _buildClubsSection(),
+              const SizedBox(height: 30),
+              // Create Club Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CreateClubPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF790AD),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Create a Club',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

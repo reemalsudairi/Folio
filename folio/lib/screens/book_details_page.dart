@@ -81,7 +81,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       children: [
                         // Book cover image
                         Image.network(
-                          bookDetails?['volumeInfo']['imageLinks']?['thumbnail'] ?? 'https://via.placeholder.com/150',
+                          bookDetails?['volumeInfo']['imageLinks']
+                                  ?['thumbnail'] ??
+                              'https://via.placeholder.com/150',
                           height: 250,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
@@ -103,7 +105,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         // Author
                         Text(
                           'By ${bookDetails?['volumeInfo']['authors']?.join(', ') ?? 'Unknown Author'}',
-                          style: const TextStyle(fontSize: 18, color: Color(0xFF9b9b9b)),
+                          style: const TextStyle(
+                              fontSize: 18, color: Color(0xFF9b9b9b)),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 20),
@@ -116,8 +119,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               child: ElevatedButton(
                                 onPressed: null, // Disables the button
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.grey, // Grey background
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                                  backgroundColor:
+                                      Colors.grey, // Grey background
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 6),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
@@ -149,7 +154,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                             enabled: false,
                                             value: 'Currently reading',
                                             child: ListTile(
-                                              leading: Icon(Icons.menu_book_sharp),
+                                              leading:
+                                                  Icon(Icons.menu_book_sharp),
                                               title: Text('Currently reading'),
                                             ),
                                           ),
@@ -192,7 +198,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600],
+                                      color: _selectedIndex == 0
+                                          ? Colors.brown[800]
+                                          : Colors.grey[600],
                                     ),
                                   ),
                                 ),
@@ -203,7 +211,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600],
+                                      color: _selectedIndex == 1
+                                          ? Colors.brown[800]
+                                          : Colors.grey[600],
                                     ),
                                   ),
                                 ),
@@ -214,7 +224,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600],
+                                      color: _selectedIndex == 2
+                                          ? Colors.brown[800]
+                                          : Colors.grey[600],
                                     ),
                                   ),
                                 ),
@@ -226,22 +238,28 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                 Container(
                                   height: 2,
                                   color: Colors.grey[300],
-                                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 16),
                                 ),
                                 AnimatedPositioned(
                                   duration: const Duration(milliseconds: 300),
-                                  left: _getWordMiddlePosition(_selectedIndex, MediaQuery.of(context).size.width) - _calculateTextWidth(
-                                      _selectedIndex == 0
-                                          ? 'About'
-                                          : _selectedIndex == 1
-                                              ? 'Clubs'
-                                              : 'Reviews') /
+                                  left: _getWordMiddlePosition(_selectedIndex,
+                                          MediaQuery.of(context).size.width) -
+                                      _calculateTextWidth(_selectedIndex == 0
+                                              ? 'About'
+                                              : _selectedIndex == 1
+                                                  ? 'Clubs'
+                                                  : 'Reviews') /
                                           2, // Position in the middle of the selected word
                                   top: -1,
                                   child: Container(
                                     height: 4,
-                                    width: _calculateTextWidth(
-                                      _selectedIndex == 0 ? 'About' : _selectedIndex == 1 ? 'Clubs' : 'Reviews'),
+                                    width:
+                                        _calculateTextWidth(_selectedIndex == 0
+                                            ? 'About'
+                                            : _selectedIndex == 1
+                                                ? 'Clubs'
+                                                : 'Reviews'),
                                     color: Colors.brown[800],
                                   ),
                                 ),
@@ -257,14 +275,19 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                             children: [
                               // Release year, number of pages, custom rating
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text('Released in'),
                                       Text(
-                                        bookDetails?['volumeInfo']['publishedDate']?.substring(0, 4) ?? 'N/A',
+                                        bookDetails?['volumeInfo']
+                                                    ['publishedDate']
+                                                ?.substring(0, 4) ??
+                                            'N/A',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
@@ -273,11 +296,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                     ],
                                   ),
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       const Text('Number of pages'),
                                       Text(
-                                        bookDetails?['volumeInfo']['pageCount']?.toString() ?? 'N/A',
+                                        bookDetails?['volumeInfo']['pageCount']
+                                                ?.toString() ??
+                                            'N/A',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
@@ -296,7 +322,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                             children: [
                                               Icon(
                                                 Icons.star,
-                                                color: Color(0xFFF790AD), // Pink color for one filled star
+                                                color: Color(
+                                                    0xFFF790AD), // Pink color for one filled star
                                                 size: 18,
                                               ),
                                             ],
@@ -318,30 +345,37 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               const SizedBox(height: 10),
                               // Description label and content
 // Description label and content
-const Text(
-  'Description',
-  style: TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 18,
-    color: Colors.grey,
-  ),
-),
-const SizedBox(height: 10), // Adds some space between "Description" and the actual content
+                              const Text(
+                                'Description',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(
+                                  height:
+                                      10), // Adds some space between "Description" and the actual content
 // Full Description with HTML tags removed
-SingleChildScrollView(
-  child: ListView(
-    shrinkWrap: true, // Allow the ListView to shrink to fit its content
-    physics: NeverScrollableScrollPhysics(), // Disable scrolling on the ListView
-    children: [
-      Text(
-        removeHtmlTags(bookDetails?['volumeInfo']['description'] ?? 'No description available.'),
-        style: const TextStyle(fontSize: 16),
-        textAlign: TextAlign.justify,
-        softWrap: true, // Ensure text wraps naturally at word boundaries
-      ),
-    ],
-  ),
-),
+                              SingleChildScrollView(
+                                child: ListView(
+                                  shrinkWrap:
+                                      true, // Allow the ListView to shrink to fit its content
+                                  physics:
+                                      const NeverScrollableScrollPhysics(), // Disable scrolling on the ListView
+                                  children: [
+                                    Text(
+                                      removeHtmlTags(bookDetails?['volumeInfo']
+                                              ['description'] ??
+                                          'No description available.'),
+                                      style: const TextStyle(fontSize: 16),
+                                      textAlign: TextAlign.justify,
+                                      softWrap:
+                                          true, // Ensure text wraps naturally at word boundaries
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         if (_selectedIndex == 1)
@@ -399,10 +433,12 @@ SingleChildScrollView(
     // Calculate the total width occupied by the words
     double totalWordsWidth = wordWidths.reduce((a, b) => a + b);
     // Calculate the space left to distribute between the words (padding)
-    double spaceBetweenWords = (screenWidth - totalWordsWidth) / 3; // 3 words, 3 spaces (between words)
+    double spaceBetweenWords = (screenWidth - totalWordsWidth) /
+        3; // 3 words, 3 spaces (between words)
 
     // Position based on index (for left margin)
-    double position = spaceBetweenWords / 2; // Start from the middle of the first space
+    double position =
+        spaceBetweenWords / 2; // Start from the middle of the first space
     for (int i = 0; i < index; i++) {
       position += wordWidths[i] + spaceBetweenWords;
     }
@@ -410,4 +446,4 @@ SingleChildScrollView(
     // Return middle of the word
     return position + (wordWidths[index] / 2);
   }
-} 
+}

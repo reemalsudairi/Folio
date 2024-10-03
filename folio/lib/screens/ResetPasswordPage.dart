@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:folio/screens/Signup.dart';
 import 'package:folio/screens/login.dart';
 
 class ResetPasswordPage extends StatefulWidget {
@@ -44,16 +43,16 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             color: Colors.lightGreen.withOpacity(0.7),
             borderRadius: BorderRadius.circular(30),
           ),
-          child: Column(
+          child: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.check,
                 color: Colors.white,
                 size: 40,
               ),
-              const SizedBox(height: 10),
-              const Text(
+              SizedBox(height: 10),
+              Text(
                 'If the email exists, a reset link was sent!',
                 style: TextStyle(
                   color: Colors.white,
@@ -73,151 +72,150 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       Navigator.pop(context);
     });
   }
-Future<void> sendPasswordResetEmail() async {
-  setState(() {
-    _errorMessage = null; // Clear previous error message
-    _inlineErrorMessage = null; // Clear inline error messages
-  });
 
-  // Check if the email field is empty first
-  if (emailController.text.trim().isEmpty) {
+  Future<void> sendPasswordResetEmail() async {
     setState(() {
-      _errorMessage = "Email field cannot be empty."; // Set the error message for empty email
-    });
-    return; // Exit the function if the email is empty
-  }
-
-  // Proceed with email validation if it's not empty
-  if (_validateEmail(emailController.text.trim())) {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null; // Reset error message
-      _inlineErrorMessage = null; // Clear inline error messages on valid submission
+      _errorMessage = null; // Clear previous error message
+      _inlineErrorMessage = null; // Clear inline error messages
     });
 
-    try {
-      final String email = emailController.text.trim().toLowerCase();
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-
-      // Show confirmation message
-      _showConfirmationMessage();
-
-      // Clear the email field
-
-      // Clear error messages after successful reset link send
+    // Check if the email field is empty first
+    if (emailController.text.trim().isEmpty) {
       setState(() {
-        _errorMessage = null;
-        _inlineErrorMessage = null;
+        _errorMessage =
+            "Email field cannot be empty."; // Set the error message for empty email
       });
-    } on FirebaseAuthException catch (e) {
-      // Handle errors based on the exception code
-      if (e.code == 'user-not-found') {
+      return; // Exit the function if the email is empty
+    }
+
+    // Proceed with email validation if it's not empty
+    if (_validateEmail(emailController.text.trim())) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null; // Reset error message
+        _inlineErrorMessage =
+            null; // Clear inline error messages on valid submission
+      });
+
+      try {
+        final String email = emailController.text.trim().toLowerCase();
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+        // Show confirmation message
+        _showConfirmationMessage();
+
+        // Clear the email field
+
+        // Clear error messages after successful reset link send
         setState(() {
-          _errorMessage = "No user found for that email.";
-          emailController.clear(); // Clear email input when there's an error
+          _errorMessage = null;
+          _inlineErrorMessage = null;
         });
-      } else {
+      } on FirebaseAuthException catch (e) {
+        // Handle errors based on the exception code
+        if (e.code == 'user-not-found') {
+          setState(() {
+            _errorMessage = "No user found for that email.";
+            emailController.clear(); // Clear email input when there's an error
+          });
+        } else {
+          setState(() {
+            _errorMessage = "An error occurred, please try again.";
+            emailController.clear(); // Clear email input when there's an error
+          });
+        }
+
+        //
+      } finally {
         setState(() {
-          _errorMessage = "An error occurred, please try again.";
-          emailController.clear(); // Clear email input when there's an error
+          _isLoading = false;
         });
       }
-
-      //
-    } finally {
+    } else {
       setState(() {
-        _isLoading = false;
+        _errorMessage = "Invalid email, please check the email format.";
+        // emailController.clear(); // Clear email input on invalid format
       });
+
+      // Clear error message after 1 second
     }
-  } else {
-    setState(() {
-      _errorMessage = "Invalid email, please check the email format.";
-      // emailController.clear(); // Clear email input on invalid format
-    });
-
-    // Clear error message after 1 second
   }
-}
 
-
-Widget _buildTextField({
-  required TextEditingController controller,
-  required String hintText,
-  bool obscureText = false,
-  required String? Function(String?) validator,
-  Widget? suffixIcon,
-  FocusNode? focusNode,
-}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      TextFormField(
-        controller: controller,
-        cursorColor: const Color(0xFFF790AD),
-        focusNode: focusNode,
-        inputFormatters: [
-          FilteringTextInputFormatter.deny(RegExp(r'\s')),
-          LengthLimitingTextInputFormatter(254), // Limit to 254 characters
-        ],
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(
-              color: Color(0xFF695555),
-              fontWeight: FontWeight.w400,
-              fontSize: 20),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFFF790AD)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFFF790AD)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: const BorderSide(color: Color(0xFFF790AD)),
-          ),
-          suffixIcon: suffixIcon,
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-        ),
-        validator: (value) {
-          // Moved error checks to the onChanged method
-          if (value == null || value.isEmpty) {
-            return 'Please enter an email.'; // For inline error
-          } else if (!_validateEmail(value)) {
-            return 'Please enter a valid email.'; // For inline error
-          }
-          return null; // No error
-        },
-        onChanged: (value) {
-          // Clear inline error messages as the user types
-          setState(() {
-            _inlineErrorMessage = null;
-          });
-        },
-      ),
-      const SizedBox(height: 5),
-      // Row for character count to align it on the right
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end, // Align to the right
-        children: [
-          Text(
-            '${controller.text.length} / 254',
-            style: const TextStyle(
-              color: Color(0xFF695555),
-              fontWeight: FontWeight.w400,
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required String? Function(String?) validator,
+    Widget? suffixIcon,
+    FocusNode? focusNode,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: controller,
+          cursorColor: const Color(0xFFF790AD),
+          focusNode: focusNode,
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'\s')),
+            LengthLimitingTextInputFormatter(254), // Limit to 254 characters
+          ],
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(
+                color: Color(0xFF695555),
+                fontWeight: FontWeight.w400,
+                fontSize: 20),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
             ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            suffixIcon: suffixIcon,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
           ),
-        ],
-      ),
-    ],
-  );
-}
-
-
+          validator: (value) {
+            // Moved error checks to the onChanged method
+            if (value == null || value.isEmpty) {
+              return 'Please enter an email.'; // For inline error
+            } else if (!_validateEmail(value)) {
+              return 'Please enter a valid email.'; // For inline error
+            }
+            return null; // No error
+          },
+          onChanged: (value) {
+            // Clear inline error messages as the user types
+            setState(() {
+              _inlineErrorMessage = null;
+            });
+          },
+        ),
+        const SizedBox(height: 5),
+        // Row for character count to align it on the right
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end, // Align to the right
+          children: [
+            Text(
+              '${controller.text.length} / 254',
+              style: const TextStyle(
+                color: Color(0xFF695555),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +354,7 @@ Widget _buildTextField({
                         TextSpan(
                           text: 'Login',
                           style: TextStyle(
-                            color: Color(0xFFF790AD),  // Match the link color
+                            color: Color(0xFFF790AD), // Match the link color
                           ),
                         ),
                       ],
@@ -364,7 +362,6 @@ Widget _buildTextField({
                   ),
                 ),
               ],
-            
             ),
           ),
         ),
