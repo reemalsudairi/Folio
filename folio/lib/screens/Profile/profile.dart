@@ -27,7 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   static final List<Widget> _pages = <Widget>[
     const LibraryPage(),
-    const ClubsPage(),
+    ClubsPage(),
     const ReviewsPage(),
   ];
 
