@@ -42,10 +42,12 @@ class _CreateClubPageState extends State<CreateClubPage> {
   ];
 
   // Function to create a new club
+  // Function to create a new club
   Future<void> _createClub() async {
-    if (_clubNameController.text.isEmpty) {
+    // Check if the club name is empty or contains only whitespace
+    if (_clubNameController.text.trim().isEmpty) {
       setState(() {
-        _errorMessage = 'Please enter a club name.';
+        _errorMessage = 'Please enter a valid club name.';
       });
       return;
     }
@@ -70,7 +72,8 @@ class _CreateClubPageState extends State<CreateClubPage> {
 
       if (user != null) {
         await _firestore.collection('clubs').add({
-          'name': _clubNameController.text.trim(),
+          'name': _clubNameController.text
+              .trim(), // Ensure no leading/trailing spaces
           'description': _descriptionController.text.trim(),
           'discussionDate': _discussionDate,
           'language': _selectedLanguage ?? '',
@@ -158,30 +161,28 @@ class _CreateClubPageState extends State<CreateClubPage> {
       lastDate: DateTime(2100),
     );
 
-    if (selectedDate != null) {
-      TimeOfDay? selectedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
+    TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (selectedTime != null) {
+      DateTime fullDateTime = DateTime(
+        selectedDate!.year,
+        selectedDate.month,
+        selectedDate.day,
+        selectedTime.hour,
+        selectedTime.minute,
       );
 
-      if (selectedTime != null) {
-        DateTime fullDateTime = DateTime(
-          selectedDate.year,
-          selectedDate.month,
-          selectedDate.day,
-          selectedTime.hour,
-          selectedTime.minute,
-        );
-
-        if (fullDateTime.isBefore(DateTime.now())) {
-          setState(() {
-            _errorMessage = 'You cannot select a past time.';
-          });
-        } else {
-          setState(() {
-            _discussionDate = Timestamp.fromDate(fullDateTime);
-          });
-        }
+      if (fullDateTime.isBefore(DateTime.now())) {
+        setState(() {
+          _errorMessage = 'You cannot select a past time.';
+        });
+      } else {
+        setState(() {
+          _discussionDate = Timestamp.fromDate(fullDateTime);
+        });
       }
     }
   }
@@ -313,7 +314,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                maxLines: 3,
+                maxLines: 2,
               ),
               const SizedBox(height: 20),
 
@@ -371,7 +372,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                   const Text(
                     'Next Discussion (Optional):',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -382,7 +383,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                           ? _formatTimestamp(_discussionDate!)
                           : 'Pick a date & time',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Color(0xFFF790AD),
                       ),
                     ),
