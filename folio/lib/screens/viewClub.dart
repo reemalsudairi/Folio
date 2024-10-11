@@ -1,9 +1,10 @@
-// view_club.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth to check current user
 import 'package:flutter/material.dart';
+import 'package:folio/screens/editClub.dart';
 
 class ViewClub extends StatefulWidget {
-  final String clubId; // Add clubId as a parameter
+  final String clubId;
 
   const ViewClub({Key? key, required this.clubId}) : super(key: key);
 
@@ -19,6 +20,7 @@ class _ViewClubState extends State<ViewClub> {
   String _clubOwnerName = 'Unknown Owner';
   String _clubDiscussionDate = '';
   bool _isLoading = true;
+  bool _isOwner = false; // Flag to track if current user is the owner
 
   @override
   void initState() {
@@ -37,7 +39,10 @@ class _ViewClubState extends State<ViewClub> {
       if (clubDoc.exists) {
         final clubData = clubDoc.data()!;
         _clubOwnerID = clubData['ownerID'] ?? '';
-        print('Fetched ownerID: $_clubOwnerID');
+
+        // Check if the current user is the owner
+        String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+        _isOwner = _clubOwnerID == currentUserId;
 
         // Fetch the owner's name
         await _fetchOwnerName(_clubOwnerID);
@@ -65,8 +70,6 @@ class _ViewClubState extends State<ViewClub> {
 
   Future<void> _fetchOwnerName(String ownerID) async {
     try {
-      print('Attempting to fetch owner name for ownerID: $ownerID');
-
       final ownerDoc = await FirebaseFirestore.instance
           .collection('readers')
           .doc(ownerID) // Assuming ownerID is the document ID
@@ -74,19 +77,15 @@ class _ViewClubState extends State<ViewClub> {
 
       if (ownerDoc.exists) {
         final ownerData = ownerDoc.data()!;
-        print('Owner document data: $ownerData');
-
         setState(() {
           _clubOwnerName = ownerData['name'] ?? 'Unknown Owner';
         });
       } else {
-        print('Owner document does not exist.');
         setState(() {
           _clubOwnerName = 'Unknown Owner';
         });
       }
     } catch (e) {
-      print('Error fetching owner name: $e');
       setState(() {
         _clubOwnerName = 'Unknown Owner';
       });
@@ -96,25 +95,37 @@ class _ViewClubState extends State<ViewClub> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8F5F0),
+      backgroundColor: const Color(0xFFF8F5F0),
       appBar: AppBar(
-        backgroundColor: Color(0xFFF8F5F0),
+        backgroundColor: const Color(0xFFF8F5F0),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        actions: [
-          Container(
-            margin: EdgeInsets.only(right: 30),
-            child: Icon(Icons.edit, color: Color(0xFF4A2E2A)),
-          ),
-        ],
+       actions: [
+  if (_isOwner) // Show pencil icon only if the current user is the owner
+    Container(
+      margin: const EdgeInsets.only(right: 30),
+      child: IconButton(
+        icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditClub(clubId: widget.clubId), // Pass the clubId to EditClub
+            ),
+          );
+        },
+      ),
+    ),
+],
+
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -135,56 +146,56 @@ class _ViewClubState extends State<ViewClub> {
                               width: double.infinity,
                               height: 200,
                               color: Colors.grey,
-                              child: Center(child: Text('No Image Available')),
+                              child: const Center(child: Text('No Image Available')),
                             ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     // Club name
                     Text(
                       _name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF4A2E2A),
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     // Club description
                     Text(
                       _clubDescription,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF4A2E2A),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     // Club owner and members
                     Row(
                       children: [
-                        CircleAvatar(
+                        const CircleAvatar(
                           backgroundColor: Colors.grey,
                           radius: 20,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Created by',
                               style: TextStyle(fontSize: 12),
                             ),
                             Text(
                               _clubOwnerName, // Display the owner's name
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                        Spacer(),
-                        Text(
-                          '15 Members', // You can update with the actual number of members
+                        const Spacer(),
+                        const Text(
+                          '15 Members', // Update this with the actual number of members
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey,
@@ -192,11 +203,11 @@ class _ViewClubState extends State<ViewClub> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
-                    Divider(color: Colors.grey),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                    const Divider(color: Colors.grey),
+                    const SizedBox(height: 16),
                     // Current reading book section
-                    Text(
+                    const Text(
                       'Currently reading',
                       style: TextStyle(
                         fontSize: 20,
@@ -204,7 +215,7 @@ class _ViewClubState extends State<ViewClub> {
                         color: Color(0xFF4A2E2A),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         ClipRRect(
@@ -213,30 +224,30 @@ class _ViewClubState extends State<ViewClub> {
                             width: 80,
                             height: 120,
                             color: Colors.grey,
-                            child: Center(child: Text('No Image')),
+                            child: const Center(child: Text('No Image')),
                           ),
                         ),
-                        SizedBox(width: 16),
+                        const SizedBox(width: 16),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'The sum of all things', // Replace with actual book title if available via _currentBookID
+                            const Text(
+                              'The sum of all things', // Replace with actual book title
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF4A2E2A),
                               ),
                             ),
-                            Text(
-                              'Nicole Brooks', // Replace with actual author if available
+                            const Text(
+                              'Nicole Brooks', // Replace with actual author
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
                               ),
                             ),
-                            SizedBox(height: 16),
-                            Text(
+                            const SizedBox(height: 16),
+                            const Text(
                               'Next discussion date',
                               style: TextStyle(
                                 fontSize: 14,
@@ -245,7 +256,7 @@ class _ViewClubState extends State<ViewClub> {
                             ),
                             Text(
                               _clubDiscussionDate, // Discussion date from Firestore
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
                               ),
