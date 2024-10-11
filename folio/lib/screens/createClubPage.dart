@@ -342,7 +342,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                   labelStyle: const TextStyle(
                     color: Color(0xFF695555),
                     fontWeight: FontWeight.w400,
-                    fontSize: 20,
+                    fontSize: 18,
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -386,7 +386,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                   labelStyle: const TextStyle(
                     color: Color(0xFF695555),
                     fontWeight: FontWeight.w400,
-                    fontSize: 20,
+                    fontSize: 18,
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -405,9 +405,12 @@ class _CreateClubPageState extends State<CreateClubPage> {
                   counterText:
                       '${_descriptionController.text.length}/250', // Character counter
                 ),
+                onChanged: (text) {
+                  // This triggers the rebuild of the widget to update the counter text dynamically
+                  setState(() {});
+                },
               ),
               const SizedBox(height: 35),
-
 // Language dropdown menu
               DropdownButtonFormField<String>(
                 value: _selectedLanguage,
@@ -427,7 +430,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                   labelStyle: const TextStyle(
                     color: Color(0xFF695555),
                     fontWeight: FontWeight.w400,
-                    fontSize: 20,
+                    fontSize: 18,
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -477,8 +480,9 @@ class _CreateClubPageState extends State<CreateClubPage> {
                               _currentBookController.text.isNotEmpty
                                   ? _currentBookController.text
                                   : 'Select a Book',
+                              maxLines: 2,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 18,
                                 color: _currentBookController.text.isNotEmpty
                                     ? Colors.black
                                     : Colors.grey,
