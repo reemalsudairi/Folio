@@ -1,8 +1,9 @@
-// ignore_for_file: prefer_const_constructors
-
+// clubs_page.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:folio/screens/viewClub.dart'; // If you need to get current user ID dynamically
+
 
 class Club {
   final String id;
@@ -17,7 +18,7 @@ class Club {
       id: documentId,
       name: data['name'] ?? '',
       description: data['description'] ?? '',
-      picture: data['picture'] ?? '', // Added picture field
+      picture: data['picture'] ?? '',
     );
   }
 }
@@ -28,26 +29,38 @@ class ClubsPage extends StatefulWidget {
 }
 
 class _ClubsPageState extends State<ClubsPage> {
-  final String userId = 'currentUserId'; // Replace with the current user ID
+  late String userId; // Initialize in initState
   List<Club> myClubs = [];
   List<Club> joinedClubs = [];
 
   @override
   void initState() {
     super.initState();
-    fetchClubs();
+    // Fetch current user ID
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      userId = user.uid;
+      fetchClubs();
+    } else {
+      // Handle case when user is not logged in
+      print('User is not logged in');
+      // Optionally, navigate to login page or show a message
+    }
   }
 
   Future<void> fetchClubs() async {
     try {
+      // Fetch clubs where the current user is the owner
       QuerySnapshot myClubsSnapshot = await FirebaseFirestore.instance
           .collection('clubs')
           .where('ownerID', isEqualTo: userId)
           .get();
 
+      // Fetch clubs where the current user is a member but not the owner
+      // Assuming you have a 'members' field as a list of user IDs
       QuerySnapshot joinedClubsSnapshot = await FirebaseFirestore.instance
           .collection('clubs')
-          .where('ownerID', isNotEqualTo: userId)
+          .where('members', arrayContains: userId)
           .get();
 
       setState(() {
@@ -60,74 +73,88 @@ class _ClubsPageState extends State<ClubsPage> {
       });
     } catch (e) {
       print('Error fetching clubs: $e');
+      // Optionally, show a snackbar or alert to inform the user
     }
   }
 
+  // Function to build club cards with tap functionality
   Widget buildClubCard(Club club) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          club.picture.isNotEmpty
-              ? ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              height: 140, // Same size as the image box
-              width: double.infinity,
-              child: Image.network(
-                club.picture,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
+    return GestureDetector(
+      onTap: () {
+        // Navigate to ViewClub page with the selected club's ID
+        Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => ViewClub(clubId: club.id),
+  ),
+);
+
+      },
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            club.picture.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 140,
+                      width: double.infinity,
+                      child: Image.network(
+                        club.picture,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 140,
+                            width: double.infinity,
+                            color: Colors.red,
+                            child: Icon(Icons.error, color: Colors.white),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                : Container(
                     height: 140,
                     width: double.infinity,
-                    color: Colors.red, // Shows red if there's an error
-                    child: Icon(Icons.error, color: Colors.white),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                },
-              ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.withOpacity(0.2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'No Image Available',
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    ),
+                  ),
+            SizedBox(height: 10),
+            Text(
+              club.name,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
-          )
-              : Container(
-            height: 140, // Match the image box height
-            width: double.infinity, // Match the width of the image
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.withOpacity(0.2),
-            ),
-            child: Center(
-              child: Text(
-                'No Image Available',
-                style: TextStyle(fontSize: 16, color: Colors.black54),
-              ),
-            ),
-          ),
-          SizedBox(height: 10), // Spacing between image and text
-          Text(
-            club.name,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -143,7 +170,7 @@ class _ClubsPageState extends State<ClubsPage> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Align(
-                alignment: Alignment.centerLeft, // Align text to the left
+                alignment: Alignment.centerLeft,
                 child: Text(
                   'My Clubs',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF351F1F)),
@@ -152,31 +179,31 @@ class _ClubsPageState extends State<ClubsPage> {
             ),
             myClubs.isEmpty
                 ? Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text('You have no clubs.'),
-            )
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text('You have no clubs.'),
+                  )
                 : GridView.builder(
-              physics: NeverScrollableScrollPhysics(), // Prevent scrolling
-              shrinkWrap: true, // Allow it to take only the required space
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Two clubs per row
-                childAspectRatio: 0.75, // Adjust the aspect ratio as needed
-              ),
-              itemCount: myClubs.length,
-              itemBuilder: (context, index) {
-                return buildClubCard(myClubs[index]);
-              },
-            ),
-            // Divider between My Clubs and Joined Clubs with padding
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.75,
+                    ),
+                    itemCount: myClubs.length,
+                    itemBuilder: (context, index) {
+                      return buildClubCard(myClubs[index]);
+                    },
+                  ),
+            // Divider between My Clubs and Joined Clubs
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Space before and after the line
-              child: Divider(thickness: 2, height: 20, color: Colors.grey), // Set divider color to gray
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Divider(thickness: 2, height: 20, color: Colors.grey),
             ),
             // Joined Clubs Section
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Align(
-                alignment: Alignment.centerLeft, // Align text to the left
+                alignment: Alignment.centerLeft,
                 child: Text(
                   'Joined Clubs',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF351F1F)),
@@ -185,21 +212,21 @@ class _ClubsPageState extends State<ClubsPage> {
             ),
             joinedClubs.isEmpty
                 ? Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text('You have not joined any clubs.'),
-            )
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text('You have not joined any clubs.'),
+                  )
                 : GridView.builder(
-              physics: NeverScrollableScrollPhysics(), // Prevent scrolling
-              shrinkWrap: true, // Allow it to take only the required space
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Two clubs per row
-                childAspectRatio: 0.75, // Adjust the aspect ratio as needed
-              ),
-              itemCount: joinedClubs.length,
-              itemBuilder: (context, index) {
-                return buildClubCard(joinedClubs[index]);
-              },
-            ),
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.75,
+                    ),
+                    itemCount: joinedClubs.length,
+                    itemBuilder: (context, index) {
+                      return buildClubCard(joinedClubs[index]);
+                    },
+                  ),
           ],
         ),
       ),
