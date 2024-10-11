@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
 import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
 import 'package:folio/screens/createClubPage.dart';
-import 'package:folio/screens/settings.dart'; // Import for SettingsPage
+import 'package:folio/screens/settings.dart';
+ import 'package:folio/screens/bookclubs_page.dart';
+// Import for SettingsPage
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.userId});
@@ -359,20 +361,6 @@ class HomePageContent extends StatelessWidget {
             borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class Clubs extends StatelessWidget {
-  const Clubs({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Clubs Page',
-        style: TextStyle(fontSize: 24),
       ),
     );
   }
