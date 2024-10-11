@@ -154,24 +154,28 @@ class _ClubsBodyState extends State<ClubsBody> {
     return Column(
       children: [
         // Search bar
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            onChanged: (value) {
-              filterClubs(value);
-            },
-            decoration: InputDecoration(
-              hintText: 'Search for a club',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-                borderSide: BorderSide.none,
-              ),
-              fillColor: Colors.grey[200],
-              filled: true,
-            ),
-          ),
-        ),
+       Padding(
+  padding: const EdgeInsets.all(8.0),
+  child: TextField(
+    decoration: InputDecoration(
+      labelText: 'Search for a club',
+      labelStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
+      filled: true,
+      fillColor: const Color.fromARGB(255, 255, 255, 255),
+      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30.0),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+          vertical: 12.0, horizontal: 20.0),
+    ),
+    onChanged: (String value) {
+      filterClubs(value);
+    },
+  ),
+),
+
         // List of clubs
         Expanded(
           child: GridView.builder(
