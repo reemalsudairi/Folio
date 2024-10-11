@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -331,6 +332,11 @@ class _CreateClubPageState extends State<CreateClubPage> {
               TextFormField(
                 controller: _clubNameController,
                 cursorColor: const Color(0xFFF790AD),
+                maxLength: 30, // Limit input to 30 characters
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(
+                      30), // Input formatter for character limit
+                ],
                 decoration: InputDecoration(
                   labelText: 'Club Name *',
                   labelStyle: const TextStyle(
@@ -352,17 +358,31 @@ class _CreateClubPageState extends State<CreateClubPage> {
                     borderRadius: BorderRadius.circular(40),
                     borderSide: const BorderSide(color: Color(0xFFF790AD)),
                   ),
+                  counterText:
+                      '${_clubNameController.text.length}/30', // Character counter
                 ),
+                onChanged: (text) {
+                  // This triggers the rebuild of the widget to update the counter text dynamically
+                  setState(() {});
+                },
               ),
               const SizedBox(height: 35),
 
 // Description Field
+              // Description Field
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
+                maxLength: 250, // Limit input to 250 characters
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(
+                      250), // Input formatter to enforce character limit
+                ],
                 cursorColor: const Color(0xFFF790AD),
                 decoration: InputDecoration(
                   labelText: 'Description (Optional)',
+                  alignLabelWithHint:
+                      true, // Aligns label to the top when not focused
                   labelStyle: const TextStyle(
                     color: Color(0xFF695555),
                     fontWeight: FontWeight.w400,
@@ -382,6 +402,8 @@ class _CreateClubPageState extends State<CreateClubPage> {
                     borderRadius: BorderRadius.circular(40),
                     borderSide: const BorderSide(color: Color(0xFFF790AD)),
                   ),
+                  counterText:
+                      '${_descriptionController.text.length}/250', // Character counter
                 ),
               ),
               const SizedBox(height: 35),
@@ -430,7 +452,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                     Colors.white, // Customize the dropdown menu color
                 menuMaxHeight: 200, // Set a max height for the dropdown menu
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 35),
 
 // Current Book Field
               Row(
@@ -554,7 +576,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                     'Next Discussion (Optional):',
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   TextButton(
@@ -566,6 +588,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFFF790AD),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
