@@ -63,10 +63,10 @@ class _ClubsPageState extends State<ClubsPage> {
     }
   }
 
-    Widget buildClubCard(Club club) {
+  Widget buildClubCard(Club club) {
     return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -79,40 +79,54 @@ class _ClubsPageState extends State<ClubsPage> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           club.picture.isNotEmpty
               ? ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.network(
-                  club.picture,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 100,
-                      color: Colors.red, // Shows red if there's an error
-                      child: Icon(Icons.error, color: Colors.white),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  },
-                ),
-              )
-            : SizedBox(
-                height: 100,
-                child: Center(child: Text('No Image Available')),
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 140, // Same size as the image box
+              width: double.infinity,
+              child: Image.network(
+                club.picture,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 140,
+                    width: double.infinity,
+                    color: Colors.red, // Shows red if there's an error
+                    child: Icon(Icons.error, color: Colors.white),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
               ),
-        SizedBox(height: 10), // Spacing between image and text
-        Text(
-          club.name,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-          SizedBox(height: 5), // Spacing between name and description
-          Text(club.description),
+            ),
+          )
+              : Container(
+            height: 140, // Match the image box height
+            width: double.infinity, // Match the width of the image
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.grey.withOpacity(0.2),
+            ),
+            child: Center(
+              child: Text(
+                'No Image Available',
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+            ),
+          ),
+          SizedBox(height: 10), // Spacing between image and text
+          Text(
+            club.name,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -121,7 +135,7 @@ class _ClubsPageState extends State<ClubsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Color(0xFFF8F8F3),
+      backgroundColor: Color(0xFFF8F8F3),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -138,21 +152,21 @@ class _ClubsPageState extends State<ClubsPage> {
             ),
             myClubs.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text('You have no clubs.'),
-                  )
+              padding: const EdgeInsets.all(16.0),
+              child: Text('You have no clubs.'),
+            )
                 : GridView.builder(
-                    physics: NeverScrollableScrollPhysics(), // Prevent scrolling
-                    shrinkWrap: true, // Allow it to take only the required space
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // Two clubs per row
-                      childAspectRatio: 0.75, // Adjust the aspect ratio as needed
-                    ),
-                    itemCount: myClubs.length,
-                    itemBuilder: (context, index) {
-                      return buildClubCard(myClubs[index]);
-                    },
-                  ),
+              physics: NeverScrollableScrollPhysics(), // Prevent scrolling
+              shrinkWrap: true, // Allow it to take only the required space
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Two clubs per row
+                childAspectRatio: 0.75, // Adjust the aspect ratio as needed
+              ),
+              itemCount: myClubs.length,
+              itemBuilder: (context, index) {
+                return buildClubCard(myClubs[index]);
+              },
+            ),
             // Divider between My Clubs and Joined Clubs with padding
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0), // Space before and after the line
@@ -171,26 +185,24 @@ class _ClubsPageState extends State<ClubsPage> {
             ),
             joinedClubs.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text('You have not joined any clubs.'),
-                  )
+              padding: const EdgeInsets.all(16.0),
+              child: Text('You have not joined any clubs.'),
+            )
                 : GridView.builder(
-                    physics: NeverScrollableScrollPhysics(), // Prevent scrolling
-                    shrinkWrap: true, // Allow it to take only the required space
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // Two clubs per row
-                      childAspectRatio: 0.75, // Adjust the aspect ratio as needed
-                    ),
-                    itemCount: joinedClubs.length,
-                    itemBuilder: (context, index) {
-                      return buildClubCard(joinedClubs[index]);
-                    },
-                  ),
+              physics: NeverScrollableScrollPhysics(), // Prevent scrolling
+              shrinkWrap: true, // Allow it to take only the required space
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Two clubs per row
+                childAspectRatio: 0.75, // Adjust the aspect ratio as needed
+              ),
+              itemCount: joinedClubs.length,
+              itemBuilder: (context, index) {
+                return buildClubCard(joinedClubs[index]);
+              },
+            ),
           ],
         ),
       ),
     );
   }
 }
-
-
