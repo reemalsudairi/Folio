@@ -345,29 +345,51 @@ class _ViewClubState extends State<ViewClub> {
     }
   }
 
-  Future<void> _fetchOwnerName(String ownerID) async {
-    try {
-      final ownerDoc = await FirebaseFirestore.instance
-          .collection('readers')
-          .doc(ownerID) // Assuming ownerID is the document ID
+Future<void> _fetchOwnerName(String ownerID) async {
+  try {
+    // Query the clubs collection to find the document where 'ownerID' matches the provided ownerID
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .where('ownerID', isEqualTo: ownerID) // Query based on the 'ownerID' field
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // Get the first document that matches the query
+      final ownerDoc = querySnapshot.docs.first;
+      final ownerData = ownerDoc.data();
+      
+      // Extract the ownerID (assuming ownerID is stored correctly in the document)
+      final String ownerID = ownerData['ownerID'];
+
+      // Fetch the owner details from the 'reader' collection using the ownerID
+      final readerDoc = await FirebaseFirestore.instance
+          .collection('reader') // Fetch from 'reader' collection
+          .doc(ownerID) // Use the ownerID as the document ID in 'reader'
           .get();
 
-      if (ownerDoc.exists) {
-        final ownerData = ownerDoc.data()!;
+      if (readerDoc.exists) {
+        final readerData = readerDoc.data()!;
         setState(() {
-          _clubOwnerName = ownerData['name'] ?? 'Unknown Owner';
+          _clubOwnerName = readerData['name'] ?? 'Unknown Owner';
         });
       } else {
         setState(() {
           _clubOwnerName = 'Unknown Owner';
         });
       }
-    } catch (e) {
+    } else {
       setState(() {
         _clubOwnerName = 'Unknown Owner';
       });
     }
+  } catch (e) {
+    setState(() {
+      _clubOwnerName = 'Unknown Owner';
+    });
   }
+}
+
+
 
   Future<void> _checkMembership() async {
     try {
