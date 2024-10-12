@@ -276,7 +276,7 @@ class _SignUpState extends State<SignUp> {
                                     hintStyle: const TextStyle(
                                       color: Color(0xFF695555),
                                       fontWeight: FontWeight.w400,
-                                      fontSize: 20,
+                                      fontSize: 15,
                                     ),
                                     filled: true,
                                     fillColor: Colors.white,
@@ -306,7 +306,7 @@ class _SignUpState extends State<SignUp> {
                                         text: TextSpan(
                                           text: '*',
                                           style: TextStyle(
-                                              color: Colors.red, fontSize: 20),
+                                              color: Color.fromARGB(255, 225, 78, 67), fontSize: 20),
                                         ),
                                       ),
                                     ),
@@ -360,7 +360,7 @@ class _SignUpState extends State<SignUp> {
                                     hintStyle: const TextStyle(
                                       color: Color(0xFF695555),
                                       fontWeight: FontWeight.w400,
-                                      fontSize: 20,
+                                      fontSize: 15,
                                     ),
                                     filled: true,
                                     fillColor: Colors.white,
@@ -390,7 +390,7 @@ class _SignUpState extends State<SignUp> {
                                         text: TextSpan(
                                           text: '*',
                                           style: TextStyle(
-                                              color: Colors.red, fontSize: 20),
+                                              color: const Color.fromARGB(255, 225, 78, 67), fontSize: 20),
                                         ),
                                       ),
                                     ),
@@ -460,7 +460,7 @@ class _SignUpState extends State<SignUp> {
                                     hintStyle: const TextStyle(
                                       color: Color(0xFF695555),
                                       fontWeight: FontWeight.w400,
-                                      fontSize: 20,
+                                      fontSize: 15,
                                     ),
 
                                     filled:
@@ -495,7 +495,7 @@ class _SignUpState extends State<SignUp> {
                                             text: TextSpan(
                                               text: '*',
                                               style: TextStyle(
-                                                  color: Colors.red,
+                                                  color: const Color.fromARGB(255, 225, 78, 67),
                                                   fontSize: 20),
                                             ),
                                           ),
@@ -572,7 +572,7 @@ class _SignUpState extends State<SignUp> {
                                     hintStyle: const TextStyle(
                                       color: Color(0xFF695555),
                                       fontWeight: FontWeight.w400,
-                                      fontSize: 20,
+                                      fontSize: 15,
                                     ),
                                     filled:
                                         true, // Make sure the field is filled with the color
@@ -606,7 +606,7 @@ class _SignUpState extends State<SignUp> {
                                             text: TextSpan(
                                               text: '*',
                                               style: TextStyle(
-                                                  color: Colors.red,
+                                                  color: const Color.fromARGB(255, 232, 95, 85),
                                                   fontSize: 20),
                                             ),
                                           ),
@@ -678,7 +678,7 @@ class _SignUpState extends State<SignUp> {
                                           );
                                         },
                                         child: const Text(
-                                          'Log in',
+                                          'Login',
                                           style: TextStyle(
                                               color: Color(0xFFF790AD)),
                                         ),

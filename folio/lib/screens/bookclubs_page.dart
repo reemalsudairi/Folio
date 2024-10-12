@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/viewClub.dart';
 
 class Club {
   final String id;
@@ -85,8 +86,20 @@ class _ClubsBodyState extends State<ClubsBody> {
     });
   }
 
-  Widget buildClubCard(Club club) {
-    return Container(
+  // Function to build club cards with tap functionality
+Widget buildClubCard(Club club) {
+  return GestureDetector(
+    onTap: () {
+      print('Tapped on club: ${club.name}'); // Debugging line
+      // Navigate to ViewClub page with the selected club's ID
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewClub(clubId: club.id),
+        ),
+      );
+    },
+    child: Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -115,11 +128,9 @@ class _ClubsBodyState extends State<ClubsBody> {
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           height: 140,
+                          width: double.infinity,
                           color: Colors.red,
-                          child: Center(
-                              child: Text('No Image Available',
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 16))),
+                          child: Icon(Icons.error, color: Colors.white),
                         );
                       },
                       loadingBuilder: (context, child, loadingProgress) {
@@ -131,12 +142,19 @@ class _ClubsBodyState extends State<ClubsBody> {
                     ),
                   ),
                 )
-              : SizedBox(
+              : Container(
                   height: 140,
                   width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.withOpacity(0.2),
+                  ),
                   child: Center(
-                      child: Text('No Image Available',
-                          style: TextStyle(fontSize: 16))),
+                    child: Text(
+                      'No Image Available',
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                  ),
                 ),
           SizedBox(height: 10),
           Text(
@@ -146,8 +164,9 @@ class _ClubsBodyState extends State<ClubsBody> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
