@@ -39,8 +39,7 @@ class _LoginPageState extends State<LoginPage> {
     passwordFocusNode.addListener(() {
       if (!passwordFocusNode.hasFocus) {
         _validatePasswordField();
-        _formKey.currentState
-            ?.validate(); // Trigger validation when focus is lost
+        _formKey.currentState?.validate(); // Trigger validation when focus is lost
       }
     });
   }
@@ -164,12 +163,6 @@ class _LoginPageState extends State<LoginPage> {
 
   String _handleAuthError(FirebaseAuthException error) {
     switch (error.code) {
-      /* case 'user-not-found':
-        return 'No user found for that email.';
-      case 'wrong-password':
-        return 'Wrong password provided.';
-      case 'invalid-email':
-        return 'The email address is badly formatted.';*/
       case 'user-disabled':
         return 'This user has been disabled.';
       case 'network-request-failed':
@@ -182,80 +175,87 @@ class _LoginPageState extends State<LoginPage> {
         return 'Invalid email/password. Please try again.';
     }
   }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    bool obscureText = false,
-    required String? Function(String?) validator,
-    FocusNode? focusNode,
-    int? maxLength,
-    bool isValid = true,
-    bool isPassword = false,
-  }) {
-    return SizedBox(
-      width: 350,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: controller,
-            obscureText: obscureText ? _obscurePassword : false,
-            cursorColor: const Color(0xFFF790AD),
-            validator: validator,
-            focusNode: focusNode,
-            maxLength: maxLength,
-            inputFormatters: [
-              FilteringTextInputFormatter.deny(RegExp(r'\s')), // Prevent spaces
-            ],
-            onChanged: (value) {
-              if (isPassword) {
-                _validatePasswordField(); // Validate password when user types
-              }
-              setState(() {}); // Trigger UI update to remove error when fixed
-            },
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: const TextStyle(
-                  color: Color(0xFF695555),
-                  fontWeight: FontWeight.w400,
-                  fontSize: 20),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(40),
-                borderSide: const BorderSide(color: Color(0xFFF790AD)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(40),
-                borderSide: const BorderSide(color: Color(0xFFF790AD)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(40),
-                borderSide: const BorderSide(color: Color(0xFFF790AD)),
-              ),
-              counterText: '${controller.text.length}/$maxLength',
-              counterStyle:
-                  const TextStyle(color: Color(0xFF695555), fontSize: 12),
-              suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: const Color(
-                            0xFFF790AD), // Set eye icon color to pink
-                      ),
-                      onPressed: _togglePasswordVisibility,
-                    )
-                  : null,
-              contentPadding: const EdgeInsets.symmetric(
-                  vertical: 15, horizontal: 20), // Adjust padding
-            ),
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String hintText,
+  bool obscureText = false,
+  required String? Function(String?) validator,
+  FocusNode? focusNode,
+  bool isValid = true,
+  bool isPassword = false,
+}) {
+  return SizedBox(
+    width: 350,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          hintText,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4A4A4A),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText ? _obscurePassword : false,
+          cursorColor: const Color(0xFFF790AD),
+          validator: validator,
+          focusNode: focusNode,
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'\s')), // Prevent spaces
+            LengthLimitingTextInputFormatter(isPassword ? 16 : 254), // Enforce max length
+          ],
+          onChanged: (value) {
+            if (isPassword) {
+              _validatePasswordField();
+            }
+            setState(() {}); // Trigger UI update
+          },
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(
+              color: Color(0xFF695555),
+              fontWeight: FontWeight.w400,
+              fontSize: 15,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(40),
+              borderSide: const BorderSide(color: Color(0xFFF790AD)),
+            ),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: const Color(0xFFF790AD),
+                    ),
+                    onPressed: _togglePasswordVisibility,
+                  )
+                : null,
+            contentPadding: const EdgeInsets.symmetric(
+                vertical: 15, horizontal: 20),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
 
   void _togglePasswordVisibility() {
     setState(() {
@@ -319,12 +319,53 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 30),
+
+                // Email field
+                _buildTextField(
+                  controller: emailController,
+                  hintText: "Email",
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return 'Please enter your email.';
+                    }
+                    final emailPattern =
+                        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
+                    if (!RegExp(emailPattern).hasMatch(value)) {
+                      return 'Please enter a valid email.';
+                    }
+                    return null;
+                  },
+                  focusNode: emailFocusNode,
+                ),
+
                 const SizedBox(height: 20),
 
-                // Red rectangle for error messages
+                // Password field
+                _buildTextField(
+                  controller: passwordController,
+                  hintText: "Password",
+                  obscureText: true,
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return 'Please enter your password.';
+                    }
+                    if (value.trim().length < 6 || value.trim().length > 16) {
+                      return 'Password must be between 6 and 16 characters.';
+                    }
+                    return null;
+                  },
+                  isPassword: true,
+                  focusNode: passwordFocusNode,
+                ),
+
+                const SizedBox(height: 20),
+
+                // Display error messages
                 if (_errorMessage != null)
                   Container(
-                    width: 350,
+                    margin: const EdgeInsets.symmetric(vertical: 10),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.red,
@@ -332,54 +373,35 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: const TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
                     ),
                   ),
+
+                // Login button
+                SizedBox(
+                  width: 350,
+                  child: ElevatedButton(
+                    onPressed: signUserIn,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF790AD),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 20),
 
-                _buildTextField(
-                  controller: emailController,
-                  hintText: 'Email',
-                  focusNode: emailFocusNode,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Please enter an email.";
-                    }
-
-                    // Check for valid email format using regex
-                    if (!RegExp(
-                            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|mil|info)$')
-                        .hasMatch(value.trim())) {
-                      return "Please enter a valid email."; // Specific error message
-                    }
-                    return null; // Return null if valid
-                  },
-                  maxLength: 254,
-                  isValid: _formKey.currentState?.validate() ?? true,
-                ),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  controller: passwordController,
-                  hintText: 'Password',
-                  obscureText: true,
-                  focusNode: passwordFocusNode,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Please enter a password.";
-                    }
-                    return null; // Return null if valid
-                  },
-                  maxLength: 16,
-                  isValid: _isPasswordFieldValid,
-                  isPassword: true,
-                ),
-                const SizedBox(
-                    height: 5), // Space between password field and link
+                // Forgot Password link
                 Align(
-                  alignment: Alignment.centerLeft, // Align to the left
+                  alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -390,33 +412,20 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: const Text(
                       'Forgot Password?',
-                      style: TextStyle(color: Color(0xFFF790AD)),
+                      style: TextStyle(color: Color(0xFF4A4A4A)),
                     ),
                   ),
                 ),
-                const SizedBox(height: 10), // Space before the login button
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF790AD),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    minimumSize: const Size(350, 50), // Width and height
-                  ),
-                  onPressed: signUserIn,
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(fontSize: 20, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 10),
 
+                const SizedBox(height: 20),
+
+                // Sign up link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account?"),
-                    TextButton(
-                      onPressed: () {
+                    const Text("Don't have an account? "),
+                    GestureDetector(
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -425,7 +434,10 @@ class _LoginPageState extends State<LoginPage> {
                       },
                       child: const Text(
                         'Sign up',
-                        style: TextStyle(color: Color(0xFFF790AD)),
+                        style: TextStyle(
+                          color: Color(0xFFF790AD),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],

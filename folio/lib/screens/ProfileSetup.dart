@@ -308,7 +308,7 @@ const SizedBox(height: 20),
                        hintStyle: const TextStyle(
                          color: Color(0xFF695555),
                          fontWeight: FontWeight.w400,
-                         fontSize: 20,
+                         fontSize: 15,
                        ),
                        filled:
                            true, // Make sure the field is filled with the color
@@ -333,7 +333,7 @@ const SizedBox(height: 20),
      child: RichText(
        text: TextSpan(
          text: '*',
-         style: TextStyle(color: Colors.red, fontSize: 20),
+         style: TextStyle(color: const Color.fromARGB(255, 232, 95, 85), fontSize: 20),
        ),
      ),
  ),
@@ -365,7 +365,7 @@ const SizedBox(height: 20),
                        hintText: "Tell us about yourself..",
                        hintStyle: const TextStyle(
                          color: Color(0xFF695555),
-                         fontSize: 20,
+                         fontSize: 15,
                        ),
                        filled:
                            true, // Make sure the field is filled with the color
@@ -410,7 +410,7 @@ const SizedBox(height: 20),
                      ], 
                      // This ensures only numbers are allowed
                      decoration: InputDecoration(
-                       hintText:"Yearly books goal (Max: 1000)",
+                       hintText:"Yearly books goal",
                        hintStyle: const TextStyle(
                          color: Color(0xFF695555),
                          fontWeight: FontWeight.w400,
