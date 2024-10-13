@@ -175,6 +175,7 @@ class _LoginPageState extends State<LoginPage> {
         return 'Invalid email/password. Please try again.';
     }
   }
+
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -254,6 +255,7 @@ Widget _buildTextField({
     ),
   );
 }
+
 
 
 
@@ -351,10 +353,10 @@ Widget _buildTextField({
                     if (value!.isEmpty) {
                       return 'Please enter your password.';
                     }
-                    if (value.trim().length < 6 || value.trim().length > 16) {
-                      return 'Password must be between 6 and 16 characters.';
-                    }
-                    return null;
+                   // if (value.trim().length < 6 || value.trim().length > 16) {
+                      //return 'Password must be between 6 and 16 characters.';
+                   // }
+                   // return null;
                   },
                   isPassword: true,
                   focusNode: passwordFocusNode,
