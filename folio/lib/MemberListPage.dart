@@ -64,7 +64,7 @@ class _MemberListPageState extends State<MemberListPage> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 131, 201, 133),
+                      backgroundColor: const Color.fromARGB(255, 245, 114, 105),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -86,7 +86,7 @@ class _MemberListPageState extends State<MemberListPage> {
                   const SizedBox(width: 12), // Space between buttons
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 245, 114, 105),
+                      backgroundColor: Colors.grey,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -279,7 +279,7 @@ class _MemberListPageState extends State<MemberListPage> {
                     backgroundImage: profilePhoto.isNotEmpty
                         ? NetworkImage(profilePhoto)
                         : const AssetImage(
-                                'assets/default_profile.png') as ImageProvider,
+                                'assets/profile_pic.png') as ImageProvider,
                   ),
                   title: Text(memberName),
                   subtitle: Text('@$memberUsername'),

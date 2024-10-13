@@ -155,109 +155,102 @@ class _ViewClubState extends State<ViewClub> {
     }
   }
 
+ 
   void _showJoinLeaveConfirmation(bool isJoining) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Disable dismissal by clicking outside
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF790AD)
-                .withOpacity(0.9), // Pinkish background with opacity
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isJoining
-                    ? Icons.group_add
-                    : Icons.exit_to_app, // Icon changes based on action
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Disable dismissal by clicking outside
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isJoining ? Icons.group_add : Icons.exit_to_app, // Icon changes based on action
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              isJoining
+                  ? 'Are you sure you want to join the club?'
+                  : 'Are you sure you want to leave the club?',
+              style: const TextStyle(
                 color: Colors.white,
-                size: 40,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              const SizedBox(height: 10),
-              Text(
-                isJoining
-                    ? 'Are you sure you want to join the club?'
-                    : 'Are you sure you want to leave the club?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isJoining
+                        ? const Color.fromARGB(255, 131, 201, 133) // Green for join
+                        : const Color.fromARGB(255, 245, 114, 105), // Red for leave
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40), // Set button width and height
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    if (isJoining) {
+                      _joinClub(); // Join the club if confirmed
+                      _showConfirmationMessageJoinClub();
+                    } else {
+                      _leaveClub(); // Leave the club if confirmed
+                      _showConfirmationMessageLeaveClub();
+                    }
+                  },
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // Center the buttons
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isJoining
-                          ? const Color.fromARGB(255, 131, 201, 133)
-                          : const Color.fromARGB(255, 245, 114,
-                              105), // Yes button color based on action
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      minimumSize:
-                          const Size(100, 40), // Set button width and height
+                const SizedBox(width: 12), // Space between buttons
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Close the dialog
-                      if (isJoining) {
-                        _joinClub(); // Join the club if confirmed
-                        _showConfirmationMessageJoinClub();
-                      } else {
-                        _leaveClub(); // Leave the club if confirmed
-                        _showConfirmationMessageLeaveClub();
-                      }
-                    },
-                    child: const Text(
-                      'Yes',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    minimumSize: const Size(100, 40), // Set button width and height
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog without action
+                  },
+                  child: const Text(
+                    'No',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 12), // Space between buttons
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 131, 201,
-                          133), // No button color, // No button color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      minimumSize:
-                          const Size(100, 40), // Set button width and height
-                    ),
-                    onPressed: () {
-                      Navigator.of(context)
-                          .pop(); // Close the dialog without action
-                    },
-                    child: const Text(
-                      'No',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   void _showConfirmationMessageJoinClub() {
     showDialog(
