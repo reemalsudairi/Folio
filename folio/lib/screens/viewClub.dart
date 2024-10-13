@@ -1,10 +1,13 @@
-import 'dart:math'; // For generating random callID
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // For Firebase Authentication
+// view_club.dart
+
+import 'dart:math';
+import 'package:folio/view/callPage.dart';
+import 'package:uuid/uuid.dart'; // Import UUID package
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:folio/screens/editClub.dart';
-import 'package:intl/intl.dart'; // For date formatting
-import 'package:folio/view/callPage.dart'; // Ensure you have CallPage defined in call_page.dart
+import 'package:intl/intl.dart';
 
 class ViewClub extends StatefulWidget {
   final String clubId;
@@ -27,12 +30,18 @@ class _ViewClubState extends State<ViewClub> {
   bool _isMember = false; // Flag to track if the user is a club member
   DateTime? _discussionDate; // To store the actual DateTime
   bool _isDiscussionScheduled = false; // To track if a discussion is scheduled
+  final Uuid uuid = Uuid(); // Initialize UUID generator
 
   @override
   void initState() {
     super.initState();
     _fetchClubData();
     _checkMembership();
+  }
+
+  // Generate a unique callID using UUID
+  String _generateCallID() {
+    return uuid.v4();
   }
 
   Future<void> _fetchClubData() async {
@@ -56,7 +65,8 @@ class _ViewClubState extends State<ViewClub> {
 
         // Parse the discussion date
         if (clubData['discussionDate'] != null) {
-          _discussionDate = (clubData['discussionDate'] as Timestamp).toDate();
+          _discussionDate =
+              (clubData['discussionDate'] as Timestamp).toDate();
           _isDiscussionScheduled = true;
           _clubDiscussionDate =
               DateFormat.yMMMd().add_jm().format(_discussionDate!.toLocal());
@@ -68,7 +78,8 @@ class _ViewClubState extends State<ViewClub> {
 
         setState(() {
           _name = clubData['name'] ?? 'No Name Available';
-          _clubDescription = clubData['description'] ?? 'No Description Available';
+          _clubDescription =
+              clubData['description'] ?? 'No Description Available';
           _picture = clubData['picture'] ?? '';
           _isLoading = false;
         });
@@ -96,7 +107,7 @@ class _ViewClubState extends State<ViewClub> {
       if (readerDoc.exists) {
         final readerData = readerDoc.data()!;
         setState(() {
-          _clubOwnerName = readerData['name'] ?? 'Unknown Owner';
+          _clubOwnerName = readerData['username'] ?? 'Unknown Owner';
         });
       } else {
         setState(() {
@@ -166,8 +177,9 @@ class _ViewClubState extends State<ViewClub> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isJoining ? const Color.fromARGB(255, 131, 201, 133) : const Color.fromARGB(255, 245, 114, 105), // Yes button color based on action
+                      backgroundColor: isJoining
+                          ? const Color.fromARGB(255, 131, 201, 133)
+                          : const Color.fromARGB(255, 245, 114, 105), // Yes button color based on action
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -307,7 +319,7 @@ class _ViewClubState extends State<ViewClub> {
     bool isDiscussionDateReached = _discussionDate != null &&
         DateTime.now().isAfter(_discussionDate!.toLocal());
 
-    // Determine if the "Join Discussion" button should be visible
+    // Determine if the "Join Discussion" button should be visible and enabled
     bool canJoinDiscussion = (_isMember || _isOwner) && isDiscussionDateReached;
 
     return Scaffold(
@@ -418,7 +430,8 @@ class _ViewClubState extends State<ViewClub> {
                               .collection('members')
                               .get(),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const CircularProgressIndicator();
                             }
                             if (snapshot.hasError) {
@@ -518,18 +531,22 @@ class _ViewClubState extends State<ViewClub> {
                         ElevatedButton(
                           onPressed: canJoinDiscussion
                               ? () {
-                                  final String callID =
-                                      Random().nextInt(999999).toString(); // Generate a random call ID
+                                  final String callID = _generateCallID(); // Generate a unique call ID
+                                  final String currentUserId =
+                                      FirebaseAuth.instance.currentUser!.uid; // Get the current user's UID
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => CallPage(callID: callID), // Navigate to CallPage
+                                      builder: (context) => CallPage(
+                                        callID: callID, // Pass the callID
+                                        userId: currentUserId, // Pass the current user's UID
+                                      ),
                                     ),
                                   );
                                 }
                               : null, // Disable if discussion date is not reached
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue, // Button color
+                            backgroundColor: Color(0xFFF790AD), // Button color
                           ),
                           child: const Text(
                             "Join Discussion",
@@ -604,3 +621,5 @@ class _ViewClubState extends State<ViewClub> {
     );
   }
 }
+
+// Ensure that CallPage is defined in call_page.dart as shown earlier.
