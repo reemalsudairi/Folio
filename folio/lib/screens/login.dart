@@ -391,10 +391,17 @@ Widget _buildTextField({
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
+                      minimumSize: const Size(350, 60),
                     ),
                     child: const Text(
                       'Login',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          color: Colors.white,
+                                              ),
+                      
                     ),
                   ),
                 ),
@@ -403,7 +410,7 @@ Widget _buildTextField({
 
                 // Forgot Password link
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   child: TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -414,7 +421,7 @@ Widget _buildTextField({
                     },
                     child: const Text(
                       'Forgot Password?',
-                      style: TextStyle(color: Color(0xFF4A4A4A)),
+                      style: TextStyle(color: const Color(0xFFF790AD)),
                     ),
                   ),
                 ),

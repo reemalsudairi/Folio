@@ -274,7 +274,7 @@ class _ViewClubState extends State<ViewClub> {
               ),
               SizedBox(height: 10),
               Text(
-                'Joined Club Successfully!',
+                'Successfully Joined Club!',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -316,7 +316,7 @@ class _ViewClubState extends State<ViewClub> {
               ),
               SizedBox(height: 10),
               Text(
-                'Left Club Successfully!',
+                'Successfully Left Club!',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -472,30 +472,44 @@ class _ViewClubState extends State<ViewClub> {
     });
   }
 
-  Future<void> _joinClub() async {
-    try {
-      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+ Future<void> _joinClub() async {
+  try {
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-      await FirebaseFirestore.instance
-          .collection('clubs')
-          .doc(widget.clubId)
-          .collection('members')
-          .doc(currentUserId)
-          .set({
+    // Reference to the club's members subcollection
+    var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
+
+    // Check if the owner is already in the members subcollection
+    var clubData = await clubRef.get();
+    String ownerID = clubData['ownerID'];
+
+    var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
+    
+    if (!ownerDoc.exists) {
+      // Add the owner to the members subcollection if not already present
+      await clubRef.collection('members').doc(ownerID).set({
         'joinedAt': FieldValue.serverTimestamp(),
       });
-
-      setState(() {
-        _isMember = true;
-      });
-    } catch (e) {
-      print('Error joining club: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Failed to join the club. Please try again.')),
-      );
     }
+
+    // Add the current user as a member
+    await clubRef.collection('members').doc(currentUserId).set({
+      'joinedAt': FieldValue.serverTimestamp(),
+    });
+
+    setState(() {
+      _isMember = true;
+    });
+
+    
+  } catch (e) {
+    print('Error joining club: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to join the club. Please try again.')),
+    );
   }
+}
+
 
   Future<void> _leaveClub() async {
     try {
@@ -676,6 +690,7 @@ class _ViewClubState extends State<ViewClub> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
+                                  decoration: TextDecoration.underline,
                                 ),
                               );
                             }
@@ -700,6 +715,7 @@ class _ViewClubState extends State<ViewClub> {
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
+                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             );
