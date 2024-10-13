@@ -31,6 +31,7 @@ class _ViewClubState extends State<ViewClub> {
   DateTime? _discussionDate; // To store the actual DateTime
   bool _isDiscussionScheduled = false; // To track if a discussion is scheduled
   final Uuid uuid = Uuid(); // Initialize UUID generator
+  String _callID = ''; // Newly added state variable
 
   @override
   void initState() {
@@ -63,17 +64,30 @@ class _ViewClubState extends State<ViewClub> {
         // Fetch the owner's name
         await _fetchOwnerName(_clubOwnerID);
 
-        // Parse the discussion date
+        // Parse the discussion date and handle callID
         if (clubData['discussionDate'] != null) {
-          _discussionDate =
-              (clubData['discussionDate'] as Timestamp).toDate();
+          _discussionDate = (clubData['discussionDate'] as Timestamp).toDate();
           _isDiscussionScheduled = true;
+
+          // Check if callID exists
+          if (clubData['callID'] != null && clubData['callID'].toString().isNotEmpty) {
+            _callID = clubData['callID'];
+          } else {
+            // Generate a new callID and store it in Firestore
+            _callID = _generateCallID();
+            await FirebaseFirestore.instance
+                .collection('clubs')
+                .doc(widget.clubId)
+                .update({'callID': _callID});
+          }
+
           _clubDiscussionDate =
               DateFormat.yMMMd().add_jm().format(_discussionDate!.toLocal());
         } else {
           _discussionDate = null;
           _isDiscussionScheduled = false;
           _clubDiscussionDate = 'No discussion scheduled yet';
+          _callID = ''; // Reset callID when no discussion is scheduled
         }
 
         setState(() {
@@ -294,12 +308,14 @@ class _ViewClubState extends State<ViewClub> {
           .doc(widget.clubId)
           .update({
         'discussionDate': null, // Clear the discussion date
+        'callID': FieldValue.delete(), // Remove the callID field
       });
 
       setState(() {
         _clubDiscussionDate = 'No discussion scheduled yet';
         _discussionDate = null; // Clear the DateTime
         _isDiscussionScheduled = false;
+        _callID = ''; // Clear the stored callID
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -531,22 +547,26 @@ class _ViewClubState extends State<ViewClub> {
                         ElevatedButton(
                           onPressed: canJoinDiscussion
                               ? () {
-                                  final String callID = _generateCallID(); // Generate a unique call ID
-                                  final String currentUserId =
-                                      FirebaseAuth.instance.currentUser!.uid; // Get the current user's UID
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CallPage(
-                                        callID: callID, // Pass the callID
-                                        userId: currentUserId, // Pass the current user's UID
+                                  if (_callID.isNotEmpty) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CallPage(
+                                          callID: _callID, // Use the stored callID
+                                          userId: FirebaseAuth.instance.currentUser!.uid, // Pass the current user's UID
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  } else {
+                                    // Handle the case where callID is missing
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Call ID is not available. Please try again later.')),
+                                    );
+                                  }
                                 }
                               : null, // Disable if discussion date is not reached
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFFF790AD), // Button color
+                            backgroundColor: const Color(0xFFF790AD), // Button color
                           ),
                           child: const Text(
                             "Join Discussion",
@@ -621,5 +641,3 @@ class _ViewClubState extends State<ViewClub> {
     );
   }
 }
-
-// Ensure that CallPage is defined in call_page.dart as shown earlier.
