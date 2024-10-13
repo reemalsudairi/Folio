@@ -1,7 +1,7 @@
 // view_club.dart
 
 import 'dart:math';
-import 'package:folio/MemberlistPage.dart';
+import 'package:folio/screens/MemberListPage.dart';
 import 'package:folio/view/callPage.dart';
 import 'package:uuid/uuid.dart'; // Import UUID package
 import 'package:flutter/material.dart';
