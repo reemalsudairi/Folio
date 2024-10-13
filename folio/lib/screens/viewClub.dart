@@ -192,7 +192,7 @@ class _ViewClubState extends State<ViewClub> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isJoining
-                          ? const Color.fromARGB(255, 131, 201, 133)
+                          ? const Color.fromARGB(255, 245, 114, 105)
                           : const Color.fromARGB(255, 245, 114, 105), // Yes button color based on action
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -219,7 +219,7 @@ class _ViewClubState extends State<ViewClub> {
                   const SizedBox(width: 12), // Space between buttons
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 245, 114, 105), // No button color
+                      backgroundColor: const Color.fromARGB(255, 131, 201, 133), // No button color, // No button color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -244,6 +244,135 @@ class _ViewClubState extends State<ViewClub> {
         ),
       ),
     );
+  }
+
+  // **New Method Added Below**
+  void _showCloseMeetingConfirmation() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.meeting_room, // Icon for closing meeting
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Are you sure you want to end this meeting?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 245, 114, 105), // Yes button color
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40), // Set button width and height
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                      _closeMeeting(); // End the meeting if confirmed
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12), // Space between buttons
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 131, 201, 133), // No button color
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40), // Set button width and height
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog without action
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  // **End of New Method**
+
+    void _showConfirmationMessageCloseMeeting() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Meeting Ended Successful!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Automatically close the confirmation dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context); // Close the confirmation dialog
+    });
   }
 
   Future<void> _joinClub() async {
@@ -318,9 +447,7 @@ class _ViewClubState extends State<ViewClub> {
         _callID = ''; // Clear the stored callID
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Meeting closed successfully.')),
-      );
+_showConfirmationMessageCloseMeeting();
     } catch (e) {
       print('Error closing meeting: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -569,7 +696,7 @@ class _ViewClubState extends State<ViewClub> {
                             backgroundColor: const Color(0xFFF790AD), // Button color
                           ),
                           child: const Text(
-                            "Join Discussion",
+                            "Join Meeting",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -581,7 +708,7 @@ class _ViewClubState extends State<ViewClub> {
                         // Close Meeting Button (Visible only to Owner)
                         if (_isOwner && _isDiscussionScheduled)
                           ElevatedButton(
-                            onPressed: _closeMeeting, // Handle closing the meeting
+                            onPressed: _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red, // Red button for closing the meeting
                             ),

@@ -1,5 +1,3 @@
-// call_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:folio/constant/callInfo.dart';
@@ -65,7 +63,7 @@ class _CallPageState extends State<CallPage> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Joining Discussion...'),
-          backgroundColor: Colors.blue,
+          backgroundColor: Color(0xFFF790AD),
         ),
         body: const Center(
           child: CircularProgressIndicator(),
