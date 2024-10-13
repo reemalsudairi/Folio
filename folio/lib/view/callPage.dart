@@ -1,7 +1,6 @@
 // call_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:folio/constant/callInfo.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
@@ -80,7 +79,7 @@ class _CallPageState extends State<CallPage> {
       userID: widget.userId, // Use the passed userId
       userName: _userName, // Use the fetched userName
       callID: widget.callID,
-      config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall(),
+      config: ZegoUIKitPrebuiltCallConfig.groupVideoCall(), // Changed to group video call
     );
   }
 }
