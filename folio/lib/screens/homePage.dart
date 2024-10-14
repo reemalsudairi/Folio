@@ -527,7 +527,7 @@ class HomePageContent extends StatelessWidget {
                     )
                   : SizedBox(
 
-                    height: 304, // Adjust height to accommodate club cards
+                    height: 350, // Adjust height to accommodate club cards
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       clipBehavior: Clip.hardEdge,
@@ -570,7 +570,7 @@ class HomePageContent extends StatelessWidget {
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
-                  height: 140,
+                  height: 200,
                   width: double.infinity,
                   child: Image.network(
                     club.picture,
@@ -591,7 +591,7 @@ class HomePageContent extends StatelessWidget {
                 ),
               )
             : Container(
-                height: 140,
+                height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),

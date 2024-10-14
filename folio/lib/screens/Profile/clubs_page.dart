@@ -14,7 +14,7 @@ class Club {
     required this.name,
     required this.description,
     required this.picture,
-    this.memberCount = 1, // Default member count to 1
+    this.memberCount = 0, // Default member count to 0
   });
 
   factory Club.fromMap(Map<String, dynamic> data, String documentId, int memberCount) {
