@@ -573,7 +573,7 @@ Widget build(BuildContext context) {
                     )
                   : SizedBox(
 
-                    height: 350, // Adjust height to accommodate club cards
+                    height: 304, // Adjust height to accommodate club cards
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       clipBehavior: Clip.hardEdge,
@@ -616,7 +616,7 @@ Widget build(BuildContext context) {
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
-                  height: 200,
+                  height: 140,
                   width: double.infinity,
                   child: Image.network(
                     club.picture,
@@ -637,7 +637,7 @@ Widget build(BuildContext context) {
                 ),
               )
             : Container(
-                height: 200,
+                height: 140,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),

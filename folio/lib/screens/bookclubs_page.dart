@@ -130,7 +130,7 @@ class _ClubsBodyState extends State<ClubsBody> {
           .collection('members')
           .get();
 
-      return membersSnapshot.size+1;
+      return membersSnapshot.size;
     } catch (e) {
       print('Error fetching member count for club $clubId: $e');
       return 0;
@@ -167,7 +167,6 @@ class _ClubsBodyState extends State<ClubsBody> {
       child: Container(
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(12),
-        height: 304,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -184,20 +183,8 @@ class _ClubsBodyState extends State<ClubsBody> {
           children: [
             club.picture.isNotEmpty
                 ? ClipRRect(
-<<<<<<< HEAD
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                height: 200,
-                width: double.infinity,
-                child: Image.network(
-                  club.picture,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-=======
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
->>>>>>> 676ea0c13803d2a3cf282b399d5636f8734a1c55
                       height: 140,
                       width: double.infinity,
                       child: Image.network(
