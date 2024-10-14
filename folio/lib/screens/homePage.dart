@@ -61,19 +61,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchCurrentlyReadingBooks() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  final user = FirebaseAuth.instance.currentUser;
+  
+  // Force Firebase to refresh user data in case of cache issues
+  await user?.reload();
+  
+  if (user == null) return;
 
-    try {
-      CollectionReference booksRef = FirebaseFirestore.instance
-          .collection('reader')
-          .doc(user.uid)
-          .collection('currently reading');
+  try {
+    CollectionReference booksRef = FirebaseFirestore.instance
+        .collection('reader')
+        .doc(user.uid)
+        .collection('currently reading');
 
-      QuerySnapshot querySnapshot = await booksRef.get();
-
+    booksRef.snapshots().listen((snapshot) async {
       List<Book> books = [];
-      for (var doc in querySnapshot.docs) {
+      for (var doc in snapshot.docs) {
         var bookId = doc['bookID'];
         Book book = await _fetchBookFromGoogleAPI(bookId);
         books.add(book);
@@ -83,13 +86,16 @@ class _HomePageState extends State<HomePage> {
         currentlyReadingBooks = books;
         _isLoadingBooks = false;
       });
-    } catch (error) {
-      print('Error fetching currently reading books: $error');
-      setState(() {
-        _isLoadingBooks = false;
-      });
-    }
+    });
+  } catch (error) {
+    print('Error fetching currently reading books: $error');
+    setState(() {
+      _isLoadingBooks = false;
+    });
   }
+}
+
+
 
   Future<Book> _fetchBookFromGoogleAPI(String bookId) async {
     String url = 'https://www.googleapis.com/books/v1/volumes/$bookId';
