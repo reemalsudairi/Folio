@@ -1,6 +1,7 @@
 // view_club.dart
 
 import 'dart:math';
+import 'package:folio/screens/MemberListPage.dart';
 import 'package:folio/view/callPage.dart';
 import 'package:uuid/uuid.dart'; // Import UUID package
 import 'package:flutter/material.dart';
@@ -70,7 +71,8 @@ class _ViewClubState extends State<ViewClub> {
           _isDiscussionScheduled = true;
 
           // Check if callID exists
-          if (clubData['callID'] != null && clubData['callID'].toString().isNotEmpty) {
+          if (clubData['callID'] != null &&
+              clubData['callID'].toString().isNotEmpty) {
             _callID = clubData['callID'];
           } else {
             // Generate a new callID and store it in Firestore
@@ -153,7 +155,104 @@ class _ViewClubState extends State<ViewClub> {
     }
   }
 
+ 
   void _showJoinLeaveConfirmation(bool isJoining) {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Disable dismissal by clicking outside
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isJoining ? Icons.group_add : Icons.exit_to_app, // Icon changes based on action
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              isJoining
+                  ? 'Are you sure you want to join the club?'
+                  : 'Are you sure you want to leave the club?',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isJoining
+                        ? const Color.fromARGB(255, 131, 201, 133) // Green for join
+                        : const Color.fromARGB(255, 245, 114, 105), // Red for leave
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40), // Set button width and height
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    if (isJoining) {
+                      _joinClub(); // Join the club if confirmed
+                      _showConfirmationMessageJoinClub();
+                    } else {
+                      _leaveClub(); // Leave the club if confirmed
+                      _showConfirmationMessageLeaveClub();
+                    }
+                  },
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12), // Space between buttons
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40), // Set button width and height
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog without action
+                  },
+                  child: const Text(
+                    'No',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
+  void _showConfirmationMessageJoinClub() {
     showDialog(
       context: context,
       barrierDismissible: false, // Disable dismissal by clicking outside
@@ -162,23 +261,107 @@ class _ViewClubState extends State<ViewClub> {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Successfully Joined Club!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Automatically close the confirmation dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context); // Close the confirmation dialog
+    });
+  }
+
+  void _showConfirmationMessageLeaveClub() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Successfully Left Club!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Automatically close the confirmation dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context); // Close the confirmation dialog
+    });
+  }
+
+  // **New Method Added Below**
+  void _showCloseMeetingConfirmation() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD)
+                .withOpacity(0.9), // Pinkish background with opacity
             borderRadius: BorderRadius.circular(30),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isJoining ? Icons.group_add : Icons.exit_to_app, // Icon changes based on action
+                Icons.meeting_room, // Icon for closing meeting
                 color: Colors.white,
                 size: 40,
               ),
               const SizedBox(height: 10),
-              Text(
-                isJoining
-                    ? 'Are you sure you want to join the club?'
-                    : 'Are you sure you want to leave the club?',
-                style: const TextStyle(
+              const Text(
+                'Are you sure you want to end this meeting?',
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -187,25 +370,22 @@ class _ViewClubState extends State<ViewClub> {
               ),
               const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Center the buttons
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isJoining
-                          ? const Color.fromARGB(255, 131, 201, 133)
-                          : const Color.fromARGB(255, 245, 114, 105), // Yes button color based on action
+                      backgroundColor: const Color.fromARGB(
+                          255, 245, 114, 105), // Yes button color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      minimumSize: const Size(100, 40), // Set button width and height
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
                     ),
                     onPressed: () {
                       Navigator.of(context).pop(); // Close the dialog
-                      if (isJoining) {
-                        _joinClub(); // Join the club if confirmed
-                      } else {
-                        _leaveClub(); // Leave the club if confirmed
-                      }
+                      _closeMeeting(); // End the meeting if confirmed
                     },
                     child: const Text(
                       'Yes',
@@ -219,14 +399,17 @@ class _ViewClubState extends State<ViewClub> {
                   const SizedBox(width: 12), // Space between buttons
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 245, 114, 105), // No button color
+                      backgroundColor: const Color.fromARGB(
+                          255, 131, 201, 133), // No button color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      minimumSize: const Size(100, 40), // Set button width and height
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
                     ),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close the dialog without action
+                      Navigator.of(context)
+                          .pop(); // Close the dialog without action
                     },
                     child: const Text(
                       'No',
@@ -245,34 +428,88 @@ class _ViewClubState extends State<ViewClub> {
       ),
     );
   }
+  // **End of New Method**
 
-  Future<void> _joinClub() async {
-    try {
-      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  void _showConfirmationMessageCloseMeeting() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Meeting Ended Successfully!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
 
-      await FirebaseFirestore.instance
-          .collection('clubs')
-          .doc(widget.clubId)
-          .collection('members')
-          .doc(currentUserId)
-          .set({
+    // Automatically close the confirmation dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context); // Close the confirmation dialog
+    });
+  }
+
+ Future<void> _joinClub() async {
+  try {
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+    // Reference to the club's members subcollection
+    var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
+
+    // Check if the owner is already in the members subcollection
+    var clubData = await clubRef.get();
+    String ownerID = clubData['ownerID'];
+
+    var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
+    
+    if (!ownerDoc.exists) {
+      // Add the owner to the members subcollection if not already present
+      await clubRef.collection('members').doc(ownerID).set({
         'joinedAt': FieldValue.serverTimestamp(),
       });
-
-      setState(() {
-        _isMember = true;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Successfully joined the club!')),
-      );
-    } catch (e) {
-      print('Error joining club: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to join the club. Please try again.')),
-      );
     }
+
+    // Add the current user as a member
+    await clubRef.collection('members').doc(currentUserId).set({
+      'joinedAt': FieldValue.serverTimestamp(),
+    });
+
+    setState(() {
+      _isMember = true;
+    });
+
+    
+  } catch (e) {
+    print('Error joining club: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to join the club. Please try again.')),
+    );
   }
+}
+
 
   Future<void> _leaveClub() async {
     try {
@@ -288,14 +525,11 @@ class _ViewClubState extends State<ViewClub> {
       setState(() {
         _isMember = false;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Successfully left the club.')),
-      );
     } catch (e) {
       print('Error leaving club: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to leave the club. Please try again.')),
+        const SnackBar(
+            content: Text('Failed to leave the club. Please try again.')),
       );
     }
   }
@@ -318,13 +552,12 @@ class _ViewClubState extends State<ViewClub> {
         _callID = ''; // Clear the stored callID
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Meeting closed successfully.')),
-      );
+      _showConfirmationMessageCloseMeeting();
     } catch (e) {
       print('Error closing meeting: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to close the meeting. Please try again.')),
+        const SnackBar(
+            content: Text('Failed to close the meeting. Please try again.')),
       );
     }
   }
@@ -359,8 +592,8 @@ class _ViewClubState extends State<ViewClub> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          EditClub(clubId: widget.clubId), // Pass the clubId to EditClub
+                      builder: (context) => EditClub(
+                          clubId: widget.clubId), // Pass the clubId to EditClub
                     ),
                   );
                 },
@@ -390,7 +623,8 @@ class _ViewClubState extends State<ViewClub> {
                               width: double.infinity,
                               height: 200,
                               color: Colors.grey,
-                              child: const Center(child: Text('No Image Available')),
+                              child: const Center(
+                                  child: Text('No Image Available')),
                             ),
                     ),
                     const SizedBox(height: 16),
@@ -456,19 +690,37 @@ class _ViewClubState extends State<ViewClub> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
+                                  decoration: TextDecoration.underline,
                                 ),
                               );
                             }
+
                             final memberCount = snapshot.data!.docs.length;
-                            return Text(
-                              '$memberCount Members',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
+
+                            return GestureDetector(
+                              onTap: () {
+                                // Navigate to the MemberListPage and pass the clubId to show the members.
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MemberListPage(
+                                      clubID: widget.clubId,
+                                      ownerID: _clubOwnerID,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                '$memberCount Members',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             );
                           },
-                        ),
+                        )
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -496,7 +748,8 @@ class _ViewClubState extends State<ViewClub> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Expanded( // To prevent overflow
+                        Expanded(
+                          // To prevent overflow
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -552,24 +805,31 @@ class _ViewClubState extends State<ViewClub> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => CallPage(
-                                          callID: _callID, // Use the stored callID
-                                          userId: FirebaseAuth.instance.currentUser!.uid, // Pass the current user's UID
+                                          callID:
+                                              _callID, // Use the stored callID
+                                          userId: FirebaseAuth
+                                              .instance
+                                              .currentUser!
+                                              .uid, // Pass the current user's UID
                                         ),
                                       ),
                                     );
                                   } else {
                                     // Handle the case where callID is missing
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Call ID is not available. Please try again later.')),
+                                      const SnackBar(
+                                          content: Text(
+                                              'Call ID is not available. Please try again later.')),
                                     );
                                   }
                                 }
                               : null, // Disable if discussion date is not reached
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF790AD), // Button color
+                            backgroundColor:
+                                const Color(0xFFF790AD), // Button color
                           ),
                           child: const Text(
-                            "Join Discussion",
+                            "Join Meeting",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -581,9 +841,11 @@ class _ViewClubState extends State<ViewClub> {
                         // Close Meeting Button (Visible only to Owner)
                         if (_isOwner && _isDiscussionScheduled)
                           ElevatedButton(
-                            onPressed: _closeMeeting, // Handle closing the meeting
+                            onPressed:
+                                _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red, // Red button for closing the meeting
+                              backgroundColor: Colors
+                                  .red, // Red button for closing the meeting
                             ),
                             child: const Text(
                               'Close Meeting',
@@ -607,7 +869,8 @@ class _ViewClubState extends State<ViewClub> {
                                 _showJoinLeaveConfirmation(false);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 245, 114, 105), // Button color for leaving
+                                backgroundColor: const Color.fromARGB(255, 245,
+                                    114, 105), // Button color for leaving
                               ),
                               child: const Text(
                                 "Leave Club",
@@ -623,7 +886,8 @@ class _ViewClubState extends State<ViewClub> {
                                 _showJoinLeaveConfirmation(true);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 131, 201, 133), // Button color for joining
+                                backgroundColor: const Color.fromARGB(255, 131,
+                                    201, 133), // Button color for joining
                               ),
                               child: const Text(
                                 "Join Club",

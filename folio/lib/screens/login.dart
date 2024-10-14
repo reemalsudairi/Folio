@@ -175,6 +175,7 @@ class _LoginPageState extends State<LoginPage> {
         return 'Invalid email/password. Please try again.';
     }
   }
+
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -254,6 +255,7 @@ Widget _buildTextField({
     ),
   );
 }
+
 
 
 
@@ -351,10 +353,10 @@ Widget _buildTextField({
                     if (value!.isEmpty) {
                       return 'Please enter your password.';
                     }
-                    if (value.trim().length < 6 || value.trim().length > 16) {
-                      return 'Password must be between 6 and 16 characters.';
-                    }
-                    return null;
+                   // if (value.trim().length < 6 || value.trim().length > 16) {
+                      //return 'Password must be between 6 and 16 characters.';
+                   // }
+                   // return null;
                   },
                   isPassword: true,
                   focusNode: passwordFocusNode,
@@ -389,10 +391,17 @@ Widget _buildTextField({
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
+                      minimumSize: const Size(350, 60),
                     ),
                     child: const Text(
                       'Login',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          color: Colors.white,
+                                              ),
+                      
                     ),
                   ),
                 ),
@@ -401,7 +410,7 @@ Widget _buildTextField({
 
                 // Forgot Password link
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   child: TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -412,7 +421,7 @@ Widget _buildTextField({
                     },
                     child: const Text(
                       'Forgot Password?',
-                      style: TextStyle(color: Color(0xFF4A4A4A)),
+                      style: TextStyle(color: const Color(0xFFF790AD)),
                     ),
                   ),
                 ),

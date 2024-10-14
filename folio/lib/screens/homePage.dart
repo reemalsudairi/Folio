@@ -1,12 +1,17 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:folio/screens/Profile/profile.dart'; // Import ProfilePage
-import 'package:folio/screens/categories_page.dart'; // Import CategoriesPage
-import 'package:folio/screens/createClubPage.dart';
+import 'package:folio/screens/Profile/currently_reading_page.dart';
+import 'package:folio/screens/Profile/profile.dart';
+import 'package:folio/screens/book_details_page.dart';
+import 'package:folio/screens/categories_page.dart';
 import 'package:folio/screens/settings.dart';
- import 'package:folio/screens/bookclubs_page.dart';
-// Import for SettingsPage
+import 'Profile/book.dart';
+import 'Profile/clubs_page.dart';
+import 'package:http/http.dart' as http;
+import 'package:folio/screens/bookclubs_page.dart';
+import 'package:folio/screens/createClubPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.userId});
@@ -18,71 +23,91 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0; // Tracks the selected tab
+  int _selectedIndex = 0;
   String _name = '';
   String _profilePhotoUrl = '';
   int _booksGoal = 0;
   int _booksRead = 0;
-
-  // Initialize pages with placeholders to avoid late initialization error
-  late List<Widget> _pages = [
-    const Center(
-        child: CircularProgressIndicator()), // Placeholder while loading
-    const CategoriesPage(),
-    const Clubs(),
-    const Center(
-        child:
-            CircularProgressIndicator()), // Placeholder while loading profile
-  ];
+  List<Book> currentlyReadingBooks = [];
+  bool _isLoadingBooks = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _setupUserDataListener();
+    _fetchCurrentlyReadingBooks(); 
   }
 
-  // Fetch user data from Firestore
-  void _fetchUserData() async {
+  Future<void> _setupUserDataListener() async {
     final user = FirebaseAuth.instance.currentUser;
+
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance
+      FirebaseFirestore.instance
           .collection('reader')
           .doc(user.uid)
-          .get();
-      if (userDoc.exists) {
-        final userData = userDoc.data()!;
-        setState(() {
-          _name = userData['name'] ?? '';
-          _profilePhotoUrl = userData['profilePhoto'] ?? '';
-          _booksGoal = userData['books'] ?? 0;
-          _booksRead = userData['booksRead'] ?? 0;
-
-          // Initialize the pages with actual content
-          _initializePages();
-        });
-      }
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists) {
+          final userData = snapshot.data();
+          setState(() {
+            _name = userData?['name'] ?? '';
+            _profilePhotoUrl = userData?['profilePhoto'] ?? '';
+            _booksGoal = userData?['books'] ?? 0;
+            _booksRead = userData?['booksRead'] ?? 0;
+          });
+        }
+      });
     }
   }
 
-  // Initialize the list of pages with user data
-  void _initializePages() {
+  Future<void> _fetchCurrentlyReadingBooks() async {
+  final user = FirebaseAuth.instance.currentUser;
+  
+  // Force Firebase to refresh user data in case of cache issues
+  await user?.reload();
+  
+  if (user == null) return;
+
+  try {
+    CollectionReference booksRef = FirebaseFirestore.instance
+        .collection('reader')
+        .doc(user.uid)
+        .collection('currently reading');
+
+    booksRef.snapshots().listen((snapshot) async {
+      List<Book> books = [];
+      for (var doc in snapshot.docs) {
+        var bookId = doc['bookID'];
+        Book book = await _fetchBookFromGoogleAPI(bookId);
+        books.add(book);
+      }
+
+      setState(() {
+        currentlyReadingBooks = books;
+        _isLoadingBooks = false;
+      });
+    });
+  } catch (error) {
+    print('Error fetching currently reading books: $error');
     setState(() {
-      _pages = [
-        HomePageContent(
-          name: _name,
-          profilePhotoUrl: _profilePhotoUrl,
-          booksGoal: _booksGoal,
-          booksRead: _booksRead,
-          onEdit: _fetchUserData, // Pass the update method
-        ),
-        const CategoriesPage(),
-        const Clubs(),
-        ProfilePage(onEdit: _fetchUserData),
-      ];
+      _isLoadingBooks = false;
     });
   }
+}
 
-  // Update the index when a tab is selected
+
+
+  Future<Book> _fetchBookFromGoogleAPI(String bookId) async {
+    String url = 'https://www.googleapis.com/books/v1/volumes/$bookId';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      return Book.fromGoogleBooksAPI(data);
+    } else {
+      throw Exception('Failed to load book data');
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -93,13 +118,24 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3),
-      body: _pages[_selectedIndex], // Display the selected page
+      body: _selectedIndex == 0
+          ? HomePageContent(
+              name: _name,
+              profilePhotoUrl: _profilePhotoUrl,
+              booksGoal: _booksGoal,
+              booksRead: _booksRead,
+              currentlyReadingBooks: currentlyReadingBooks,
+              isLoadingBooks: _isLoadingBooks,
+            )
+          : _selectedIndex == 1
+              ? const CategoriesPage()
+              : _selectedIndex == 2
+                  ?  ClubsPage()
+                  : ProfilePage(onEdit: _setupUserDataListener),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor:
-            const Color(0xFFF790AD), // Pink color for selected item
-        unselectedItemColor:
-            const Color(0xFFB3B3B3), // Grey color for unselected item
+        selectedItemColor: const Color(0xFFF790AD),
+        unselectedItemColor: const Color(0xFFB3B3B3),
         showSelectedLabels: false,
         showUnselectedLabels: false,
         onTap: _onItemTapped,
@@ -131,7 +167,8 @@ class HomePageContent extends StatelessWidget {
   final String profilePhotoUrl;
   final int booksGoal;
   final int booksRead;
-  final VoidCallback onEdit;
+  final List<Book> currentlyReadingBooks;
+  final bool isLoadingBooks;
 
   const HomePageContent({
     super.key,
@@ -139,182 +176,88 @@ class HomePageContent extends StatelessWidget {
     required this.profilePhotoUrl,
     required this.booksGoal,
     required this.booksRead,
-    required this.onEdit, // Receive onEdit callback
+    required this.currentlyReadingBooks,
+    required this.isLoadingBooks,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F1),
-      appBar: PreferredSize(
-        preferredSize: const Size(412, 56),
-        child: AppBar(
-          backgroundColor: const Color(0xFFF8F5F1),
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          actions: [
-            IgnorePointer(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.notifications_active,
-                  color: Color.fromARGB(255, 35, 23, 23),
-                  size: 30,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Good Day,\n$name!',
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 53, 31, 31),
+                  ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SettingsPage()),
-                  );
-                },
+                CircleAvatar(
+                  radius: 40,
+                  backgroundImage: profilePhotoUrl.isNotEmpty
+                      ? NetworkImage(profilePhotoUrl)
+                      : const AssetImage('assets/images/profile_pic.png')
+                          as ImageProvider,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildYearlyGoal(),
+            const SizedBox(height: 30),
+            _buildCurrentlyReadingSection(context),
+            const SizedBox(height: 120),
+            const Text(
+              'Clubs',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 53, 31, 31),
               ),
             ),
-            IgnorePointer(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.person_search_rounded,
-                  color: Color.fromARGB(255, 35, 23, 23),
-                  size: 30,
-                ),
+            const SizedBox(height: 15),
+            _buildClubsSection(),
+            const SizedBox(height: 30),
+            // Create Club Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const SettingsPage()),
+                        builder: (context) => const CreateClubPage()),
                   );
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF790AD),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  'Create a Club',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        // Add SingleChildScrollView to make the content scrollable
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Good Day,\n$name!',
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 53, 31, 31),
-                    ),
-                  ),
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundImage: profilePhotoUrl.isNotEmpty
-                        ? NetworkImage(profilePhotoUrl)
-                        : const AssetImage('assets/images/profile_pic.png')
-                            as ImageProvider,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildYearlyGoal(),
-              const SizedBox(height: 30),
-              const Text(
-                'Currently Reading',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 53, 31, 31),
-                ),
-              ),
-              const SizedBox(height: 15),
-              _buildCurrentlyReadingSection(),
-              const SizedBox(height: 120),
-              const Text(
-                'Clubs',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 53, 31, 31),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-              _buildClubsSection(),
-              const SizedBox(height: 30),
-              // Create Club Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const CreateClubPage()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF790AD),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text(
-                    'Create a Club',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildCurrentlyReadingSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F5F1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Center(
-        child: Text(
-          'No added books yet',
-          style: TextStyle(
-            fontSize: 16,
-            color: Color.fromARGB(255, 53, 31, 31),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildClubsSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F5F1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Center(
-        child: Text(
-          'No joined clubs yet',
-          style: TextStyle(
-            fontSize: 16,
-            color: Color.fromARGB(255, 53, 31, 31),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Yearly Goal section
   Widget _buildYearlyGoal() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -361,6 +304,107 @@ class HomePageContent extends StatelessWidget {
             borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCurrentlyReadingSection(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Currently Reading',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 53, 31, 31),
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CurrentlyReadingPage(
+                      userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                    ),
+                  ),
+                );
+              },
+              child: const Icon(Icons.arrow_forward),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+        isLoadingBooks
+            ? const Center(child: CircularProgressIndicator())
+            : currentlyReadingBooks.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No books in your currently reading list.',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  )
+                : SizedBox(
+                    height: 160,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: currentlyReadingBooks.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(width: 20),
+                      itemBuilder: (context, index) {
+                        Book book = currentlyReadingBooks[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookDetailsPage(
+                                  bookId: book.id,
+                                  userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                                ),
+                              ),
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              book.thumbnailUrl,
+                              width: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                width: 100,
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.broken_image, size: 40),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+      ],
+    );
+  }
+
+  Widget _buildClubsSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F5F1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Center(
+        child: Text(
+          'No joined clubs yet',
+          style: TextStyle(
+            fontSize: 16,
+            color: Color.fromARGB(255, 53, 31, 31),
+          ),
+        ),
       ),
     );
   }
