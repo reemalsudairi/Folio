@@ -6,9 +6,9 @@ import 'package:folio/screens/Profile/currently_reading_page.dart';
 import 'package:folio/screens/Profile/profile.dart';
 import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/categories_page.dart';
+import 'package:folio/screens/extendedclubs.dart';
 import 'package:folio/screens/settings.dart';
 import 'Profile/book.dart';
-import 'Profile/clubs_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/screens/createClubPage.dart';
@@ -29,13 +29,16 @@ class _HomePageState extends State<HomePage> {
   int _booksGoal = 0;
   int _booksRead = 0;
   List<Book> currentlyReadingBooks = [];
+  List<Club> myClubs = [];
+  List<Club> joinedClubs = [];
   bool _isLoadingBooks = true;
-
+  bool _isLoadingClubs = true;
   @override
   void initState() {
     super.initState();
     _setupUserDataListener();
     _fetchCurrentlyReadingBooks(); 
+    _fetchClubs();
   }
 
   Future<void> _setupUserDataListener() async {
@@ -107,6 +110,84 @@ class _HomePageState extends State<HomePage> {
       throw Exception('Failed to load book data');
     }
   }
+ Future<void> _fetchClubs() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final userId = user?.uid ?? '';
+
+    if (userId.isEmpty) {
+      print('User is not logged in.');
+      return;
+    }
+
+    try {
+      // Fetch clubs the user owns
+      FirebaseFirestore.instance
+          .collection('clubs')
+          .where('ownerID', isEqualTo: userId)
+          .snapshots()
+          .listen((QuerySnapshot myClubsSnapshot) async {
+        List<Club> tempMyClubs = [];
+
+        for (var doc in myClubsSnapshot.docs) {
+          int memberCount = await fetchMemberCount(doc.id);
+          tempMyClubs.add(Club.fromMap(
+              doc.data() as Map<String, dynamic>, doc.id, memberCount));
+        }
+
+        // Update the state for myClubs
+        setState(() {
+          myClubs = tempMyClubs;
+        });
+      });
+
+      // Fetch clubs the user has joined but doesn't own
+      FirebaseFirestore.instance
+          .collection('clubs')
+          .snapshots()
+          .listen((QuerySnapshot joinedClubsSnapshot) async {
+        List<Club> tempJoinedClubs = [];
+
+        for (var doc in joinedClubsSnapshot.docs) {
+          var clubData = doc.data() as Map<String, dynamic>?;
+
+          if (clubData != null && clubData.containsKey('ownerID')) {
+            DocumentSnapshot memberSnapshot = await FirebaseFirestore.instance
+                .collection('clubs')
+                .doc(doc.id)
+                .collection('members')
+                .doc(userId)
+                .get();
+
+            if (memberSnapshot.exists && clubData['ownerID'] != userId) {
+              int memberCount = await fetchMemberCount(doc.id);
+              tempJoinedClubs.add(
+                  Club.fromMap(clubData, doc.id, memberCount));
+            }
+          }
+        }
+
+        setState(() {
+          joinedClubs = tempJoinedClubs;
+          _isLoadingClubs = false;
+        });
+      });
+    } catch (e) {
+      print('Error fetching clubs: $e');
+      setState(() {
+        _isLoadingClubs = false;
+      });
+    }
+  }
+
+  Future<int> fetchMemberCount(String clubId) async {
+    final memberSnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(clubId)
+        .collection('members')
+        .get();
+
+    return memberSnapshot.docs.length + 1; // Always exceed the actual member size by 1
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -126,11 +207,14 @@ class _HomePageState extends State<HomePage> {
               booksRead: _booksRead,
               currentlyReadingBooks: currentlyReadingBooks,
               isLoadingBooks: _isLoadingBooks,
+               myClubs: myClubs,
+              joinedClubs: joinedClubs,
+              isLoadingClubs: _isLoadingClubs,
             )
           : _selectedIndex == 1
               ? const CategoriesPage()
               : _selectedIndex == 2
-                  ?  ClubsPage()
+                  ?  ClubsBody()
                   : ProfilePage(onEdit: _setupUserDataListener),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -168,7 +252,11 @@ class HomePageContent extends StatelessWidget {
   final int booksGoal;
   final int booksRead;
   final List<Book> currentlyReadingBooks;
+  final List<Club> myClubs;
+  final List<Club> joinedClubs;
   final bool isLoadingBooks;
+  final bool isLoadingClubs;
+
 
   const HomePageContent({
     super.key,
@@ -177,11 +265,15 @@ class HomePageContent extends StatelessWidget {
     required this.booksGoal,
     required this.booksRead,
     required this.currentlyReadingBooks,
+    required this.myClubs,
+    required this.joinedClubs,
     required this.isLoadingBooks,
+    required this.isLoadingClubs,
   });
 
   @override
   Widget build(BuildContext context) {
+    List<Club> allClubs = [...myClubs, ...joinedClubs];
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(30.0),
@@ -213,16 +305,10 @@ class HomePageContent extends StatelessWidget {
             const SizedBox(height: 30),
             _buildCurrentlyReadingSection(context),
             const SizedBox(height: 120),
-            const Text(
-              'Clubs',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 53, 31, 31),
-              ),
-            ),
+            
+            
             const SizedBox(height: 15),
-            _buildClubsSection(),
+            _buildClubsSection(context, allClubs),
             const SizedBox(height: 30),
             // Create Club Button
             SizedBox(
@@ -390,22 +476,153 @@ class HomePageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildClubsSection() {
+  Widget _buildClubsSection(BuildContext context, List<Club> allClubs) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F5F1),
+        color: const Color(0xFFF8F8F3),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Center(
-        child: Text(
-          'No joined clubs yet',
-          style: TextStyle(
-            fontSize: 16,
-            color: Color.fromARGB(255, 53, 31, 31),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+             const Text(
+              'Clubs',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 53, 31, 31),
+              ),
+            ),
+         GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ClubPage(),
+              ),
+            );
+          },
+          child: const Icon(
+            Icons.arrow_forward,
+            color: Color(0xFF351F1F),
           ),
         ),
+            ],
+            
+          ),
+          const SizedBox(height: 10),
+        
+          const SizedBox(height: 10),
+          isLoadingClubs
+              ? const Center(child: CircularProgressIndicator())
+              : allClubs.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No clubs yet. Join or create one!',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    )
+                  : SizedBox(
+
+                    height: 304, // Adjust height to accommodate club cards
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.hardEdge,
+                      child: Row(
+
+                        children: allClubs
+                            .take(5) // Display only the first 5 clubs
+                            .map((club) => _buildClubCard(context, club))
+                            .toList(),
+                      ),
+                    ),
+                  ),
+          
+
+        ],
       ),
     );
   }
+
+  Widget _buildClubCard(BuildContext context, Club club) {
+  return Container(
+    width: 200, // Set a fixed width to ensure consistent card sizes
+    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.2),
+          spreadRadius: 2,
+          blurRadius: 5,
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        club.picture.isNotEmpty
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 140,
+                  width: double.infinity,
+                  child: Image.network(
+                    club.picture,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 140,
+                        width: double.infinity,
+                        color: Colors.red,
+                        child: Icon(Icons.error, color: Colors.white),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(child: CircularProgressIndicator());
+                    },
+                  ),
+                ),
+              )
+            : Container(
+                height: 140,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey.withOpacity(0.2),
+                ),
+                child: Center(
+                  child: Text(
+                    'No Image Available',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                ),
+              ),
+        const SizedBox(height: 10),
+        Text(
+          club.name,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 53, 31, 31),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${club.memberCount} members',
+          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ),
+  );
+}
+
 }
