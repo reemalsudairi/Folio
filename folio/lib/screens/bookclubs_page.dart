@@ -68,7 +68,7 @@ class Clubs extends StatelessWidget {
             child: const Icon(
               Icons.add, // Use the add icon
               color: Colors.white, // Set the icon color to white for contrast
-              size: 40, // Optional: Increase the icon size
+              size: 50, // Optional: Increase the icon size
             ),
           ),
         ),
