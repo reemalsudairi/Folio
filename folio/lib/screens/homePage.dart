@@ -233,7 +233,7 @@ class _HomePageState extends State<HomePage> {
             label: 'Search',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book_outlined, size: 35),
+            icon: Icon(Icons.diversity_3_outlined, size: 35),
             label: 'Library',
           ),
           BottomNavigationBarItem(
