@@ -199,6 +199,48 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3),
+            appBar: PreferredSize(
+        preferredSize: const Size(412, 56),
+        child: AppBar(
+          backgroundColor: const Color(0xFFF8F5F1),
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            IgnorePointer(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.notifications_active,
+                  color: Color.fromARGB(255, 35, 23, 23),
+                  size: 30,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()),
+                  );
+                },
+              ),
+            ),
+            IgnorePointer(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.person_search_rounded,
+                  color: Color.fromARGB(255, 35, 23, 23),
+                  size: 30,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
       body: _selectedIndex == 0
           ? HomePageContent(
               name: _name,
@@ -304,10 +346,9 @@ class HomePageContent extends StatelessWidget {
             _buildYearlyGoal(),
             const SizedBox(height: 30),
             _buildCurrentlyReadingSection(context),
-            const SizedBox(height: 120),
+            const SizedBox(height: 30),
             
             
-            const SizedBox(height: 15),
             _buildClubsSection(context, allClubs),
             const SizedBox(height: 30),
             // Create Club Button
@@ -478,7 +519,7 @@ class HomePageContent extends StatelessWidget {
 
   Widget _buildClubsSection(BuildContext context, List<Club> allClubs) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      // padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F8F3),
         borderRadius: BorderRadius.circular(20),
