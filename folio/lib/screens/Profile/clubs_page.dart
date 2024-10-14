@@ -31,6 +31,8 @@ class Club {
 class ClubsPage extends StatefulWidget {
   @override
   _ClubsPageState createState() => _ClubsPageState();
+
+  
 }
 
 class _ClubsPageState extends State<ClubsPage> {
