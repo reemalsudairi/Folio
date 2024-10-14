@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/viewClub.dart';
 
 class Club {
   final String id;
@@ -130,7 +131,17 @@ class _ClubsPageState extends State<ClubsPage> {
   }
 
   Widget buildClubCard(Club club) {
-    return Container(
+  return GestureDetector( // Wrap with GestureDetector
+    onTap: () {
+      // Navigate to ViewClub page and pass the club ID
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewClub(clubId: club.id), // Replace with your actual ViewClub widget
+        ),
+      );
+    },
+    child: Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -199,8 +210,10 @@ class _ClubsPageState extends State<ClubsPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
