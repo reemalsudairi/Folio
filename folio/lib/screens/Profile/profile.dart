@@ -21,13 +21,15 @@ class _ProfilePageState extends State<ProfilePage> {
   String _bio = '';
   String _profilePhotoUrl = '';
   int _booksGoal = 0;
-  int _booksRead = 0; // Example for tracking progress
+  int _booksRead = 0; // Track the number of books read
   String _username = '';
   String _email = ''; // Add email variable
 
   static final List<Widget> _pages = <Widget>[
-    const LibraryPage(),
-    ClubsPage(),
+    const LibraryPage(
+      userId: '',
+    ),
+     ClubsPage(),
     const ReviewsPage(),
   ];
 
@@ -42,26 +44,27 @@ class _ProfilePageState extends State<ProfilePage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final userId = user.uid;
-        final userDoc = await FirebaseFirestore.instance.collection('reader').doc(userId).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('reader')
+            .doc(userId)
+            .get();
         if (userDoc.exists) {
           final userData = userDoc.data()!;
           setState(() {
             _name = userData['name'] ?? '';
             _bio = userData['bio'] ?? '';
             _profilePhotoUrl = userData['profilePhoto'] ?? '';
-            _booksGoal = userData['books'] ?? 0;
-            _booksRead = 0; // Example value; replace with actual data if available
+            _booksGoal = userData['books'] ?? 0; // Fetch user's book goal
+            _booksRead = userData['booksRead'] ?? 0; // Fetch books read
             _username = userData['username'] ?? ''; // Fetch username
             _email = userData['email'] ?? ''; // Fetch email
           });
         }
       } else {
-        // Handle case when user is not logged in
         print('User is not logged in');
       }
     } catch (e) {
       print('Error fetching user profile: $e');
-      // Handle error, e.g., show a snackbar or alert
     }
   }
 
@@ -112,11 +115,13 @@ class _ProfilePageState extends State<ProfilePage> {
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
-              icon: const Icon(Icons.edit, color: Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.edit,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: _navigateToEditProfile,
             ),
             IconButton(
-              icon: const Icon(Icons.settings, color: Color.fromARGB(255, 35, 23, 23)),
+              icon: const Icon(Icons.settings,
+                  color: Color.fromARGB(255, 35, 23, 23)),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -135,14 +140,15 @@ class _ProfilePageState extends State<ProfilePage> {
               radius: 50,
               backgroundImage: _profilePhotoUrl.isNotEmpty
                   ? NetworkImage(_profilePhotoUrl)
-                  : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
+                  : const AssetImage('assets/images/profile_pic.png')
+                      as ImageProvider,
             ),
             const SizedBox(height: 5),
             Text(
               _name,
               style: TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.bold ,
+                fontWeight: FontWeight.bold,
                 color: Colors.brown[800],
               ),
             ),
@@ -165,77 +171,87 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 20),
-            _buildYearlyGoal(),
+            _buildYearlyGoal(), // Show yearly goal progress here
             const SizedBox(height: 20),
             Column(
-  children: [
-    Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        TextButton(
-          onPressed: () => _onItemTapped(0),
-          child: Text(
-            'Library',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _selectedIndex == 0 ? Colors.brown[800] : Colors.grey[600],
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    TextButton(
+                      onPressed: () => _onItemTapped(0),
+                      child: Text(
+                        'Library',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _selectedIndex == 0
+                              ? Colors.brown[800]
+                              : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _onItemTapped(1),
+                      child: Text(
+                        'Clubs',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _selectedIndex == 1
+                              ? Colors.brown[800]
+                              : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _onItemTapped(2),
+                      child: Text(
+                        'Reviews',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _selectedIndex == 2
+                              ? Colors.brown[800]
+                              : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    Container(
+                      height: 2,
+                      color: Colors.grey[300],
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      left: _getWordMiddlePosition(_selectedIndex,
+                              MediaQuery.of(context).size.width) -
+                          _calculateTextWidth(_selectedIndex == 0
+                                  ? 'Library'
+                                  : _selectedIndex == 1
+                                      ? 'Clubs'
+                                      : 'Reviews') /
+                              2, // Position in the middle of the selected word
+                      top: -1,
+                      child: Container(
+                        height: 4,
+                        width: _calculateTextWidth(_selectedIndex == 0
+                            ? 'Library'
+                            : _selectedIndex == 1
+                                ? 'Clubs'
+                                : 'Reviews'),
+                        color: Colors.brown[800],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-        ),
-        TextButton(
-          onPressed: () => _onItemTapped(1),
-          child: Text(
-            'Clubs',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _selectedIndex == 1 ? Colors.brown[800] : Colors.grey[600],
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () => _onItemTapped(2),
-          child: Text(
-            'Reviews',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _selectedIndex == 2 ? Colors.brown[800] : Colors.grey[600],
-            ),
-          ),
-        ),
-      ],
-    ),
-    Stack(
-      fit: StackFit.passthrough,
-      children: [
-        Container(
-          height: 2,
-          color: Colors.grey[300],
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-        AnimatedPositioned(
-  duration: const Duration(milliseconds: 300),
-  left: _getWordMiddlePosition(_selectedIndex, MediaQuery.of(context).size.width) - _calculateTextWidth(
-      _selectedIndex == 0
-          ? 'Library'
-          : _selectedIndex == 1
-              ? 'Clubs'
-              : 'Reviews') /
-      2, // Position in the middle of the selected word
-  top: -1,
-  child: Container(
-    height: 4,
-    width: _calculateTextWidth(
-      _selectedIndex == 0 ? 'Library' : _selectedIndex == 1 ? 'Clubs' : 'Reviews'),
-    color: Colors.brown[800],
-  ),
-),
-      ],
-    ),
-  ],
-),
             const SizedBox(height: 10),
             Expanded(
               child: _pages[_selectedIndex],
@@ -246,6 +262,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Yearly Goal section with booksRead and booksGoal
   Widget _buildYearlyGoal() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -288,7 +305,7 @@ class _ProfilePageState extends State<ProfilePage> {
           LinearProgressIndicator(
             value: _booksGoal > 0 ? _booksRead / _booksGoal : 0,
             backgroundColor: Colors.grey[300],
-            valueColor: const AlwaysStoppedAnimation (Color(0xFFF790AD)),
+            valueColor: const AlwaysStoppedAnimation(Color(0xFFF790AD)),
             minHeight: 13,
             borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
@@ -312,26 +329,28 @@ class _ProfilePageState extends State<ProfilePage> {
     return textPainter.width;
   }
 
- double _getWordMiddlePosition(int index, double screenWidth) {
-  // Widths of each word using the same text style
-  final wordWidths = [
-    _calculateTextWidth('Library'),
-    _calculateTextWidth('Clubs'),
-    _calculateTextWidth('Reviews'),
-  ];
+  double _getWordMiddlePosition(int index, double screenWidth) {
+    // Widths of each word using the same text style
+    final wordWidths = [
+      _calculateTextWidth('Library'),
+      _calculateTextWidth('Clubs'),
+      _calculateTextWidth('Reviews'),
+    ];
 
-  // Calculate the total width occupied by the words
-  double totalWordsWidth = wordWidths.reduce((a, b) => a + b);
-  // Calculate the space left to distribute between the words (padding)
-  double spaceBetweenWords = (screenWidth - totalWordsWidth) / 3; // 3 words, 3 spaces (between words)
+    // Calculate the total width occupied by the words
+    double totalWordsWidth = wordWidths.reduce((a, b) => a + b);
+    // Calculate the space left to distribute between the words (padding)
+    double spaceBetweenWords = (screenWidth - totalWordsWidth) /
+        3; // 3 words, 3 spaces (between words)
 
-  // Position based on index (for left margin)
-  double position = spaceBetweenWords / 2; // Start from the middle of the first space
-  for (int i = 0; i < index; i++) {
-    position += wordWidths[i] + spaceBetweenWords;
+    // Position based on index (for left margin)
+    double position =
+        spaceBetweenWords / 2; // Start from the middle of the first space
+    for (int i = 0; i < index; i++) {
+      position += wordWidths[i] + spaceBetweenWords;
+    }
+
+    // Return middle of the word
+    return position + (wordWidths[index] / 2);
   }
-
-  // Return middle of the word
-  return position + (wordWidths[index] / 2);
-}
 }
