@@ -673,54 +673,61 @@ class _ViewClubState extends State<ViewClub> {
                         ),
                         const Spacer(),
                         // Dynamic member count
-                        FutureBuilder<QuerySnapshot>(
-                          future: FirebaseFirestore.instance
-                              .collection('clubs')
-                              .doc(widget.clubId)
-                              .collection('members')
-                              .get(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            }
-                            if (snapshot.hasError) {
-                              return const Text(
-                                'Members',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              );
-                            }
+                        // Dynamic member count
+FutureBuilder<QuerySnapshot>(
+  future: FirebaseFirestore.instance
+      .collection('clubs')
+      .doc(widget.clubId)
+      .collection('members')
+      .get(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    }
+    if (snapshot.hasError) {
+      return const Text(
+        'Members',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+          decoration: TextDecoration.underline,
+        ),
+      );
+    }
 
-                            final memberCount = snapshot.data!.docs.length;
+    // Determine the member count, starting from 1 if the actual count is 0
+    final memberCount = snapshot.data!.docs.isEmpty ? 1 : snapshot.data!.docs.length;
 
-                            return GestureDetector(
-                              onTap: () {
-                                // Navigate to the MemberListPage and pass the clubId to show the members.
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => MemberListPage(
-                                      clubID: widget.clubId,
-                                      ownerID: _clubOwnerID,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                '$memberCount Members',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            );
-                          },
-                        )
+    return GestureDetector(
+      onTap: () {
+        // Check if clubID and ownerID are valid
+        if (widget.clubId.isNotEmpty && _clubOwnerID.isNotEmpty) {
+          // Navigate to the MemberListPage
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MemberListPage(
+                clubID: widget.clubId,
+                ownerID: _clubOwnerID,
+              ),
+            ),
+          );
+        } else {
+          // Handle the error appropriately, e.g., show a snackbar or log the issue
+          print('Club ID or Owner ID is empty.');
+        }
+      },
+      child: Text(
+        '$memberCount Member${memberCount > 1 ? 's' : ''}', // Handle pluralization
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
+  },
+)
                       ],
                     ),
                     const SizedBox(height: 16),
