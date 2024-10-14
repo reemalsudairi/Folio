@@ -211,7 +211,7 @@ class _MemberListPageState extends State<MemberListPage> {
                   String ownerName = ownerData['name'] ?? 'No Name';
                   String ownerUsername = ownerData['username'] ?? 'No Username';
                   String profilePhoto =
-                      ownerData['profilePhoto'] ?? ''; // Default if not found
+                      ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default if not found
 
                   return ListTile(
                     leading: CircleAvatar(
@@ -291,13 +291,11 @@ class _MemberListPageState extends State<MemberListPage> {
             }
 
             // For other members
-            var member = otherMembers[index - 1]; // Adjust for owner at index 0
-            String memberID = member.id;
-
+            var member = otherMembers[index - 1]; // Adjust index for members
             return StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('reader')
-                  .doc(memberID)
+                  .doc(member.id)
                   .snapshots(),
               builder: (context, AsyncSnapshot<DocumentSnapshot> memberSnapshot) {
                 if (memberSnapshot.connectionState == ConnectionState.waiting) {
@@ -328,14 +326,14 @@ class _MemberListPageState extends State<MemberListPage> {
                   ),
                   title: Text(memberName),
                   subtitle: Text('@$memberUsername'),
-                  trailing: currentUserID == widget.ownerID // Only show for owner
+                  trailing: widget.ownerID == currentUserID
                       ? IconButton(
                           icon: const Icon(Icons.remove_circle, color: Colors.red),
                           onPressed: () {
-                            _showRemoveConfirmation(memberID, memberName); // Show confirmation dialog
+                            _showRemoveConfirmation(member.id, memberName);
                           },
                         )
-                      : null,
+                      : null, // Only show remove button for the owner
                 );
               },
             );
@@ -349,15 +347,9 @@ class _MemberListPageState extends State<MemberListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Member List'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // Navigate back to the previous page
-          },
-        ),
+        title: const Text('Members List'),
       ),
-      body: _buildMemberList(),
+      body: _buildMemberList(), // Call the function to build the member list
     );
   }
 }
