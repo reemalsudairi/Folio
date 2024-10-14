@@ -14,7 +14,7 @@ class Club {
     required this.name,
     required this.description,
     required this.picture,
-    this.memberCount = 0, // Default member count to 0
+    this.memberCount = 1, // Default member count to 1
   });
 
   factory Club.fromMap(Map<String, dynamic> data, String documentId, int memberCount) {
@@ -51,51 +51,58 @@ class _ClubsPageState extends State<ClubsPage> {
       return;
     }
     try {
-      // Fetch clubs where the current user is the owner (My Clubs)
-      QuerySnapshot myClubsSnapshot = await FirebaseFirestore.instance
+      // Listen to real-time updates for clubs where the current user is the owner (My Clubs)
+      FirebaseFirestore.instance
           .collection('clubs')
           .where('ownerID', isEqualTo: userId)
-          .get();
+          .snapshots()
+          .listen((QuerySnapshot myClubsSnapshot) async {
+        List<Club> tempMyClubs = [];
 
-      List<Club> tempMyClubs = [];
-      List<Club> tempJoinedClubs = [];
+        for (var doc in myClubsSnapshot.docs) {
+          int memberCount = await fetchMemberCount(doc.id);
+          tempMyClubs.add(Club.fromMap(doc.data() as Map<String, dynamic>, doc.id, memberCount));
+        }
 
-      // Get member counts for My Clubs
-      for (var doc in myClubsSnapshot.docs) {
-        int memberCount = await fetchMemberCount(doc.id);
-        tempMyClubs.add(Club.fromMap(doc.data() as Map<String, dynamic>, doc.id, memberCount));
-      }
+        // Update the state for myClubs
+        setState(() {
+          myClubs = tempMyClubs;
+        });
+      });
 
-      // Fetch all clubs
-      QuerySnapshot joinedClubsSnapshot = await FirebaseFirestore.instance
+      // Listen to real-time updates for joined clubs
+      FirebaseFirestore.instance
           .collection('clubs')
-          .get();
+          .snapshots()
+          .listen((QuerySnapshot joinedClubsSnapshot) async {
+        List<Club> tempJoinedClubs = [];
 
-      for (var doc in joinedClubsSnapshot.docs) {
-        var clubData = doc.data() as Map<String, dynamic>?;
+        for (var doc in joinedClubsSnapshot.docs) {
+          var clubData = doc.data() as Map<String, dynamic>?;
 
-        // Safely check if the document's data is not null and contains 'ownerID'
-        if (clubData != null && clubData.containsKey('ownerID')) {
-          // Fetch the members subcollection to check if the user is a member
-          DocumentSnapshot memberSnapshot = await FirebaseFirestore.instance
-              .collection('clubs')
-              .doc(doc.id)
-              .collection('members')
-              .doc(userId)
-              .get();
+          // Safely check if the document's data is not null and contains 'ownerID'
+          if (clubData != null && clubData.containsKey('ownerID')) {
+            // Fetch the members subcollection to check if the user is a member
+            DocumentSnapshot memberSnapshot = await FirebaseFirestore.instance
+                .collection('clubs')
+                .doc(doc.id)
+                .collection('members')
+                .doc(userId)
+                .get();
 
-          // Check if the user is in the members subcollection and not the owner
-          if (memberSnapshot.exists && clubData['ownerID'] != userId) {
-            int memberCount = await fetchMemberCount(doc.id);
-            tempJoinedClubs.add(Club.fromMap(clubData, doc.id, memberCount));
+            // Check if the user is in the members subcollection and not the owner
+            if (memberSnapshot.exists && clubData['ownerID'] != userId) {
+              int memberCount = await fetchMemberCount(doc.id);
+              tempJoinedClubs.add(Club.fromMap(clubData, doc.id, memberCount));
+            }
           }
         }
-      }
 
-      setState(() {
-        myClubs = tempMyClubs;
-        joinedClubs = tempJoinedClubs;
-        isLoading = false; // Data fetching complete
+        // Update the state for joinedClubs
+        setState(() {
+          joinedClubs = tempJoinedClubs;
+          isLoading = false; // Data fetching complete
+        });
       });
     } catch (e) {
       print('Error fetching clubs: $e');
@@ -105,6 +112,7 @@ class _ClubsPageState extends State<ClubsPage> {
     }
   }
 
+
   Future<int> fetchMemberCount(String clubId) async {
     try {
       QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
@@ -112,10 +120,10 @@ class _ClubsPageState extends State<ClubsPage> {
           .doc(clubId)
           .collection('members')
           .get();
-      return membersSnapshot.size;
+      return membersSnapshot.size + 1;
     } catch (e) {
       print('Error fetching member count for club $clubId: $e');
-      return 0;
+      return 1;
     }
   }
 
