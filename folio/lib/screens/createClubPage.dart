@@ -8,8 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'custom_option_widget.dart'; // Import the custom widget
-
 class CreateClubPage extends StatefulWidget {
   const CreateClubPage({super.key});
 
@@ -158,17 +156,27 @@ class _CreateClubPageState extends State<CreateClubPage> {
 
       if (user != null) {
         await _firestore.collection('clubs').add({
-          'name': _clubNameController.text.trim(), // Ensure no leading/trailing spaces
+          'name': _clubNameController.text
+              .trim(), // Ensure no leading/trailing spaces
           'description': _descriptionController.text.trim(),
           'discussionDate': _discussionDate,
           'language': _selectedLanguage ?? '',
-          'currentBookID': _selectedBookId ?? '', // Use _selectedBookId instead of text
+          'currentBookID':
+              _selectedBookId ?? '', // Use _selectedBookId instead of text
           'ownerID': user.uid,
-          'picture': _clubImageUrl ?? '', // Add the club picture URL if available
+          'picture':
+              _clubImageUrl ?? '', // Add the club picture URL if available
         });
 
         // Show success message
         _showConfirmationMessage();
+        // Navigate to Clubs page after successful creation
+        // Navigator.pushReplacement(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => const Clubs(), // Correctly reference the Clubs widget
+        //   ),
+        // );
 
         // Clear the form
         _clubNameController.clear();
@@ -178,7 +186,8 @@ class _CreateClubPageState extends State<CreateClubPage> {
         setState(() {
           _discussionDate = null;
           _clubImageFile = null;
-          _currentImage = const AssetImage('assets/images/clubs.jpg'); // Revert to default image
+          _currentImage = const AssetImage(
+              'assets/images/clubs.jpg'); // Revert to default image
           _selectedLanguage = null;
           _selectedBookId = null; // Clear the selected book ID
           _bookCover = null; // Clear the book cover URL
@@ -194,6 +203,86 @@ class _CreateClubPageState extends State<CreateClubPage> {
         _isLoading = false;
       });
     }
+  }
+
+  void _showCreateClubConfirmation() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD)
+                .withOpacity(0.9), // Pinkish background with opacity
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.group_add, // Icon for creating a club
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Are you sure you want to create the club?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _createClub();
+                      // Call the confirmation message function
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(
+                          255, 131, 201, 133), // Green background for "Yes"
+                    ),
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(
+                          255, 245, 114, 105), // Green background for "Yes"
+                    ),
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // Function to show confirmation message
@@ -313,34 +402,39 @@ class _CreateClubPageState extends State<CreateClubPage> {
             children: [
               // Club Image Picker with options
 // Club Image Picker with options
-Center(
-  child: GestureDetector(
-    onTap: () => _showImagePickerOptions(context),
-    child: Column(
-      children: [
-        Container(
-          height: 200,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10), // Border radius 10
-            border: Border.all(color: Colors.grey, width: 2), // Add border
-            image: DecorationImage(
-              image: _clubImageFile != null
-                  ? FileImage(_clubImageFile!) as ImageProvider
-                  : const AssetImage('assets/images/clubs.jpg'), // Placeholder image
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        IconButton(
-          icon: const Icon(Icons.camera_alt, color: Color(0xFFF790AD)),
-          onPressed: () => _showImagePickerOptions(context), // Open the image picker options
-        ),
-      ],
-    ),
-  ),
-),
+              Center(
+                child: GestureDetector(
+                  onTap: () => _showImagePickerOptions(context),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(10), // Border radius 10
+                          border: Border.all(
+                              color: Colors.grey, width: 2), // Add border
+                          image: DecorationImage(
+                            image: _clubImageFile != null
+                                ? FileImage(_clubImageFile!) as ImageProvider
+                                : const AssetImage(
+                                    'assets/images/clubs.jpg'), // Placeholder image
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      IconButton(
+                        icon: const Icon(Icons.camera_alt,
+                            color: Color(0xFFF790AD)),
+                        onPressed: () => _showImagePickerOptions(
+                            context), // Open the image picker options
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 20),
 
@@ -370,7 +464,8 @@ Center(
                 cursorColor: const Color(0xFFF790AD),
                 maxLength: 30, // Limit input to 30 characters
                 inputFormatters: [
-                  LengthLimitingTextInputFormatter(30), // Input formatter for character limit
+                  LengthLimitingTextInputFormatter(
+                      30), // Input formatter for character limit
                 ],
                 decoration: InputDecoration(
                   labelText: 'Club Name *',
@@ -398,9 +493,15 @@ Center(
                 ),
                 onChanged: (text) {
                   // This triggers the rebuild of the widget to update the counter text dynamically
-                  setState(() {});
+                  setState(() {
+                    // Clear the error message if the input is not empty
+                    if (text.trim().isNotEmpty) {
+                      _errorMessage = null; // Clear the error message
+                    }
+                  });
                 },
               ),
+
               const SizedBox(height: 35),
 
               // Description Field
@@ -409,7 +510,8 @@ Center(
                 maxLines: 3,
                 maxLength: 250, // Limit input to 250 characters
                 inputFormatters: [
-                  LengthLimitingTextInputFormatter(250), // Input formatter to enforce character limit
+                  LengthLimitingTextInputFormatter(
+                      250), // Input formatter to enforce character limit
                 ],
                 cursorColor: const Color(0xFFF790AD),
                 decoration: InputDecoration(
@@ -491,106 +593,123 @@ Center(
               ),
               const SizedBox(height: 35),
 
- Column(
-  children: [
-    // Current Book Field with custom styling
-    Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40), // Match the design
-              border: Border.all(color: const Color(0xFFF790AD)), // Border color
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Text(
-                    _currentBookController.text.isNotEmpty
-                        ? _currentBookController.text
-                        : 'Select a Book',
-                    maxLines: 2,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: _currentBookController.text.isNotEmpty
-                          ? Colors.black
-                          : Colors.grey,
-                    ),
-                    overflow: TextOverflow.ellipsis, // Truncate if too long
-                  ),
-                ),
-                // Search icon
-                GestureDetector(
-                  onTap: () async {
-                    // Navigate to SelectBookPage
-                    final selectedBook = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SelectBookPage(),
+              Column(
+                children: [
+                  // Current Book Field with custom styling
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            // Navigate to SelectBookPage when the container is tapped
+                            final selectedBook = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SelectBookPage(),
+                              ),
+                            );
+
+                            // Check if a book was selected
+                            if (selectedBook != null) {
+                              setState(() {
+                                _selectedBookId =
+                                    selectedBook['id']; // Store book ID
+                                _currentBookController.text =
+                                    selectedBook['title']; // Set title
+                                _bookCover = selectedBook[
+                                    'coverImage']; // Store book cover
+                                _bookAuthor =
+                                    selectedBook['author']; // Store author name
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.circular(40), // Match the design
+                              border: Border.all(
+                                  color:
+                                      const Color(0xFFF790AD)), // Border color
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    _currentBookController.text.isNotEmpty
+                                        ? _currentBookController.text
+                                        : 'Select a Book',
+                                    maxLines: 2,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color:
+                                          _currentBookController.text.isNotEmpty
+                                              ? Colors.black
+                                              : Colors.grey,
+                                    ),
+                                    overflow: TextOverflow
+                                        .ellipsis, // Truncate if too long
+                                  ),
+                                ),
+                                // Search icon
+                                const Icon(
+                                  Icons.search,
+                                  color:
+                                      Color(0xFFF790AD), // Customize icon color
+                                ),
+                                if (_currentBookController.text.isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.close,
+                                        color: Colors.red), // X icon
+                                    onPressed: () {
+                                      setState(() {
+                                        _currentBookController
+                                            .clear(); // Clear the book title
+                                        _bookCover =
+                                            null; // Clear the book cover
+                                        _bookAuthor =
+                                            null; // Clear the author name
+                                        _selectedBookId =
+                                            null; // Clear the book ID
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    );
-
-                    // Check if a book was selected
-                    if (selectedBook != null) {
-                      setState(() {
-                        _selectedBookId = selectedBook['id']; // Store book ID
-                        _currentBookController.text = selectedBook['title']; // Set title
-                        _bookCover = selectedBook['coverImage']; // Store book cover
-                        _bookAuthor = selectedBook['author']; // Store author name
-                      });
-                    }
-                  },
-                  child: const Icon(
-                    Icons.search,
-                    color: Color(0xFFF790AD), // Customize icon color
+                    ],
                   ),
-                ),
-                if (_currentBookController.text.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red), // X icon
-                    onPressed: () {
-                      setState(() {
-                        _currentBookController.clear(); // Clear the book title
-                        _bookCover = null; // Clear the book cover
-                        _bookAuthor = null; // Clear the author name
-                        _selectedBookId = null; // Clear the book ID
-                      });
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
 
-    // Display the selected book cover and author
-    if (_bookCover != null) ...[
-      const SizedBox(height: 16), // Space between fields
-      Image.network(
-        _bookCover!,
-        height: 100,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(
-            child: Icon(Icons.error), // Error icon if the image fails to load
-          );
-        },
-      ),
-      const SizedBox(height: 8),
-      Text(
-        _bookAuthor != null ? 'Author: $_bookAuthor' : '',
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ],
-  ],
-),
+                  // Display the selected book cover and author
+                  if (_bookCover != null) ...[
+                    const SizedBox(height: 16), // Space between fields
+                    Image.network(
+                      _bookCover!,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(Icons
+                              .error), // Error icon if the image fails to load
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _bookAuthor != null ? 'Author: $_bookAuthor' : '',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
 
               const SizedBox(height: 20),
 
@@ -621,14 +740,24 @@ Center(
                 ],
               ),
               const SizedBox(height: 20),
-
+// Create Club Button with loading spinner
               // Create Club Button with loading spinner
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _createClub,
+                        onPressed: () {
+                          // Check if the club name is empty or contains only whitespace
+                          if (_clubNameController.text.trim().isEmpty) {
+                            setState(() {
+                              _errorMessage =
+                                  'Please enter a club name.'; // Set error message
+                            });
+                            return; // Return early if there's an error
+                          }
+                          _showCreateClubConfirmation(); // Show confirmation dialog if name is valid
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF790AD),
                           shape: RoundedRectangleBorder(
@@ -647,6 +776,7 @@ Center(
                         ),
                       ),
                     ),
+
               const SizedBox(height: 50),
             ],
           ),

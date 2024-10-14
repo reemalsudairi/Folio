@@ -271,78 +271,124 @@ class HomePageContent extends StatelessWidget {
     required this.isLoadingClubs,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    List<Club> allClubs = [...myClubs, ...joinedClubs];
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(30.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Good Day,\n$name!',
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 53, 31, 31),
-                  ),
-                ),
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: profilePhotoUrl.isNotEmpty
-                      ? NetworkImage(profilePhotoUrl)
-                      : const AssetImage('assets/images/profile_pic.png')
-                          as ImageProvider,
-                ),
-              ],
+@override
+Widget build(BuildContext context) {
+  List<Club> allClubs = [...myClubs, ...joinedClubs];
+
+  return Scaffold(
+    appBar: PreferredSize(
+      preferredSize: const Size(412, 56),
+      child: AppBar(
+        backgroundColor: const Color(0xFFF8F8F3), // Updated AppBar color
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          IgnorePointer(
+            child: IconButton(
+              icon: const Icon(
+                Icons.notifications_active,
+                color: Color.fromARGB(255, 35, 23, 23),
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SettingsPage()),
+                );
+              },
             ),
-            const SizedBox(height: 20),
-            _buildYearlyGoal(),
-            const SizedBox(height: 30),
-            _buildCurrentlyReadingSection(context),
-            const SizedBox(height: 120),
-            
-            
-            const SizedBox(height: 15),
-            _buildClubsSection(context, allClubs),
-            const SizedBox(height: 30),
-            // Create Club Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const CreateClubPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF790AD),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          ),
+          IgnorePointer(
+            child: IconButton(
+              icon: const Icon(
+                Icons.person_search_rounded,
+                color: Color.fromARGB(255, 35, 23, 23),
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SettingsPage()),
+                );
+              },
+            ),
+          )
+        ],
+      ),
+    ),
+    body: Container(
+      color: const Color(0xFFF8F8F3), // Updated background color
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(30.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Good Day,\n$name!',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 53, 31, 31),
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  'Create a Club',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: profilePhotoUrl.isNotEmpty
+                        ? NetworkImage(profilePhotoUrl)
+                        : const AssetImage('assets/images/profile_pic.png')
+                            as ImageProvider,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildYearlyGoal(),
+              const SizedBox(height: 30),
+              _buildCurrentlyReadingSection(context),
+              const SizedBox(height: 30),
+              _buildClubsSection(context, allClubs),
+              const SizedBox(height: 30),
+              // Create Club Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CreateClubPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF790AD),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Create a Club',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildYearlyGoal() {
     return Container(
@@ -478,7 +524,7 @@ class HomePageContent extends StatelessWidget {
 
   Widget _buildClubsSection(BuildContext context, List<Club> allClubs) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      // padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F8F3),
         borderRadius: BorderRadius.circular(20),

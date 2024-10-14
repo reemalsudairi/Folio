@@ -13,13 +13,23 @@ class _SelectBookPageState extends State<SelectBookPage> {
   List<dynamic> _books = [];
   bool _isLoading = true;
   String _errorMessage = '';
-  final TextEditingController _searchController =
-      TextEditingController(); // Controller for search bar
+  final TextEditingController _searchController = TextEditingController();
+  String? currentBookID;
+  String? _currentBookTitle; // Define this variable
+  String? coverImage; // Define this variable
+  bool _isSearching = false; // New state to track if the user is searching
 
   @override
   void initState() {
     super.initState();
     _loadBestSellingBooks(); // Load best-selling books initially
+
+    // Add a listener to the search controller to track whether the user is searching
+    _searchController.addListener(() {
+      setState(() {
+        _isSearching = _searchController.text.isNotEmpty;
+      });
+    });
   }
 
   // Function to load 30 best-selling books from Google Books API
@@ -107,147 +117,166 @@ class _SelectBookPageState extends State<SelectBookPage> {
                   _searchAndNavigate(context, value: value),
             ),
           ),
-          // "Bestsellers" label
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0, bottom: 8.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Bestsellers",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: Color(0xFF351F1F),
+          // Show "Bestsellers" label and grid only if the user is not searching
+          if (!_isSearching)
+            const Padding(
+              padding: EdgeInsets.only(left: 16.0, bottom: 8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Bestsellers",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    color: Color(0xFF351F1F),
+                  ),
                 ),
               ),
             ),
-          ),
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _errorMessage.isNotEmpty
-                  ? Center(child: Text(_errorMessage))
-                  : Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.66,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                          ),
-                          itemCount: _books.length,
-                          itemBuilder: (context, index) {
-                            final book = _books[index];
-                            final title =
-                                book['volumeInfo']['title'] ?? 'No title';
-                            final authors =
-                                book['volumeInfo']['authors']?.join(', ') ??
-                                    'Unknown author';
-                            final thumbnail =
-                                book['volumeInfo']['imageLinks'] != null
-                                    ? book['volumeInfo']['imageLinks']
-                                        ['thumbnail']
-                                    : 'https://via.placeholder.com/150';
-                            final bookID = book['id'];
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_errorMessage.isNotEmpty)
+            Expanded(
+              child: Center(
+                // Wrap the message in a Center widget
+                child: Text(
+                  _errorMessage,
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 125, 124, 124),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.66,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: _books.length,
+                  itemBuilder: (context, index) {
+                    final book = _books[index];
+                    final title = book['volumeInfo']['title'] ?? 'No title';
+                    final authors = book['volumeInfo']['authors']?.join(', ') ??
+                        'Unknown author';
+                    final thumbnail = book['volumeInfo']['imageLinks'] != null
+                        ? book['volumeInfo']['imageLinks']['thumbnail']
+                        : 'https://via.placeholder.com/150';
+                    final bookID =
+                        book['id']; // Correct Google Books API book ID
 
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(30.0),
-                              child: Container(
-                                color: const Color(0xFFF8F8F3),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Flexible(
-                                          flex: 5,
-                                          child: AspectRatio(
-                                            aspectRatio: 0.66,
-                                            child: Image.network(
-                                              thumbnail,
-                                              fit: BoxFit.cover,
-                                              width: double.infinity,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                return const Center(
-                                                    child: Icon(Icons.error));
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                        Flexible(
-                                          flex: 2,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              title,
-                                              style: const TextStyle(
-                                                color: Color(0xFF351F1F),
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                        Flexible(
-                                          flex: 1,
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 8.0,
-                                                right: 8.0,
-                                                bottom: 8.0),
-                                            child: Text(
-                                              authors,
-                                              style: const TextStyle(
-                                                color: Color(0xFF9b9b9b),
-                                                fontSize: 15,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(30.0),
+                      child: Container(
+                        color: const Color(0xFFF8F8F3),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  flex: 5,
+                                  child: AspectRatio(
+                                    aspectRatio: 0.66,
+                                    child: Image.network(
+                                      thumbnail,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return const Center(
+                                            child: Icon(Icons.error));
+                                      },
                                     ),
-                                    Positioned(
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          Navigator.pop(context, {
-                                            'id': bookID,
-                                            'title': title,
-                                            'coverImage': thumbnail,
-                                          });
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              const Color(0xFFF790AD),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20, vertical: 12),
-                                        ),
-                                        child: const Text(
-                                          'Select',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16),
-                                        ),
+                                  ),
+                                ),
+                                Flexible(
+                                  flex: 2,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      title,
+                                      style: const TextStyle(
+                                        color: Color(0xFF351F1F),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ],
+                                  ),
+                                ),
+                                Flexible(
+                                  flex: 1,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 8.0, right: 8.0, bottom: 8.0),
+                                    child: Text(
+                                      authors,
+                                      style: const TextStyle(
+                                        color: Color(0xFF9b9b9b),
+                                        fontSize: 15,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Positioned(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  final selectedBook = {
+                                    'id':
+                                        bookID, // The correct book ID from Google Books API
+                                    'title': title,
+                                    'coverImage': thumbnail,
+                                  };
+
+                                  // Store the selected book information locally
+                                  setState(() {
+                                    currentBookID =
+                                        bookID; // Store the book ID locally
+                                    _currentBookTitle =
+                                        title; // Store the book title locally
+                                    coverImage =
+                                        thumbnail; // Store the book cover locally
+                                  });
+
+                                  // Close the page and return the selected book data
+                                  Navigator.pop(context,
+                                      selectedBook); // Return selected book
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF790AD),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
+                                ),
+                                child: const Text(
+                                  'Select',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16),
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                    );
+                  },
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/createClubPage.dart';
 import 'package:folio/screens/viewClub.dart';
 
 class Club {
@@ -8,9 +9,14 @@ class Club {
   final String picture;
   final int memberCount;
 
-  Club({required this.id, required this.name, required this.picture, this.memberCount = 0});
+  Club(
+      {required this.id,
+      required this.name,
+      required this.picture,
+      this.memberCount = 0});
 
-  factory Club.fromMap(Map<String, dynamic> data, String documentId, int memberCount) {
+  factory Club.fromMap(
+      Map<String, dynamic> data, String documentId, int memberCount) {
     return Club(
       id: documentId,
       name: data['name'] ?? '',
@@ -42,6 +48,33 @@ class Clubs extends StatelessWidget {
       backgroundColor: Color(0xFFF8F8F3),
 
       body: const ClubsBody(),
+      floatingActionButton: ClipOval(
+        child: SizedBox(
+          width: 70, // Set the width to make it bigger
+          height: 70, // Set the height to make it bigger
+
+          child: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      CreateClubPage(), // Navigate to the Create Club page
+                ),
+              );
+            },
+            backgroundColor:
+                const Color(0xFFF790AD), // Set the background color to pink
+            child: const Icon(
+              Icons.add, // Use the add icon
+              color: Colors.white, // Set the icon color to white for contrast
+              size: 50, // Optional: Increase the icon size
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat, // Optional: Positioning
     );
   }
 }
@@ -66,12 +99,14 @@ class _ClubsBodyState extends State<ClubsBody> {
 
   Future<void> fetchClubs() async {
     try {
-      QuerySnapshot clubsSnapshot = await FirebaseFirestore.instance.collection('clubs').get();
+      QuerySnapshot clubsSnapshot =
+          await FirebaseFirestore.instance.collection('clubs').get();
       List<Club> fetchedClubs = [];
 
       for (var doc in clubsSnapshot.docs) {
         int memberCount = await fetchMemberCount(doc.id);
-        fetchedClubs.add(Club.fromMap(doc.data() as Map<String, dynamic>, doc.id, memberCount));
+        fetchedClubs.add(Club.fromMap(
+            doc.data() as Map<String, dynamic>, doc.id, memberCount));
       }
 
       setState(() {
@@ -106,7 +141,8 @@ class _ClubsBodyState extends State<ClubsBody> {
     List<Club> searchResults = [];
     if (query.isNotEmpty) {
       searchResults = clubs
-          .where((club) => club.name.toLowerCase().contains(query.toLowerCase()))
+          .where(
+              (club) => club.name.toLowerCase().contains(query.toLowerCase()))
           .toList();
     } else {
       searchResults = clubs;
@@ -148,6 +184,7 @@ class _ClubsBodyState extends State<ClubsBody> {
           children: [
             club.picture.isNotEmpty
                 ? ClipRRect(
+<<<<<<< HEAD
               borderRadius: BorderRadius.circular(12),
               child: SizedBox(
                 height: 200,
@@ -157,35 +194,46 @@ class _ClubsBodyState extends State<ClubsBody> {
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
+=======
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+>>>>>>> 676ea0c13803d2a3cf282b399d5636f8734a1c55
                       height: 140,
                       width: double.infinity,
-                      color: Colors.red,
-                      child: Icon(Icons.error, color: Colors.white),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  },
-                ),
-              ),
-            )
+                      child: Image.network(
+                        club.picture,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 140,
+                            width: double.infinity,
+                            color: Colors.red,
+                            child: Icon(Icons.error, color: Colors.white),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                      ),
+                    ),
+                  )
                 : Container(
-              height: 140,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.grey.withOpacity(0.2),
-              ),
-              child: Center(
-                child: Text(
-                  'No Image Available',
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
-                ),
-              ),
-            ),
+                    height: 140,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.withOpacity(0.2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'No Image Available',
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    ),
+                  ),
             SizedBox(height: 10),
             Text(
               club.name,
@@ -208,47 +256,48 @@ class _ClubsBodyState extends State<ClubsBody> {
   Widget build(BuildContext context) {
     return isLoading // Conditional rendering based on loading state
         ? Center(
-      child: CircularProgressIndicator(),
-    )
+            child: CircularProgressIndicator(),
+          )
         : Column(
-      children: [
-        // Search bar
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextField(
-            decoration: InputDecoration(
-              labelText: 'Search for a club',
-              labelStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
-              filled: true,
-              fillColor: const Color.fromARGB(255, 255, 255, 255),
-              prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
-                borderSide: BorderSide.none,
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Search for a club',
+                    labelStyle:
+                        TextStyle(color: Colors.grey[600], fontSize: 16),
+                    filled: true,
+                    fillColor: const Color.fromARGB(255, 255, 255, 255),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12.0, horizontal: 20.0),
+                  ),
+                  onChanged: (String value) {
+                    filterClubs(value);
+                  },
+                ),
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                  vertical: 12.0, horizontal: 20.0),
-            ),
-            onChanged: (String value) {
-              filterClubs(value);
-            },
-          ),
-        ),
 
-        // List of clubs
-        Expanded(
-          child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.75,
-            ),
-            itemCount: filteredClubs.length,
-            itemBuilder: (context, index) {
-              return buildClubCard(filteredClubs[index]);
-            },
-          ),
-        ),
-      ],
-    );
+              // List of clubs
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemCount: filteredClubs.length,
+                  itemBuilder: (context, index) {
+                    return buildClubCard(filteredClubs[index]);
+                  },
+                ),
+              ),
+            ],
+          );
   }
 }
