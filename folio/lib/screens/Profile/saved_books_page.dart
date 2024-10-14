@@ -131,7 +131,7 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
       await FirebaseFirestore.instance
           .collection('reader')
           .doc(userId)
-          .collection('saved')
+          .collection('save')
           .doc(book.id)
           .delete();
 
