@@ -178,62 +178,68 @@ class _ClubsBodyState extends State<ClubsBody> {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            club.picture.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
+        child: SingleChildScrollView(
+          // Allow content to scroll
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              club.picture.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        height: 140,
+                        width: double.infinity,
+                        child: Image.network(
+                          club.picture,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 140,
+                              width: double.infinity,
+                              color: Colors.red,
+                              child: Icon(Icons.error, color: Colors.white),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                        ),
+                      ),
+                    )
+                  : Container(
                       height: 140,
                       width: double.infinity,
-                      child: Image.network(
-                        club.picture,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 140,
-                            width: double.infinity,
-                            color: Colors.red,
-                            child: Icon(Icons.error, color: Colors.white),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        },
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey.withOpacity(0.2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'No Image Available',
+                          style: TextStyle(fontSize: 16, color: Colors.black54),
+                        ),
                       ),
                     ),
-                  )
-                : Container(
-                    height: 140,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.grey.withOpacity(0.2),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'No Image Available',
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      ),
-                    ),
-                  ),
-            SizedBox(height: 10),
-            Text(
-              club.name,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 6),
-            Text(
-              '${club.memberCount} members',
-              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              SizedBox(height: 2),
+              Text(
+                club.name,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                maxLines: 1, // Limits to 1 line
+                overflow:
+                    TextOverflow.ellipsis, // Adds "..." if the text is too long
+              ),
+              SizedBox(height: 2),
+              Text(
+                '${club.memberCount} members',
+                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
