@@ -186,11 +186,10 @@ class _ClubsBodyState extends State<ClubsBody> {
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.grey.withOpacity(0.2),
                       image: DecorationImage(
-            image: AssetImage('assets/images/clubs.jpg'),
-            fit: BoxFit.cover,
-          ),
+                        image: AssetImage('assets/images/clubs.jpg'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                   
                   ),
             const SizedBox(height: 2),
             // Use Flexible here to handle overflow
@@ -219,7 +218,7 @@ class _ClubsBodyState extends State<ClubsBody> {
 
   @override
   Widget build(BuildContext context) {
-     return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: Text(
           'Book Clubs',
@@ -234,58 +233,59 @@ class _ClubsBodyState extends State<ClubsBody> {
         automaticallyImplyLeading: false,
       ),
       backgroundColor: Color(0xFFF8F8F3),
-    body: isLoading // Conditional rendering based on loading state
-        ? Center(
-            child: CircularProgressIndicator(),
-          )
-        : Column(
-            children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Search for a club',
-                    labelStyle:
-                        TextStyle(color: Colors.grey[600], fontSize: 16),
-                    filled: true,
-                    fillColor: const Color.fromARGB(255, 255, 255, 255),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                      borderSide: BorderSide.none,
+      body: isLoading // Conditional rendering based on loading state
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Column(
+              children: [
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Search for a club',
+                      labelStyle:
+                          TextStyle(color: Colors.grey[600], fontSize: 16),
+                      filled: true,
+                      fillColor: const Color.fromARGB(255, 255, 255, 255),
+                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12.0, horizontal: 20.0),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 12.0, horizontal: 20.0),
+                    onChanged: (String value) {
+                      filterClubs(value);
+                    },
                   ),
-                  onChanged: (String value) {
-                    filterClubs(value);
-                  },
                 ),
-              ),
 
-              // List of clubs
-             Expanded(
-              child: filteredClubs.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No clubs found for your search.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                  : GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.75,
-                      ),
-                      itemCount: filteredClubs.length,
-                      itemBuilder: (context, index) {
-                        return buildClubCard(filteredClubs[index]);
-                      },
-                    ),
+                // List of clubs
+                Expanded(
+                  child: filteredClubs.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No clubs found for your search.',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.75,
+                          ),
+                          itemCount: filteredClubs.length,
+                          itemBuilder: (context, index) {
+                            return buildClubCard(filteredClubs[index]);
+                          },
+                        ),
+                ),
+              ],
             ),
-            ],
-          ),
-     );
+    );
   }
 }
