@@ -62,27 +62,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   void _loadBookDetails() async {
     try {
       final details = await _googleBooksService.getBookDetails(widget.bookId);
-      final List<String> allLists = ['save', 'currently reading', 'finished'];
-      String currentList = 'Add to'; // Default state
-
-      for (var list in allLists) {
-        var doc = await _firestore
-            .collection('reader')
-            .doc(userId)
-            .collection(list)
-            .doc(widget.bookId)
-            .get();
-
-        if (doc.exists) {
-          currentList =
-              capitalize(list); // Use the newly created helper function
-          break;
-        }
-      }
-
       setState(() {
         bookDetails = details;
-        selectedOption = currentList; // Set the current list
         _isLoading = false;
       });
     } catch (e) {
@@ -91,11 +72,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         _errorMessage = 'Error loading book details: ${e.toString()}';
       });
     }
-  }
-
-  String capitalize(String input) {
-    if (input.isEmpty) return "";
-    return input[0].toUpperCase() + input.substring(1);
   }
 
   // Method to remove HTML tags from a string
@@ -115,169 +91,137 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       });
     }
   }
+Future<void> _moveBookBetweenLists(String currentList, String newList) async {
+  // Ensure userId is set
+  if (!_isUserIdLoaded) {
+    print('Error: User ID is not loaded yet!');
+    return;
+  }
 
-  Future<void> _moveBookBetweenLists(String currentList, String newList) async {
-    if (!_isUserIdLoaded) {
-      print('Error: User ID is not loaded yet!');
-      return;
-    }
+  final currentUserId = userId ?? widget.userId;
 
-    final currentUserId = userId ?? widget.userId;
+  // ignore: unnecessary_null_comparison
+  if (currentUserId == null || currentUserId.isEmpty) {
+    print('Error: User ID is empty!');
+    return;
+  }
 
-    if (currentUserId == null || currentUserId.isEmpty) {
-      print('Error: User ID is empty!');
-      return;
-    }
+  if (widget.bookId.isEmpty) {
+    print('Error: Book ID is empty!');
+    return;
+  }
 
-    if (widget.bookId.isEmpty) {
-      print('Error: Book ID is empty!');
-      return;
-    }
+  try {
+    print('Moving book from $currentList to $newList');
 
-    try {
-      // Remove the book from all lists except the new one
-      final List<String> allLists = ['save', 'currently reading', 'finished'];
+    // Remove the book from all lists except the new one
+    final List<String> allLists = ['save', 'currently reading', 'finished'];
 
-      for (var list in allLists) {
-        if (list != newList.toLowerCase()) {
-          await _firestore
-              .collection('reader')
-              .doc(currentUserId)
-              .collection(list)
-              .doc(widget.bookId)
-              .delete();
-          if (list == 'Finished') {
-            await _decrementBooksRead();
-          }
+    for (var list in allLists) {
+      if (list != newList.toLowerCase()) {
+        print('Removing book from $list');
+        await _firestore
+            .collection('reader')
+            .doc(currentUserId)
+            .collection(list)
+            .doc(widget.bookId)
+            .delete();
+
+        // If the book was in "finished", decrement the yearly goal
+        if (list == 'Finished') {
+          print('Attempting to decrement booksRead...');
+          await _decrementBooksRead();
         }
       }
-      // Add the book to the new list and save the state
-      await _firestore
-          .collection('reader')
-          .doc(currentUserId)
-          .collection(newList.toLowerCase())
-          .doc(widget.bookId)
-          .set({
-        'bookID': widget.bookId,
-        'timestamp': FieldValue.serverTimestamp(),
-        'listName': newList // Save the list name as part of the book's data
-      });
-      // If the book is moved to "finished", increment the yearly goal
-      if (newList == 'Finished') {
-
-        await _incrementBooksRead();
-      }
-
-      _showConfirmationMessage(newList);
-    } catch (e) {
-      print('Error moving book: $e');
     }
-  }
 
-  void _showConfirmationMessage(String listName) {
-    String formattedListName = listName[0].toUpperCase() +
-        listName.substring(1); // Capitalize the first letter
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Disable dismissal by clicking outside
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.lightGreen.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 40,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Added to $formattedListName list successfully!',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+// Add the book to the new list
+await _firestore
+    .collection('reader')
+    .doc(currentUserId)
+    .collection(newList.toLowerCase())
+    .doc(widget.bookId)
+    .set({
+  'bookID': widget.bookId,
+  'timestamp': FieldValue.serverTimestamp(),
+});
 
-    // Automatically close the confirmation dialog after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
-      if (Navigator.canPop(context)) {
-        // Check if the navigator can pop
-        Navigator.pop(context); // Close the confirmation dialog
-      }
-    });
+print('newList value is: $newList'); // Debugging log
+
+// If the book is moved to "finished", increment the yearly goal
+if (newList == 'Finished') {
+  print('Entering _incrementBooksRead block...');  // Debugging log
+  await _incrementBooksRead();
+} else {
+  print('Not entering _incrementBooksRead, newList is not "finished"'); // Debugging log
+}
+
+
+    print('Successfully moved the book to $newList');
+  } catch (e) {
+    print('Error moving book: $e');
   }
+}
 
 // Increment books read when a book is moved to "Finished"
-  Future<void> _incrementBooksRead() async {
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+Future<void> _incrementBooksRead() async {
+  try {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('reader')
+        .doc(userId)
+        .get();
+
+    if (userDoc.exists && userDoc.data() != null) {
+      Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+      int booksRead = data?['booksRead'] ?? 0;
+
+      await FirebaseFirestore.instance
           .collection('reader')
           .doc(userId)
-          .get();
+          .update({'booksRead': booksRead + 1});
 
-      if (userDoc.exists && userDoc.data() != null) {
-        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
-        int booksRead = data?['booksRead'] ?? 0;
-
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .update({'booksRead': booksRead + 1});
-
-        print('Books read incremented');
-      } else {
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .update({'booksRead': 1});
-        print('Books read initialized and incremented');
-      }
-    } catch (e) {
-      print('Error incrementing books read: $e');
+      print('Books read incremented');
+    } else {
+      await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(userId)
+          .update({'booksRead': 1});
+      print('Books read initialized and incremented');
     }
+  } catch (e) {
+    print('Error incrementing books read: $e');
   }
+}
 
 // Decrement books read when a book is removed from "Finished"
-  Future<void> _decrementBooksRead() async {
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('reader')
-          .doc(userId)
-          .get();
+Future<void> _decrementBooksRead() async {
+  try {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('reader')
+        .doc(userId)
+        .get();
 
-      if (userDoc.exists && userDoc.data() != null) {
-        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
-        int booksRead = data?['booksRead'] ?? 0;
+    if (userDoc.exists && userDoc.data() != null) {
+      Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+      int booksRead = data?['booksRead'] ?? 0;
 
-        if (booksRead > 0) {
-          await FirebaseFirestore.instance
-              .collection('reader')
-              .doc(userId)
-              .update({'booksRead': booksRead - 1});
+      if (booksRead > 0) {
+        await FirebaseFirestore.instance
+            .collection('reader')
+            .doc(userId)
+            .update({'booksRead': booksRead - 1});
 
-          print('Books read decremented');
-        } else {
-          print('Cannot decrement, booksRead is already zero');
-        }
+        print('Books read decremented');
+      } else {
+        print('Cannot decrement, booksRead is already zero');
       }
-    } catch (e) {
-      print('Error decrementing books read: $e');
     }
+  } catch (e) {
+    print('Error decrementing books read: $e');
   }
+}
+
+
 
   // Handle tab switching
   void _onItemTapped(int index) {
@@ -316,22 +260,21 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Book cover image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  bookDetails?['volumeInfo']['imageLinks']?['thumbnail'] ??
-                      'https://via.placeholder.com/150',
-                  height: 250,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 250,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image, size: 40),
-                    );
-                  },
-                ),
-              ),
+             ClipRRect(
+  borderRadius: BorderRadius.circular(10),
+  child: Image.network(
+    bookDetails?['volumeInfo']['imageLinks']?['thumbnail'] ?? 'https://via.placeholder.com/150',
+    height: 250,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      return Container(
+        height: 250,
+        color: Colors.grey[300],
+        child: const Icon(Icons.broken_image, size: 40),
+      );
+    },
+  ),
+),
 
               const SizedBox(height: 20),
               // Title
@@ -377,7 +320,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                             child: Text(
                               selectedOption == 'Add to'
                                   ? 'Add to'
-                                  : '$selectedOption',
+                                  : 'Added to $selectedOption',
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
