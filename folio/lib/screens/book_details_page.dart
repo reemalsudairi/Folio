@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/services/google_books_service.dart';
 import 'package:html/parser.dart'; // For parsing HTML
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:folio/screens/viewClub.dart';
 
 class BookDetailsPage extends StatefulWidget {
   final String bookId;
@@ -27,11 +29,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   String selectedOption = 'Add to'; // Default button text
   int _selectedIndex = 0; // To track selected tab
+    List<Club> bookClubs = []; // Initialize the bookClubs list
 
   @override
   void initState() {
     super.initState();
-    _fetchUserIdAndLoadDetails(); // Fetch user ID from Firebase Auth
+    _fetchUserIdAndLoadDetails(); 
+        fetchBookClubs(widget.bookId); 
   }
 
   // Fetch the user ID from Firebase Authentication
@@ -105,6 +109,180 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     parsedText = parsedText.replaceAll('⭐', ''); // Remove star symbols
     return parsedText;
   }
+Future<void> fetchBookClubs(String bookId) async {
+  try {
+    QuerySnapshot clubsSnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .where('currentBookID', isEqualTo: bookId)
+        .get();
+
+    List<Club> tempClubs = [];
+    for (var doc in clubsSnapshot.docs) {
+      int memberCount = await fetchMemberCount(doc.id); // Fetch the member count
+      tempClubs.add(Club.fromMap(doc.data() as Map<String, dynamic>, doc.id, memberCount)); // Update club member count
+
+
+    }
+
+    setState(() {
+      bookClubs = tempClubs;
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('Error fetching clubs: $e');
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
+Future<int> fetchMemberCount(String clubId) async {
+  try {
+    QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(clubId)
+        .collection('members')
+        .get();
+
+    return membersSnapshot.size; // Return the correct count
+  } catch (e) {
+    print('Error fetching member count for club $clubId: $e');
+    return 0;
+  }
+}
+
+
+
+  // Method to build the club grid view
+  Widget buildClubGridView(List<Club> bookClubs) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (bookClubs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'No clubs are currently discussing this book.',
+          style: TextStyle(fontSize: 18, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    } else {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+        ),
+        itemCount: bookClubs.length,
+        itemBuilder: (context, index) {
+          final club = bookClubs[index];
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ViewClub(clubId: club.id),
+                ),
+              );
+            },
+            child: buildClubCard(club),
+          );
+        },
+      );
+    }
+  }
+
+  Widget buildClubCard(Club club) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewClub(clubId: club.id), // Navigate to club details
+        ),
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          club.picture.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 140, // Adjusted height
+                    width: double.infinity,
+                    child: Image.network(
+                      club.picture,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 140,
+                          width: double.infinity,
+                          color: Colors.red,
+                          child: const Icon(Icons.error, color: Colors.white),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                    ),
+                  ),
+                )
+              : Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.withOpacity(0.2),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/clubs.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+          const SizedBox(height: 8), // Add some space between the image and text
+
+          // Club name
+          Flexible(
+            child: Text(
+              club.name,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+              maxLines: 1, // Limit to one line
+              overflow: TextOverflow.ellipsis, // Show ellipsis if name is too long
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Member count (smaller font size)
+          Flexible(
+            child: Text(
+                  '${club.memberCount} members', // Correctly displaying the member count
+              style: const TextStyle(fontSize: 14, color: Colors.grey), // Smaller text size
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
   void _onMenuSelected(String value) {
     if (value != selectedOption) {
@@ -632,14 +810,26 @@ Future<void> _decrementBooksRead() async {
                   ],
                 ),
               if (_selectedIndex == 1)
-                Center(
-                  child: Text(
-                    'No clubs discussing this book currently.',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown[800],
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+  child: Text(
+    'Clubs discussing this book',
+    style: const TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: Color(0xFF351F1F),
+    ),
+  ),
+),
+
+                      const SizedBox(height: 16),
+                      // Call to build the club grid view
+                      buildClubGridView(bookClubs),
+                    ],
                   ),
                 ),
               if (_selectedIndex == 2)
