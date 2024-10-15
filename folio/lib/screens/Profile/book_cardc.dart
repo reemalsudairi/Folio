@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/book_details_page.dart';
-
 import 'book.dart';
 
 class CurrentlyReadingBookCard extends StatelessWidget {
@@ -63,8 +62,7 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                     color: Color(0xFFF790AD), // Pink color as per your request
                     size: 20,
                   ),
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
                       value: 'Move to Finished',
                       child: ListTile(
@@ -94,37 +92,33 @@ class CurrentlyReadingBookCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Flexible(
-            flex: 1, // This is the flex factor, you can adjust it
-            child: SizedBox(
-              width: 120,
-              child: Column(
-                children: [
-                  Text(
-                    book.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 120,
+            child: Column(
+              children: [
+                Text(
+                  book.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    book.author,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  book.author,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
                   ),
-                  const SizedBox(height: 4),
-                ],
-              ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         ],
@@ -132,3 +126,4 @@ class CurrentlyReadingBookCard extends StatelessWidget {
     );
   }
 }
+
