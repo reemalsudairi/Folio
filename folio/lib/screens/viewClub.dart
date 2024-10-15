@@ -1,22 +1,47 @@
-// view_club.dart
+import 'dart:convert';
 
-import 'dart:math';
-import 'package:folio/screens/MemberListPage.dart';
-import 'package:folio/view/callPage.dart';
-import 'package:uuid/uuid.dart'; // Import UUID package
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:folio/screens/MemberListPage.dart';
 import 'package:folio/screens/editClub.dart';
+import 'package:folio/view/callPage.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart'; // Import UUID package
 
 class ViewClub extends StatefulWidget {
   final String clubId;
 
-  const ViewClub({Key? key, required this.clubId}) : super(key: key);
+  ViewClub({Key? key, required this.clubId}) : super(key: key);
 
   @override
   _ViewClubState createState() => _ViewClubState();
+}
+
+Future _fetchBookData(String clubId) async {
+  final bookDataRef = FirebaseFirestore.instance.collection('clubs').doc(clubId);
+  final bookDataSnapshot = await bookDataRef.get();
+  if (bookDataSnapshot.exists) {
+    final clubData = bookDataSnapshot.data() as Map<String, dynamic>;
+
+    // Fetch book details from Google Books API
+    if (clubData['currentBookID'] != null) {
+      final bookResponse = await http.get(Uri.parse(
+          'https://www.googleapis.com/books/v1/volumes/${clubData['currentBookID']}'));
+      if (bookResponse.statusCode == 200) {
+        final bookData = jsonDecode(bookResponse.body);
+        return {
+          'title': bookData['volumeInfo']['title'] ?? '',
+          'author': bookData['volumeInfo']['authors']?[0] ?? '',
+          'image': bookData['volumeInfo']['imageLinks']['thumbnail'] ?? '',
+        };
+      } else {
+        print('Failed to retrieve book details from Google Books API');
+      }
+    }
+  }
+  return null;
 }
 
 class _ViewClubState extends State<ViewClub> {
@@ -155,102 +180,100 @@ class _ViewClubState extends State<ViewClub> {
     }
   }
 
- 
   void _showJoinLeaveConfirmation(bool isJoining) {
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Disable dismissal by clicking outside
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isJoining ? Icons.group_add : Icons.exit_to_app, // Icon changes based on action
-              color: Colors.white,
-              size: 40,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              isJoining
-                  ? 'Are you sure you want to join the club?'
-                  : 'Are you sure you want to leave the club?',
-              style: const TextStyle(
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isJoining ? Icons.group_add : Icons.exit_to_app, // Icon changes based on action
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                size: 40,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isJoining
-                        ? const Color.fromARGB(255, 131, 201, 133) // Green for join
-                        : const Color.fromARGB(255, 245, 114, 105), // Red for leave
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    minimumSize: const Size(100, 40), // Set button width and height
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                    if (isJoining) {
-                      _joinClub(); // Join the club if confirmed
-                      _showConfirmationMessageJoinClub();
-                    } else {
-                      _leaveClub(); // Leave the club if confirmed
-                      _showConfirmationMessageLeaveClub();
-                    }
-                  },
-                  child: const Text(
-                    'Yes',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              const SizedBox(height: 10),
+              Text(
+                isJoining
+                    ? 'Are you sure you want to join the club?'
+                    : 'Are you sure you want to leave the club?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
-                const SizedBox(width: 12), // Space between buttons
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isJoining
+                          ? const Color.fromARGB(255, 131, 201, 133) // Green for join
+                          : const Color.fromARGB(255, 245, 114, 105), // Red for leave
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40), // Set button width and height
                     ),
-                    minimumSize: const Size(100, 40), // Set button width and height
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog without action
-                  },
-                  child: const Text(
-                    'No',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                      if (isJoining) {
+                        _joinClub(); // Join the club if confirmed
+                        _showConfirmationMessageJoinClub();
+                      } else {
+                        _leaveClub(); // Leave the club if confirmed
+                        _showConfirmationMessageLeaveClub();
+                      }
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 12), // Space between buttons
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40), // Set button width and height
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog without action
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   void _showConfirmationMessageJoinClub() {
     showDialog(
@@ -472,44 +495,64 @@ class _ViewClubState extends State<ViewClub> {
     });
   }
 
- Future<void> _joinClub() async {
-  try {
-    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  Future<void> _joinClub() async {
+    try {
+      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-    // Reference to the club's members subcollection
-    var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
+      // Reference to the club's members subcollection
+      var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
 
-    // Check if the owner is already in the members subcollection
-    var clubData = await clubRef.get();
-    String ownerID = clubData['ownerID'];
+      // Check the club data
+      var clubData = await clubRef.get();
+      String ownerID = clubData['ownerID'];
 
-    var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
-    
-    if (!ownerDoc.exists) {
       // Add the owner to the members subcollection if not already present
-      await clubRef.collection('members').doc(ownerID).set({
-        'joinedAt': FieldValue.serverTimestamp(),
+      var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
+      if (!ownerDoc.exists) {
+        var ownerData = await FirebaseFirestore.instance.collection('reader').doc(ownerID).get();
+        if (ownerData.exists) {
+          String ownerName = ownerData['name'] ?? 'No Name';
+          String ownerUsername = ownerData['username'] ?? 'No Username';
+          String ownerProfilePhoto = ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
+
+          // Add the owner to the members subcollection
+          await clubRef.collection('members').doc(ownerID).set({
+            'joinedAt': FieldValue.serverTimestamp(),
+            'name': ownerName,
+            'username': ownerUsername,
+            'profilePhoto': ownerProfilePhoto,
+          });
+        }
+      }
+
+      // Fetch the current user's profile data
+      var userDoc = await FirebaseFirestore.instance.collection('reader').doc(currentUserId).get();
+
+      if (userDoc.exists) {
+        var userData = userDoc.data()!;
+        String name = userData['name'] ?? 'No Name';
+        String username = userData['username'] ?? 'No Username';
+        String profilePhoto = userData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
+
+        // Add the current user as a member with additional information
+        await clubRef.collection('members').doc(currentUserId).set({
+          'joinedAt': FieldValue.serverTimestamp(),
+          'name': name,
+          'username': username,
+          'profilePhoto': profilePhoto,
+        });
+      }
+
+      setState(() {
+        _isMember = true;
       });
+    } catch (e) {
+      print('Error joining club: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to join the club. Please try again.')),
+      );
     }
-
-    // Add the current user as a member
-    await clubRef.collection('members').doc(currentUserId).set({
-      'joinedAt': FieldValue.serverTimestamp(),
-    });
-
-    setState(() {
-      _isMember = true;
-    });
-
-    
-  } catch (e) {
-    print('Error joining club: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Failed to join the club. Please try again.')),
-    );
   }
-}
-
 
   Future<void> _leaveClub() async {
     try {
@@ -609,25 +652,19 @@ class _ViewClubState extends State<ViewClub> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Club picture
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: _picture.isNotEmpty
-                          ? Image.network(
-                              _picture,
-                              width: double.infinity,
-                              height: 200,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              width: double.infinity,
-                              height: 200,
-                              color: Colors.grey,
-                              child: const Center(
-                                  child: Text('No Image Available')),
-                            ),
-                    ),
-                    const SizedBox(height: 16),
+                   // Club picture
+ClipRRect(
+  borderRadius: BorderRadius.circular(8.0),
+  child: Image(
+    image: _picture.isNotEmpty
+        ? NetworkImage(_picture)
+        : AssetImage('folio/assets/images/clubs.jpg'),
+    width: double.infinity,
+    height: 200,
+    fit: BoxFit.cover,
+  ),
+),
+const SizedBox(height: 16),
                     // Club name
                     Text(
                       _name,
@@ -673,61 +710,66 @@ class _ViewClubState extends State<ViewClub> {
                         ),
                         const Spacer(),
                         // Dynamic member count
-                        // Dynamic member count
-FutureBuilder<QuerySnapshot>(
-  future: FirebaseFirestore.instance
-      .collection('clubs')
-      .doc(widget.clubId)
-      .collection('members')
-      .get(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const CircularProgressIndicator();
-    }
-    if (snapshot.hasError) {
-      return const Text(
-        'Members',
-        style: TextStyle(
-          fontSize: 14,
-          color: Colors.grey,
-          decoration: TextDecoration.underline,
-        ),
-      );
-    }
+                        FutureBuilder<QuerySnapshot>(
+                          future: FirebaseFirestore.instance
+                              .collection('clubs')
+                              .doc(widget.clubId)
+                              .collection('members')
+                              .get(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            }
+                            if (snapshot.hasError) {
+                              return const Text(
+                                'Members',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              );
+                            }
 
-    // Determine the member count, starting from 1 if the actual count is 0
-    final memberCount = snapshot.data!.docs.isEmpty ? 1 : snapshot.data!.docs.length;
+                            // Get the number of members
+                            final memberCount = snapshot.data!.docs.length;
 
-    return GestureDetector(
-      onTap: () {
-        // Check if clubID and ownerID are valid
-        if (widget.clubId.isNotEmpty && _clubOwnerID.isNotEmpty) {
-          // Navigate to the MemberListPage
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MemberListPage(
-                clubID: widget.clubId,
-                ownerID: _clubOwnerID,
-              ),
-            ),
-          );
-        } else {
-          // Handle the error appropriately, e.g., show a snackbar or log the issue
-          print('Club ID or Owner ID is empty.');
-        }
-      },
-      child: Text(
-        '$memberCount Member${memberCount > 1 ? 's' : ''}', // Handle pluralization
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.grey,
-          decoration: TextDecoration.underline,
-        ),
-      ),
-    );
-  },
-)
+                            // Set display count to 1 if there are no members, otherwise display the actual count
+                            final displayCount =
+                                memberCount == 0 ? 1 : memberCount;
+
+                            return GestureDetector(
+                              onTap: () {
+                                // Check if clubID and ownerID are valid
+                                if (widget.clubId.isNotEmpty &&
+                                    _clubOwnerID.isNotEmpty) {
+                                  // Navigate to the MemberListPage
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => MemberListPage(
+                                        clubID: widget.clubId,
+                                        ownerID: _clubOwnerID,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  // Handle the error appropriately, e.g., show a snackbar or log the issue
+                                  print('Club ID or Owner ID is empty.');
+                                }
+                              },
+                              child: Text(
+                                '$displayCount Members', // Use the display count
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -743,63 +785,104 @@ FutureBuilder<QuerySnapshot>(
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: Container(
-                            width: 80,
-                            height: 120,
-                            color: Colors.grey,
-                            child: const Center(child: Text('No Image')),
-                          ),
+
+                   // Currently reading book section
+FutureBuilder(
+  future: _fetchBookData(widget.clubId),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    }
+    if (snapshot.hasError) {
+      return const Text(
+        'Error fetching data',
+        style: TextStyle(fontSize: 14, color: Colors.grey),
+      );
+    }
+
+    final bookData = snapshot.data;
+
+    if (bookData == null) {
+      return const Text(
+        'No book has been selected for this club.',
+        style: TextStyle(fontSize: 14, color: Colors.grey),
+      );
+    }
+
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            GestureDetector(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  width: 80,
+                  height: 120,
+                  child: bookData['image'] != null
+                      ? Image.network(
+                          bookData['image'],
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset('folio/assets/images/clubs.jpg'), // Display default image
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: GestureDetector(
+                
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (bookData['title'] != null)
+                      Text(
+                        bookData['title'],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4A2E2A),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          // To prevent overflow
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'The Sum of All Things', // Replace with actual book title
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4A2E2A),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Nicole Brooks', // Replace with actual author
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Next discussion date',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF4A2E2A),
-                                ),
-                              ),
-                              Text(
-                                _clubDiscussionDate, // Discussion date from Firestore
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4A2E2A),
-                                ),
-                              ),
-                            ],
-                          ),
+                      ),
+                    if (bookData['author'] != null)
+                      Text(
+                        bookData['author'],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
                         ),
-                      ],
+                      ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Next discussion date',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF4A2E2A),
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 16),
+                    Text(
+                      _clubDiscussionDate, // Discussion date from Firestore
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4A2E2A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  },
+),
+
+                    SizedBox(height: 16),
+                    Divider(color: Colors.grey),
+                    SizedBox(height: 16),
                     // Join Discussion Button and Close Meeting Button
                     Row(
                       children: [
@@ -824,7 +907,7 @@ FutureBuilder<QuerySnapshot>(
                                   } else {
                                     // Handle the case where callID is missing
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                      SnackBar(
                                           content: Text(
                                               'Call ID is not available. Please try again later.')),
                                     );
@@ -833,9 +916,9 @@ FutureBuilder<QuerySnapshot>(
                               : null, // Disable if discussion date is not reached
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                const Color(0xFFF790AD), // Button color
+                                Color(0xFFF790AD), // Button color
                           ),
-                          child: const Text(
+                          child: Text(
                             "Join Meeting",
                             style: TextStyle(
                               fontSize: 14,
@@ -844,7 +927,7 @@ FutureBuilder<QuerySnapshot>(
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: 16),
                         // Close Meeting Button (Visible only to Owner)
                         if (_isOwner && _isDiscussionScheduled)
                           ElevatedButton(
@@ -854,7 +937,7 @@ FutureBuilder<QuerySnapshot>(
                               backgroundColor: Colors
                                   .red, // Red button for closing the meeting
                             ),
-                            child: const Text(
+                            child: Text(
                               'Close Meeting',
                               style: TextStyle(
                                 fontSize: 14,
@@ -865,9 +948,9 @@ FutureBuilder<QuerySnapshot>(
                           ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
+                    Divider(color: Colors.grey),
+                    SizedBox(height: 16),
                     // Only show the Join/Leave button for non-owners
                     if (!_isOwner)
                       _isMember
@@ -876,10 +959,10 @@ FutureBuilder<QuerySnapshot>(
                                 _showJoinLeaveConfirmation(false);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 245,
-                                    114, 105), // Button color for leaving
+                                backgroundColor: Color.fromARGB(
+                                    255, 245, 114, 105), // Button color for leaving
                               ),
-                              child: const Text(
+                              child: Text(
                                 "Leave Club",
                                 style: TextStyle(
                                   fontSize: 14,
@@ -893,10 +976,10 @@ FutureBuilder<QuerySnapshot>(
                                 _showJoinLeaveConfirmation(true);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 131,
-                                    201, 133), // Button color for joining
+                                backgroundColor: Color.fromARGB(
+                                    255, 131, 201, 133), // Button color for joining
                               ),
-                              child: const Text(
+                              child: Text(
                                 "Join Club",
                                 style: TextStyle(
                                   fontSize: 14,
@@ -908,7 +991,8 @@ FutureBuilder<QuerySnapshot>(
                   ],
                 ),
               ),
-            ),
-    );
+ ),
+          );
   }
 }
+

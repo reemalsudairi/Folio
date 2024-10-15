@@ -178,13 +178,12 @@ class _ClubsPageState extends State<ClubPage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: Colors.grey.withOpacity(0.2),
+              image: DecorationImage(
+            image: AssetImage('assets/images/clubs.jpg'),
+            fit: BoxFit.cover,
+          ),
             ),
-            child: Center(
-              child: Text(
-                'No Image Available',
-                style: TextStyle(fontSize: 16, color: Colors.black54),
-              ),
-            ),
+            
           ),
           SizedBox(height: 10),
           Text(
