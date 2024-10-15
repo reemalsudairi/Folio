@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> {
   final user = FirebaseAuth.instance.currentUser;
   
   // Force Firebase to refresh user data in case of cache issues
-  await user?.reload();
+ // await user?.reload();
   
   if (user == null) return;
 
