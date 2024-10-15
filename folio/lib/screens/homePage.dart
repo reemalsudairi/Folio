@@ -642,12 +642,13 @@ Widget build(BuildContext context) {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: Colors.grey.withOpacity(0.2),
-                  image: DecorationImage(
-            image: AssetImage('assets/images/clubs.jpg'),
-            fit: BoxFit.cover,
-          ),
                 ),
-                
+                child: Center(
+                  child: Text(
+                    'No Image Available',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                ),
               ),
         const SizedBox(height: 10),
         Text(

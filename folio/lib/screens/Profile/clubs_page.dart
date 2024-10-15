@@ -131,100 +131,89 @@ class _ClubsPageState extends State<ClubsPage> {
   }
 
   Widget buildClubCard(Club club) {
-    return GestureDetector(
-      // Wrap with GestureDetector
-      onTap: () {
-        // Navigate to ViewClub page and pass the club ID
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ViewClub(
-                clubId: club.id), // Replace with your actual ViewClub widget
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-            ),
-          ],
+  return GestureDetector( // Wrap with GestureDetector
+    onTap: () {
+      // Navigate to ViewClub page and pass the club ID
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewClub(clubId: club.id), // Replace with your actual ViewClub widget
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            club.picture.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      height: 140,
-                      width: double.infinity,
-                      child: Image.network(
-                        club.picture,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 140,
-                            width: double.infinity,
-                            color: Colors.red,
-                            child: Icon(Icons.error, color: Colors.white),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(child: CircularProgressIndicator());
-                        },
-                      ),
-                    ),
-                  )
-                : Container(
-                    height: 120,
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          club.picture.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 140,
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.grey.withOpacity(0.2),
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/clubs.jpg'),
-                        fit: BoxFit.cover,
-                      ),
+                    child: Image.network(
+                      club.picture,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 140,
+                          width: double.infinity,
+                          color: Colors.red,
+                          child: Icon(Icons.error, color: Colors.white),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(child: CircularProgressIndicator());
+                      },
                     ),
                   ),
-
-            // Use Flexible for club name
-            Flexible(
-              child: Text(
-                club.name,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                maxLines: 1, // Limits to 1 line
-                overflow:
-                    TextOverflow.ellipsis, // Adds "..." if the text is too long
-              ),
-            ),
-
-            // Use Flexible for member count
-            Flexible(
-              child: Text(
-                '${club.memberCount} members', // Display member count
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                textAlign: TextAlign.center,
-                maxLines: 5, // Limits to 1 line
-                overflow:
-                    TextOverflow.ellipsis, // Adds "..." if the text is too long
-              ),
-            ),
-          ],
-        ),
+                )
+              : Container(
+                  height: 140,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.withOpacity(0.2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No Image Available',
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                  ),
+                ),
+          SizedBox(height: 10),
+          Text(
+            club.name,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 6),
+          Text(
+            '${club.memberCount} members', // Display member count
+            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {

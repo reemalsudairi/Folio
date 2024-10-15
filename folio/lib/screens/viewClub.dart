@@ -471,57 +471,37 @@ class _ViewClubState extends State<ViewClub> {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
-Future<void> _joinClub() async {
+
+ Future<void> _joinClub() async {
   try {
     String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     // Reference to the club's members subcollection
     var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
 
-    // Check the club data
+    // Check if the owner is already in the members subcollection
     var clubData = await clubRef.get();
     String ownerID = clubData['ownerID'];
 
-    // Add the owner to the members subcollection if not already present
     var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
+    
     if (!ownerDoc.exists) {
-      var ownerData = await FirebaseFirestore.instance.collection('reader').doc(ownerID).get();
-      if (ownerData.exists) {
-        String ownerName = ownerData['name'] ?? 'No Name';
-        String ownerUsername = ownerData['username'] ?? 'No Username';
-        String ownerProfilePhoto = ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
-
-        // Add the owner to the members subcollection
-        await clubRef.collection('members').doc(ownerID).set({
-          'joinedAt': FieldValue.serverTimestamp(),
-          'name': ownerName,
-          'username': ownerUsername,
-          'profilePhoto': ownerProfilePhoto,
-        });
-      }
-    }
-
-    // Fetch the current user's profile data
-    var userDoc = await FirebaseFirestore.instance.collection('reader').doc(currentUserId).get();
-
-    if (userDoc.exists) {
-      var userData = userDoc.data()!;
-      String name = userData['name'] ?? 'No Name';
-      String username = userData['username'] ?? 'No Username';
-      String profilePhoto = userData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
-
-      // Add the current user as a member with additional information
-      await clubRef.collection('members').doc(currentUserId).set({
+      // Add the owner to the members subcollection if not already present
+      await clubRef.collection('members').doc(ownerID).set({
         'joinedAt': FieldValue.serverTimestamp(),
-        'name': name,
-        'username': username,
-        'profilePhoto': profilePhoto,
       });
     }
+
+    // Add the current user as a member
+    await clubRef.collection('members').doc(currentUserId).set({
+      'joinedAt': FieldValue.serverTimestamp(),
+    });
 
     setState(() {
       _isMember = true;
     });
+
+    
   } catch (e) {
     print('Error joining club: $e');
     ScaffoldMessenger.of(context).showSnackBar(
@@ -693,7 +673,8 @@ Future<void> _joinClub() async {
                         ),
                         const Spacer(),
                         // Dynamic member count
-                  FutureBuilder<QuerySnapshot>(
+                        // Dynamic member count
+FutureBuilder<QuerySnapshot>(
   future: FirebaseFirestore.instance
       .collection('clubs')
       .doc(widget.clubId)
@@ -714,11 +695,8 @@ Future<void> _joinClub() async {
       );
     }
 
-    // Get the number of members
-    final memberCount = snapshot.data!.docs.length;
-
-    // Set display count to 1 if there are no members, otherwise display the actual count
-    final displayCount = memberCount == 0 ? 1 : memberCount;
+    // Determine the member count, starting from 1 if the actual count is 0
+    final memberCount = snapshot.data!.docs.isEmpty ? 1 : snapshot.data!.docs.length;
 
     return GestureDetector(
       onTap: () {
@@ -740,7 +718,7 @@ Future<void> _joinClub() async {
         }
       },
       child: Text(
-        '$displayCount Members', // Use the display count
+        '$memberCount Member${memberCount > 1 ? 's' : ''}', // Handle pluralization
         style: const TextStyle(
           fontSize: 14,
           color: Colors.grey,
@@ -750,7 +728,6 @@ Future<void> _joinClub() async {
     );
   },
 )
-
                       ],
                     ),
                     const SizedBox(height: 16),

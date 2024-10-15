@@ -46,7 +46,35 @@ class Clubs extends StatelessWidget {
         automaticallyImplyLeading: false,
       ),
       backgroundColor: Color(0xFFF8F8F3),
+
       body: const ClubsBody(),
+      floatingActionButton: ClipOval(
+        child: SizedBox(
+          width: 70, // Set the width to make it bigger
+          height: 70, // Set the height to make it bigger
+
+          child: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      CreateClubPage(), // Navigate to the Create Club page
+                ),
+              );
+            },
+            backgroundColor:
+                const Color(0xFFF790AD), // Set the background color to pink
+            child: const Icon(
+              Icons.add, // Use the add icon
+              color: Colors.white, // Set the icon color to white for contrast
+              size: 50, // Optional: Increase the icon size
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat, // Optional: Positioning
     );
   }
 }
@@ -151,7 +179,6 @@ class _ClubsBodyState extends State<ClubsBody> {
           ],
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Use min to prevent overflow
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             club.picture.isNotEmpty
@@ -168,12 +195,12 @@ class _ClubsBodyState extends State<ClubsBody> {
                             height: 140,
                             width: double.infinity,
                             color: Colors.red,
-                            child: const Icon(Icons.error, color: Colors.white),
+                            child: Icon(Icons.error, color: Colors.white),
                           );
                         },
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
-                          return const Center(
+                          return Center(
                             child: CircularProgressIndicator(),
                           );
                         },
@@ -186,26 +213,21 @@ class _ClubsBodyState extends State<ClubsBody> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.grey.withOpacity(0.2),
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/clubs.jpg'),
-                        fit: BoxFit.cover,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'No Image Available',
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
                       ),
                     ),
                   ),
-            const SizedBox(height: 2),
-            // Use Flexible here to handle overflow
-            Flexible(
-              child: Text(
-                club.name,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                maxLines: 1, // Limits to 1 line
-                overflow:
-                    TextOverflow.ellipsis, // Adds "..." if the text is too long
-              ),
+            SizedBox(height: 10),
+            Text(
+              club.name,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 6),
             Text(
               '${club.memberCount} members',
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
@@ -219,100 +241,50 @@ class _ClubsBodyState extends State<ClubsBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Book Clubs',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 26,
-            color: Color(0xFF351F1F),
-          ),
-        ),
-        backgroundColor: Color(0xFFF8F8F3),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
-      backgroundColor: Color(0xFFF8F8F3),
-      body: isLoading // Conditional rendering based on loading state
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
-          : Column(
-              children: [
-                // Search bar
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Search for a club',
-                      labelStyle:
-                          TextStyle(color: Colors.grey[600], fontSize: 16),
-                      filled: true,
-                      fillColor: const Color.fromARGB(255, 255, 255, 255),
-                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12.0, horizontal: 20.0),
+    return isLoading // Conditional rendering based on loading state
+        ? Center(
+            child: CircularProgressIndicator(),
+          )
+        : Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Search for a club',
+                    labelStyle:
+                        TextStyle(color: Colors.grey[600], fontSize: 16),
+                    filled: true,
+                    fillColor: const Color.fromARGB(255, 255, 255, 255),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      borderSide: BorderSide.none,
                     ),
-                    onChanged: (String value) {
-                      filterClubs(value);
-                    },
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12.0, horizontal: 20.0),
                   ),
+                  onChanged: (String value) {
+                    filterClubs(value);
+                  },
                 ),
+              ),
 
-                // List of clubs
-                Expanded(
-                  child: filteredClubs.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No clubs found for your search.',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
-                          ),
-                        )
-                      : GridView.builder(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.75,
-                          ),
-                          itemCount: filteredClubs.length,
-                          itemBuilder: (context, index) {
-                            return buildClubCard(filteredClubs[index]);
-                          },
-                        ),
+              // List of clubs
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemCount: filteredClubs.length,
+                  itemBuilder: (context, index) {
+                    return buildClubCard(filteredClubs[index]);
+                  },
                 ),
-              ],
-            ),
-      floatingActionButton: ClipOval(
-        child: SizedBox(
-          width: 70, // Set the width to make it bigger
-          height: 70, // Set the height to make it bigger
-          child: FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      CreateClubPage(), // Navigate to the Create Club page
-                ),
-              );
-            },
-            backgroundColor:
-                const Color(0xFFF790AD), // Set the background color to pink
-            child: const Icon(
-              Icons.add, // Use the add icon
-              color: Colors.white, // Set the icon color to white for contrast
-              size: 50, // Optional: Increase the icon size
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.endFloat, // Positioning
-    );
+              ),
+            ],
+          );
   }
 }
