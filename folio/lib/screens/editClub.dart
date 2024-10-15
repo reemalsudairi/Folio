@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io'; // For handling File images
 
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore interaction
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart'; // Ensure you import the SelectBookPage
 import 'package:image_picker/image_picker.dart'; // Import the image picker package
+import 'package:http/http.dart' as http;
 
 class EditClub extends StatefulWidget {
   final String clubId; // Pass the clubId to identify the club being edited
@@ -55,51 +57,62 @@ class _EditClubPageState extends State<EditClub> {
     _loadClubData(); // Load the club data when the page is initialized
   }
 
-  // Function to load the existing club data for editing
-  Future<void> _loadClubData() async {
-    setState(() {
-      _isLoading = true;
-    });
+// Function to load the existing club data for editing
+Future<void> _loadClubData() async {
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      print('Fetching club data from Firestore...');
-      DocumentSnapshot clubSnapshot =
-          await _firestore.collection('clubs').doc(widget.clubId).get();
+  try {
+    print('Fetching club data from Firestore...');
+    DocumentSnapshot clubSnapshot =
+        await _firestore.collection('clubs').doc(widget.clubId).get();
 
-      if (clubSnapshot.exists) {
-        var clubData = clubSnapshot.data() as Map<String, dynamic>;
-        print('Club data retrieved: $clubData');
+    if (clubSnapshot.exists) {
+      var clubData = clubSnapshot.data() as Map<String, dynamic>;
+      print('Club data retrieved: $clubData');
 
-        _clubNameController.text = clubData['name'] ?? '';
-        _descriptionController.text = clubData['description'] ?? '';
-        _selectedLanguage =
-            _languages.contains(clubData['language']) ? clubData['language'] : null; // Ensure language is valid
-        _currentBookController.text = clubData['currentBookTitle'] ?? '';
-        _selectedBookId = clubData['currentBookID'];
-        _bookCover = clubData['currentBookCover'];
-        _bookAuthor = clubData['currentBookAuthor'];
-        _discussionDate = clubData['discussionDate'];
-        _clubImageUrl = clubData['picture']; // Load the existing club image URL
-        _originalClubImageUrl = clubData['picture']; // Track the original image URL
+      _clubNameController.text = clubData['name'] ?? '';
+      _descriptionController.text = clubData['description'] ?? '';
+      _selectedLanguage =
+          _languages.contains(clubData['language']) ? clubData['language'] : null; // Ensure language is valid
+      _selectedBookId = clubData['currentBookID'];
 
-        print('Club image URL: $_clubImageUrl');
-      } else {
-        print('Club document does not exist.');
-        setState(() {
-          _errorMessage = 'Club not found.';
-        });
+      // Retrieve book details from Google Books API
+      if (_selectedBookId != null) {
+        final bookResponse = await http.get(Uri.parse(
+            'https://www.googleapis.com/books/v1/volumes/${_selectedBookId}'));
+        if (bookResponse.statusCode == 200) {
+          final bookData = jsonDecode(bookResponse.body);
+          _currentBookController.text = bookData['volumeInfo']['title'] ?? '';
+          _bookCover = bookData['volumeInfo']['imageLinks']['thumbnail'] ?? '';
+        } else {
+          print('Failed to retrieve book details from Google Books API');
+        }
       }
-    } catch (e) {
-      print('Error fetching club data: $e');
+
+      _discussionDate = clubData['discussionDate'];
+      _clubImageUrl = clubData['picture']; // Load the existing club image URL
+      _originalClubImageUrl = clubData['picture']; // Track the original image URL
+
+      print('Club image URL: $_clubImageUrl');
+    } else {
+      print('Club document does not exist.');
       setState(() {
-        _errorMessage = 'Failed to load club data. Please try again.';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
+        _errorMessage = 'Club not found.';
       });
     }
+  } catch (e) {
+    print('Error fetching club data: $e');
+    setState(() {
+      _errorMessage = 'Failed to load club data. Please try again.';
+    });
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
 // Function to show options for picking an image
 Future<void> _showImagePickerOptions(BuildContext context) async {
@@ -716,28 +729,30 @@ Future<void> _deleteImageFromFirebase() async {
                       ],
                     ),
 
-                    // Display the selected book cover and author
-                    if (_bookCover != null) ...[
-                      const SizedBox(height: 16), // Space between fields
-                      Image.network(
-                        _bookCover!,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(Icons.error), // Error icon if the image fails to load
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _bookAuthor != null ? 'Author: $_bookAuthor' : '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+// Display the selected book cover and author
+if (_bookCover != null) ...[
+  const SizedBox(height: 16), // Space between fields
+  Center( // Add Center widget to center the book cover
+    child: Image.network(
+      _bookCover!,
+      height: 100,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return const Center(
+          child: Icon(Icons.error), // Error icon if the image fails to load
+        );
+      },
+    ),
+  ),
+  const SizedBox(height: 8),
+  Text(
+    _bookAuthor != null ? 'Author: $_bookAuthor' : '',
+    style: const TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+],
 
                     const SizedBox(height: 20),
 

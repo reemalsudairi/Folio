@@ -141,32 +141,31 @@ class _CreateClubPageState extends State<CreateClubPage> {
       _errorMessage = null; // Reset error message
     });
 
-    try {
-      final user = FirebaseAuth.instance.currentUser;
+  try {
+    final user = FirebaseAuth.instance.currentUser;
 
-      // Upload the club picture if available
-      if (_clubImageFile != null) {
-        final ref = _storage
-            .ref()
-            .child('club_pictures')
-            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-        await ref.putFile(_clubImageFile!);
-        _clubImageUrl = await ref.getDownloadURL();
-      }
+    // Upload the club picture if available
+    if (_clubImageFile != null) {
+      final ref = _storage
+          .ref()
+          .child('club_pictures')
+          .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await ref.putFile(_clubImageFile!);
+      _clubImageUrl = await ref.getDownloadURL();
+    }
 
-      if (user != null) {
-        await _firestore.collection('clubs').add({
-          'name': _clubNameController.text
-              .trim(), // Ensure no leading/trailing spaces
-          'description': _descriptionController.text.trim(),
-          'discussionDate': _discussionDate,
-          'language': _selectedLanguage ?? '',
-          'currentBookID':
-              _selectedBookId ?? '', // Use _selectedBookId instead of text
-          'ownerID': user.uid,
-          'picture':
-              _clubImageUrl ?? '', // Add the club picture URL if available
-        });
+    if (user != null) {
+      await _firestore.collection('clubs').add({
+        'name': _clubNameController.text
+            .trim(), // Ensure no leading/trailing spaces
+        'description': _descriptionController.text.trim(),
+        'discussionDate': _discussionDate,
+        'language': _selectedLanguage ?? '',
+        'currentBookID':
+            _selectedBookId ?? '', // Use _selectedBookId instead of text
+        'ownerID': user.uid,
+        'picture': _clubImageUrl ?? null, // Change here
+      });
 
         // Show success message
         _showConfirmationMessage();
