@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Added FirebaseAuth
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class MemberListPage extends StatefulWidget {
@@ -72,7 +72,7 @@ class _MemberListPageState extends State<MemberListPage> {
                     ),
                     onPressed: () {
                       Navigator.of(context).pop(); // Close the dialog
-                      _removeMember(memberID); // Remove the member if confirmed
+                      _removeMember(memberID, memberName); // Remove the member if confirmed
                     },
                     child: const Text(
                       'Yes',
@@ -114,7 +114,7 @@ class _MemberListPageState extends State<MemberListPage> {
   }
 
   // Function to remove the member from the Firebase database
-  void _removeMember(String memberID) async {
+  void _removeMember(String memberID, String memberName) async {
     try {
       await FirebaseFirestore.instance
           .collection('clubs')
@@ -122,14 +122,14 @@ class _MemberListPageState extends State<MemberListPage> {
           .collection('members')
           .doc(memberID)
           .delete();
-      _showConfirmationMessage(); // Show success message after removal
+      _showConfirmationMessage(memberName); // Show success message with member name
     } catch (e) {
       print('Error removing member: $e');
     }
   }
 
   // Function to show the "Member Removed Successfully!" message
-  void _showConfirmationMessage() {
+  void _showConfirmationMessage(String memberName) {
     showDialog(
       context: context,
       barrierDismissible: false, // Disable dismissal by clicking outside
@@ -141,18 +141,18 @@ class _MemberListPageState extends State<MemberListPage> {
             color: Colors.lightGreen.withOpacity(0.7),
             borderRadius: BorderRadius.circular(30),
           ),
-          child: const Column(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.check,
                 color: Colors.white,
                 size: 40,
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(
-                'Member Removed Successfully!',
-                style: TextStyle(
+                '$memberName Removed Successfully!',
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -172,7 +172,8 @@ class _MemberListPageState extends State<MemberListPage> {
   }
 
   // Function to build the member list
-  Widget _buildMemberList() {
+ // Function to build the member list
+Widget _buildMemberList() {
   return StreamBuilder<QuerySnapshot>(
     stream: FirebaseFirestore.instance
         .collection('clubs')
@@ -184,7 +185,41 @@ class _MemberListPageState extends State<MemberListPage> {
         return const Center(child: CircularProgressIndicator());
       }
 
-      List<QueryDocumentSnapshot> members = snapshot.data?.docs ?? [];
+      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('reader')
+              .doc(widget.ownerID)
+              .get(),
+          builder: (context, ownerSnapshot) {
+            if (ownerSnapshot.connectionState == ConnectionState.waiting) {
+              return const ListTile(title: Text('Loading...'));
+            }
+
+            if (!ownerSnapshot.hasData || !ownerSnapshot.data!.exists) {
+              return const ListTile(title: Text('Owner not found.'));
+            }
+
+            var ownerData = ownerSnapshot.data!.data() as Map<String, dynamic>;
+            String ownerName = ownerData['name'] ?? 'No Name';
+            String ownerUsername = ownerData['username'] ?? 'No Username';
+            String profilePhoto =
+                ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default if not found
+
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundImage: profilePhoto.isNotEmpty
+                    ? NetworkImage(profilePhoto)
+                    : const AssetImage('assets/profile_pic.png') as ImageProvider,
+              ),
+              title: Text('$ownerName (Owner)'),
+              subtitle: Text('@$ownerUsername'),
+            );
+          },
+        );
+      }
+
+      List<QueryDocumentSnapshot> members = snapshot.data!.docs;
 
       // Separate the owner from other members
       QueryDocumentSnapshot? ownerDoc;
@@ -198,74 +233,23 @@ class _MemberListPageState extends State<MemberListPage> {
         }
       }
 
-      // If no other members, explicitly create a list to include only the owner
-      if (members.isEmpty) {
-        return ListView.builder(
-          itemCount: 1, // Only show the owner
-          itemBuilder: (context, index) {
-            return StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('reader')
-                  .doc(widget.ownerID)
-                  .snapshots(),
-              builder: (context, AsyncSnapshot<DocumentSnapshot> ownerSnapshot) {
-                if (ownerSnapshot.connectionState == ConnectionState.waiting) {
-                  return const ListTile(
-                    title: Text('Loading...'),
-                  );
-                }
-
-                if (!ownerSnapshot.hasData || !ownerSnapshot.data!.exists) {
-                  return const ListTile(
-                    title: Text('Owner not found.'),
-                  );
-                }
-
-                var ownerData =
-                    ownerSnapshot.data!.data() as Map<String, dynamic>;
-                String ownerName = ownerData['name'] ?? 'No Name';
-                String ownerUsername = ownerData['username'] ?? 'No Username';
-                String profilePhoto =
-                    ownerData['profilePhoto'] ?? ''; // Default if not found
-
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: profilePhoto.isNotEmpty
-                        ? NetworkImage(profilePhoto)
-                        : const AssetImage('assets/default_profile.png')
-                            as ImageProvider,
-                  ),
-                  title: Text('$ownerName (Owner)'),
-                  subtitle: Text('@$ownerUsername'),
-                  // No trailing button for the owner
-                );
-              },
-            );
-          },
-        );
-      }
-
-      // If members exist, show the owner and other members
+      // Display the owner at the top and other members
       return ListView.builder(
         itemCount: otherMembers.length + 1, // +1 for the owner
         itemBuilder: (context, index) {
           if (index == 0 && ownerDoc != null) {
-            return StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
                   .collection('reader')
                   .doc(widget.ownerID)
-                  .snapshots(),
-              builder: (context, AsyncSnapshot<DocumentSnapshot> ownerSnapshot) {
+                  .get(),
+              builder: (context, ownerSnapshot) {
                 if (ownerSnapshot.connectionState == ConnectionState.waiting) {
-                  return const ListTile(
-                    title: Text('Loading...'),
-                  );
+                  return const ListTile(title: Text('Loading...'));
                 }
 
                 if (!ownerSnapshot.hasData || !ownerSnapshot.data!.exists) {
-                  return const ListTile(
-                    title: Text('Owner not found.'),
-                  );
+                  return const ListTile(title: Text('Owner not found.'));
                 }
 
                 var ownerData =
@@ -273,80 +257,60 @@ class _MemberListPageState extends State<MemberListPage> {
                 String ownerName = ownerData['name'] ?? 'No Name';
                 String ownerUsername = ownerData['username'] ?? 'No Username';
                 String profilePhoto =
-                    ownerData['profilePhoto'] ?? ''; // Default if not found
+                    ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default if not found
 
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundImage: profilePhoto.isNotEmpty
                         ? NetworkImage(profilePhoto)
-                        : const AssetImage('assets/default_profile.png')
-                            as ImageProvider,
+                        : const AssetImage('assets/profile_pic.png') as ImageProvider,
                   ),
                   title: Text('$ownerName (Owner)'),
                   subtitle: Text('@$ownerUsername'),
-                  // No trailing button for the owner
                 );
               },
             );
           }
 
-          var member = otherMembers[index - 1]; // Adjust for owner at index 0
-          String memberID = member.id;
-
+          // For other members
+          var member = otherMembers[index - 1]; // Adjust index for members
           return StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('reader')
-                .doc(memberID)
+                .doc(member.id)
                 .snapshots(),
-            builder: (context, AsyncSnapshot<DocumentSnapshot> userSnapshot) {
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
-                return const ListTile(
-                  title: Text('Loading...'),
-                );
+            builder: (context, AsyncSnapshot<DocumentSnapshot> memberSnapshot) {
+              if (memberSnapshot.connectionState == ConnectionState.waiting) {
+                return const ListTile(title: Text('Loading...'));
               }
 
-              if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                return const ListTile(
-                  title: Text('User not found.'),
-                );
+              if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
+                return const ListTile(title: Text('Member not found.'));
               }
 
-              var userData = userSnapshot.data!.data() as Map<String, dynamic>;
-              String memberName = userData['name'] ?? 'No Name';
-              String memberUsername = userData['username'] ?? 'No Username';
+              var memberData =
+                  memberSnapshot.data!.data() as Map<String, dynamic>;
+              String memberName = memberData['name'] ?? 'No Name';
+              String memberUsername = memberData['username'] ?? 'No Username';
               String profilePhoto =
-                  userData['profilePhoto'] ?? ''; // Default if not found
+                  memberData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default if not found
 
               return ListTile(
                 leading: CircleAvatar(
                   backgroundImage: profilePhoto.isNotEmpty
                       ? NetworkImage(profilePhoto)
-                      : const AssetImage('assets/profile_pic.png')
-                          as ImageProvider,
+                      : const AssetImage('assets/profile_pic.png') as ImageProvider,
                 ),
                 title: Text(memberName),
                 subtitle: Text('@$memberUsername'),
                 trailing: widget.ownerID == currentUserID
-                    ? ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF790AD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          minimumSize: const Size(60, 30),
-                        ),
-                        onPressed: () =>
-                            _showRemoveConfirmation(memberID, memberName),
-                        child: const Text(
-                          'Remove',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold, // Set text color to white
-                          ),
-                        ),
+                    ? IconButton(
+                        icon: const Icon(Icons.remove_circle, color: Colors.red),
+                        onPressed: () {
+                          _showRemoveConfirmation(member.id, memberName);
+                        },
                       )
-                    : null,
+                    : null, // Only show remove button for the owner
               );
             },
           );
@@ -359,18 +323,11 @@ class _MemberListPageState extends State<MemberListPage> {
 
   @override
   Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text(
-        'Member List',
-        style: TextStyle(
-          fontWeight: FontWeight.bold, // Set the font weight to bold
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Members List'),
       ),
-    ),
-    body: Center( // Center the member list
-      child: _buildMemberList(),
-    ),
-  );
-}
+      body: _buildMemberList(), // Call the function to build the member list
+    );
+  }
 }

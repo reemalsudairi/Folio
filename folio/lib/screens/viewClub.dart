@@ -471,37 +471,57 @@ class _ViewClubState extends State<ViewClub> {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
-
- Future<void> _joinClub() async {
+Future<void> _joinClub() async {
   try {
     String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     // Reference to the club's members subcollection
     var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
 
-    // Check if the owner is already in the members subcollection
+    // Check the club data
     var clubData = await clubRef.get();
     String ownerID = clubData['ownerID'];
 
+    // Add the owner to the members subcollection if not already present
     var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
-    
     if (!ownerDoc.exists) {
-      // Add the owner to the members subcollection if not already present
-      await clubRef.collection('members').doc(ownerID).set({
-        'joinedAt': FieldValue.serverTimestamp(),
-      });
+      var ownerData = await FirebaseFirestore.instance.collection('reader').doc(ownerID).get();
+      if (ownerData.exists) {
+        String ownerName = ownerData['name'] ?? 'No Name';
+        String ownerUsername = ownerData['username'] ?? 'No Username';
+        String ownerProfilePhoto = ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
+
+        // Add the owner to the members subcollection
+        await clubRef.collection('members').doc(ownerID).set({
+          'joinedAt': FieldValue.serverTimestamp(),
+          'name': ownerName,
+          'username': ownerUsername,
+          'profilePhoto': ownerProfilePhoto,
+        });
+      }
     }
 
-    // Add the current user as a member
-    await clubRef.collection('members').doc(currentUserId).set({
-      'joinedAt': FieldValue.serverTimestamp(),
-    });
+    // Fetch the current user's profile data
+    var userDoc = await FirebaseFirestore.instance.collection('reader').doc(currentUserId).get();
+
+    if (userDoc.exists) {
+      var userData = userDoc.data()!;
+      String name = userData['name'] ?? 'No Name';
+      String username = userData['username'] ?? 'No Username';
+      String profilePhoto = userData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
+
+      // Add the current user as a member with additional information
+      await clubRef.collection('members').doc(currentUserId).set({
+        'joinedAt': FieldValue.serverTimestamp(),
+        'name': name,
+        'username': username,
+        'profilePhoto': profilePhoto,
+      });
+    }
 
     setState(() {
       _isMember = true;
     });
-
-    
   } catch (e) {
     print('Error joining club: $e');
     ScaffoldMessenger.of(context).showSnackBar(
@@ -673,54 +693,64 @@ class _ViewClubState extends State<ViewClub> {
                         ),
                         const Spacer(),
                         // Dynamic member count
-                        FutureBuilder<QuerySnapshot>(
-                          future: FirebaseFirestore.instance
-                              .collection('clubs')
-                              .doc(widget.clubId)
-                              .collection('members')
-                              .get(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            }
-                            if (snapshot.hasError) {
-                              return const Text(
-                                'Members',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              );
-                            }
+                  FutureBuilder<QuerySnapshot>(
+  future: FirebaseFirestore.instance
+      .collection('clubs')
+      .doc(widget.clubId)
+      .collection('members')
+      .get(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    }
+    if (snapshot.hasError) {
+      return const Text(
+        'Members',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+          decoration: TextDecoration.underline,
+        ),
+      );
+    }
 
-                            final memberCount = snapshot.data!.docs.length;
+    // Get the number of members
+    final memberCount = snapshot.data!.docs.length;
 
-                            return GestureDetector(
-                              onTap: () {
-                                // Navigate to the MemberListPage and pass the clubId to show the members.
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => MemberListPage(
-                                      clubID: widget.clubId,
-                                      ownerID: _clubOwnerID,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                '$memberCount Members',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            );
-                          },
-                        )
+    // Set display count to 1 if there are no members, otherwise display the actual count
+    final displayCount = memberCount == 0 ? 1 : memberCount;
+
+    return GestureDetector(
+      onTap: () {
+        // Check if clubID and ownerID are valid
+        if (widget.clubId.isNotEmpty && _clubOwnerID.isNotEmpty) {
+          // Navigate to the MemberListPage
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MemberListPage(
+                clubID: widget.clubId,
+                ownerID: _clubOwnerID,
+              ),
+            ),
+          );
+        } else {
+          // Handle the error appropriately, e.g., show a snackbar or log the issue
+          print('Club ID or Owner ID is empty.');
+        }
+      },
+      child: Text(
+        '$displayCount Members', // Use the display count
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
+  },
+)
+
                       ],
                     ),
                     const SizedBox(height: 16),
