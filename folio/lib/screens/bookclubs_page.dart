@@ -178,68 +178,70 @@ class _ClubsBodyState extends State<ClubsBody> {
             ),
           ],
         ),
-        child: SingleChildScrollView(
-          // Allow content to scroll
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              club.picture.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        height: 140,
-                        width: double.infinity,
-                        child: Image.network(
-                          club.picture,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 140,
-                              width: double.infinity,
-                              color: Colors.red,
-                              child: Icon(Icons.error, color: Colors.white),
-                            );
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          },
-                        ),
-                      ),
-                    )
-                  : Container(
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Use min to prevent overflow
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            club.picture.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
                       height: 140,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey.withOpacity(0.2),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'No Image Available',
-                          style: TextStyle(fontSize: 16, color: Colors.black54),
-                        ),
+                      child: Image.network(
+                        club.picture,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 140,
+                            width: double.infinity,
+                            color: Colors.red,
+                            child: const Icon(Icons.error, color: Colors.white),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
                       ),
                     ),
-              SizedBox(height: 2),
-              Text(
+                  )
+                : Container(
+                    height: 140,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.withOpacity(0.2),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'No Image Available',
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    ),
+                  ),
+            const SizedBox(height: 2),
+            // Use Flexible here to handle overflow
+            Flexible(
+              child: Text(
                 club.name,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
                 maxLines: 1, // Limits to 1 line
                 overflow:
                     TextOverflow.ellipsis, // Adds "..." if the text is too long
               ),
-              SizedBox(height: 2),
-              Text(
-                '${club.memberCount} members',
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${club.memberCount} members',
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
