@@ -44,7 +44,7 @@ class _CurrentlyReadingPageState extends State<CurrentlyReadingPage> {
       CollectionReference booksRef = FirebaseFirestore.instance
           .collection('reader')
           .doc(userId)
-          .collection('currently reading'); // Ensure collection name is 'currently reading'
+          .collection('currently reading');
 
       QuerySnapshot querySnapshot = await booksRef.get();
 
@@ -78,94 +78,207 @@ class _CurrentlyReadingPageState extends State<CurrentlyReadingPage> {
     }
   }
 
- void _onMenuSelected(String option, Book book) {
-  print('Selected option: $option for book: ${book.title}');
-  
-  
-  if (option == 'Move to Saved') {
-    _moveBook(book, 'currently reading', 'save'); 
-  } else if (option == 'Move to Finished') {
-    _moveBook(book, 'currently reading', 'finished'); 
-  } else if (option == 'Remove from Currently Reading') {
-    _removeBook(book); 
+  void _showConfirmationMessage(String bookTitle,String action) {
+    String formattedAction = action[0].toUpperCase() + action.substring(1);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                ' $bookTitle $formattedAction list successfully!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
+  }
+  void _showRemoveBookConfirmation(String bookTitle, Book book) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD).withOpacity(0.9),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning, // Change icon to warning for removal confirmation
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Are you sure you want to remove $bookTitle from the Currently Reading list?',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 245, 114, 105), // Red for remove
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    _removeBook(book); // Proceed to remove the book
+                  },
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog without action
+                  },
+                  child: const Text(
+                    'No',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _onMenuSelected(String option, Book book) {
+  switch (option) {
+    case 'Move to Saved':
+      _moveBook(book, 'currently reading', 'save');
+      break;
+    case 'Move to Finished':
+      _moveBook(book, 'currently reading', 'finished');
+      break;
+    case 'Remove from Currently Reading':
+      _showRemoveBookConfirmation(book.title,book); // Show confirmation before removal
+      break;
   }
 }
 
-Future<void> _moveBook(Book book, String fromCollection, String toCollection) async {
-  print('Attempting to move book from $fromCollection to $toCollection');
-  
-  if (userId == null || userId!.isEmpty) {
-    print('Error: User ID is null or empty!');
-    return;
-  }
 
-  if (book.id.isEmpty) {
-    print('Error: Book ID is empty!');
-    return;
-  }
 
-  try {
+  Future<void> _moveBook(Book book, String fromCollection, String toCollection) async {
+    try {
+      if (fromCollection == 'finished' && toCollection != 'finished') {
+        await _decrementBooksRead(); 
+      }
 
-    if (toCollection == 'finished' && fromCollection != 'finished') {
-      await _incrementBooksRead(); 
+      await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(userId)
+          .collection(fromCollection)
+          .doc(book.id)
+          .delete();
+
+      await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(userId)
+          .collection(toCollection)
+          .doc(book.id)
+          .set({
+        'bookID': book.id,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      if (toCollection == 'finished' && fromCollection != 'finished') {
+        await _incrementBooksRead();
+      }
+
+      setState(() {
+        currentlyReadingBooks.remove(book);
+      });
+
+      _showConfirmationMessage(book.title,'Moved to $toCollection');
+    } catch (e) {
+      print('Error moving book: $e');
     }
+  }
 
-   
-    if (fromCollection == 'finished' && toCollection != 'finished') {
-      await _decrementBooksRead(); 
+  Future<void> _removeBook(Book book) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(userId)
+          .collection('currently reading')
+          .doc(book.id)
+          .delete();
+
+      setState(() {
+        currentlyReadingBooks.remove(book);
+      });
+
+      _showConfirmationMessage(book.title,'Removed from Currently Reading');
+    } catch (e) {
+      print('Error removing book: $e');
     }
-
-    print('Trying to delete from $fromCollection');
-    await FirebaseFirestore.instance
-        .collection('reader')
-        .doc(userId)
-        .collection(fromCollection)
-        .doc(book.id)
-        .delete();
-
-    print('Trying to add to $toCollection');
-    await FirebaseFirestore.instance
-        .collection('reader')
-        .doc(userId)
-        .collection(toCollection)
-        .doc(book.id)
-        .set({
-      'bookID': book.id,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    print('Book moved to $toCollection successfully');
-
-    setState(() {
-      currentlyReadingBooks.remove(book); // Remove from UI
-    });
-  } catch (e) {
-    print('Error moving book: $e');
   }
-}
 
-Future<void> _removeBook(Book book) async {
-  try {
-    print('Removing book: ${book.title}');
-    await FirebaseFirestore.instance
-        .collection('reader')
-        .doc(userId)
-        .collection('currently reading')
-        .doc(book.id)
-        .delete();
-
-    setState(() {
-      currentlyReadingBooks.remove(book);
-    });
-    print('Book removed successfully');
-  } catch (e) {
-    print('Error removing book: $e');
-  }
-}
-
-// Increment books read when a book is moved to "Finished"
-Future<void> _incrementBooksRead() async {
-  try {
+  Future<void> _incrementBooksRead() async {
     DocumentSnapshot userDoc = await FirebaseFirestore.instance
         .collection('reader')
         .doc(userId)
@@ -179,23 +292,10 @@ Future<void> _incrementBooksRead() async {
           .collection('reader')
           .doc(userId)
           .update({'booksRead': booksRead + 1});
-
-      print('Books read incremented');
-    } else {
-      await FirebaseFirestore.instance
-          .collection('reader')
-          .doc(userId)
-          .update({'booksRead': 1});
-      print('Books read initialized and incremented');
     }
-  } catch (e) {
-    print('Error incrementing books read: $e');
   }
-}
 
-// Decrement books read when a book is removed from "Finished"
-Future<void> _decrementBooksRead() async {
-  try {
+  Future<void> _decrementBooksRead() async {
     DocumentSnapshot userDoc = await FirebaseFirestore.instance
         .collection('reader')
         .doc(userId)
@@ -210,53 +310,55 @@ Future<void> _decrementBooksRead() async {
             .collection('reader')
             .doc(userId)
             .update({'booksRead': booksRead - 1});
-
-        print('Books read decremented');
-      } else {
-        print('Cannot decrement, booksRead is already zero');
       }
     }
-  } catch (e) {
-    print('Error decrementing books read: $e');
   }
-}
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Currently Reading'),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8F8F3), // Set the background color
+    appBar: AppBar(
+      backgroundColor: Colors.transparent, // Set the AppBar background to transparent
+      elevation: 0, // Remove shadow
+      centerTitle: true,
+      title: const Text(
+        'Currently Reading',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 26,
+          color: Color(0xFF351F1F), // Set the title color
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : currentlyReadingBooks.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No books in your currently reading list.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(12.0),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.66,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemCount: currentlyReadingBooks.length,
-                  itemBuilder: (context, index) {
-                    Book book = currentlyReadingBooks[index];
-                    return CurrentlyReadingBookCard(
-                      book: book,
-                      userId: userId!,
-                      onMenuSelected: (String option) {
-                        _onMenuSelected(option, book);
-                      },
-                    );
-                  },
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : currentlyReadingBooks.isEmpty
+            ? const Center(
+                child: Text(
+                  'No books in your currently reading list.',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
-    );
-  }
+              )
+            : GridView.builder(
+                padding: const EdgeInsets.all(12.0),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.66,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: currentlyReadingBooks.length,
+                itemBuilder: (context, index) {
+                  Book book = currentlyReadingBooks[index];
+                  return CurrentlyReadingBookCard(
+                    book: book,
+                    userId: userId!,
+                    onMenuSelected: (String option) {
+                      _onMenuSelected(option, book);
+                    },
+                  );
+                },
+              ),
+  );
+}
 }

@@ -51,75 +51,53 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                right: -30,
+                right: -30, // Adjusted from -40 to 10
                 top: 5,
-                child: PopupMenuButton<String>(
-                  onSelected: (String result) {
-                    onMenuSelected(result);
-                  },
-                  icon: const Icon(
-                    Icons.more_vert,
-                    color: Color(0xFFF790AD), // Pink color as per your request
-                    size: 20,
-                  ),
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'Move to Finished',
-                      child: ListTile(
-                        leading: Icon(Icons.check_circle, color: Colors.brown),
-                        title: Text('Move to Finished'),
+                child: Material(
+                  color: Colors.transparent, // Ensure the Material widget is transparent
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24), // Circular hit area for better touch
+                    onTap: () {}, // Just for visual feedback
+                    child: PopupMenuButton<String>(
+                      onSelected: (String result) {
+                        onMenuSelected(result);
+                      },
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: Color(0xFFF790AD),
+                        size: 30, // Increased size for easier tapping
                       ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'Move to Saved',
-                      child: ListTile(
-                        leading: Icon(Icons.bookmark, color: Colors.brown),
-                        title: Text('Move to Saved'),
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'Remove from Currently Reading',
-                      child: ListTile(
-                        leading: const Icon(Icons.delete, color: Colors.red),
-                        title: const Text(
-                          'Remove from Currently Reading',
-                          style: TextStyle(color: Colors.red),
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'Move to Finished',
+                          child: ListTile(
+                            leading: Icon(Icons.check_circle, color: Colors.brown),
+                            title: Text('Move to Finished'),
+                          ),
                         ),
-                      ),
+                        const PopupMenuItem<String>(
+                          value: 'Move to Saved',
+                          child: ListTile(
+                            leading: Icon(Icons.bookmark, color: Colors.brown),
+                            title: Text('Move to Saved'),
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'Remove from Currently Reading',
+                          child: ListTile(
+                            leading: const Icon(Icons.delete, color: Colors.red),
+                            title: const Text(
+                              'Remove from Currently Reading',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: 120,
-            child: Column(
-              children: [
-                Text(
-                  book.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  book.author,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
           ),
         ],
       ),

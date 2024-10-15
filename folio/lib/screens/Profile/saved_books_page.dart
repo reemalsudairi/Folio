@@ -78,14 +78,151 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
     }
   }
 
+  void _showConfirmationMessage(String bookTitle, String action) {
+    String formattedAction = action[0].toUpperCase() + action.substring(1);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                ' $bookTitle $formattedAction list successfully!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
+  void _showRemoveBookConfirmation(String bookTitle, Book book) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD).withOpacity(0.9),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons
+                    .warning, // Change icon to warning for removal confirmation
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Are you sure you want to remove $bookTitle from the Saved list?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 245, 114, 105), // Red for remove
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                      _removeBook(book); // Proceed to remove the book
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 160, 160, 160), // Grey for "No" button
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(); // Close the dialog without action
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onMenuSelected(String option, Book book) {
-    print('Selected option: $option for book: ${book.title}');
-    if (option == 'Move to Currently Reading') {
-      _moveBook(book, 'save', 'currently reading');
-    } else if (option == 'Move to Finished') {
-      _moveBook(book, 'save', 'finished');
-    } else if (option == 'Remove from Saved') {
-      _removeBook(book);
+    switch (option) {
+      case 'Move to Currently Reading':
+        _moveBook(book, 'save', 'currently reading');
+        break;
+      case 'Move to Finished':
+        _moveBook(book, 'save', 'finished');
+        break;
+      case 'Remove from Saved':
+        _showRemoveBookConfirmation(
+            book.title, book); // Show confirmation before removal
+        break;
     }
   }
 
@@ -119,6 +256,8 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
       setState(() {
         savedBooks.remove(book);
       });
+            _showConfirmationMessage(book.title,'Moved to $toCollection');
+
       print('Book moved to $toCollection successfully');
     } catch (e) {
       print('Error moving book: $e');
@@ -138,6 +277,9 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
       setState(() {
         savedBooks.remove(book);
       });
+            _showConfirmationMessage(book.title,'Removed from Saved');
+
+      
       print('Book removed successfully');
     } catch (e) {
       print('Error removing book: $e');
@@ -205,8 +347,21 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor:
+          const Color(0xFFF8F8F3), // Set the background color to match
       appBar: AppBar(
-        title: const Text('Saved Books'),
+        backgroundColor:
+            Colors.transparent, // Set the AppBar background to transparent
+        elevation: 0, // Remove shadow
+        centerTitle: true,
+        title: const Text(
+          'Saved Books',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+            color: Color(0xFF351F1F), // Set the title color to match
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -214,7 +369,9 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
               ? const Center(
                   child: Text(
                     'No books in your saved list.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey), // Text style for no books message
                   ),
                 )
               : GridView.builder(

@@ -50,8 +50,8 @@ class FinishedBookCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                right: -30,
+                    Positioned(
+                right: -30, // Adjusted for visibility, ensure it fits your UI design
                 top: 5,
                 child: PopupMenuButton<String>(
                   onSelected: (String result) {
@@ -60,7 +60,7 @@ class FinishedBookCard extends StatelessWidget {
                   icon: const Icon(
                     Icons.more_vert,
                     color: Color(0xFFF790AD),
-                    size: 20,
+                    size: 30,
                   ),
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
@@ -126,4 +126,3 @@ class FinishedBookCard extends StatelessWidget {
     );
   }
 }
-

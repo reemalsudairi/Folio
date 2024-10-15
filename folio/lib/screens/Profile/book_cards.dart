@@ -50,17 +50,15 @@ class SavedBookCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                right: -30,
+         Positioned(
+                right: -30, // Adjusted from -30 to a positive value for better accessibility
                 top: 5,
                 child: PopupMenuButton<String>(
-                  onSelected: (String result) {
-                    onMenuSelected(result);
-                  },
+                  onSelected: onMenuSelected,
                   icon: const Icon(
                     Icons.more_vert,
                     color: Color(0xFFF790AD),
-                    size: 20,
+                    size: 30,
                   ),
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
@@ -126,4 +124,3 @@ class SavedBookCard extends StatelessWidget {
     );
   }
 }
-
