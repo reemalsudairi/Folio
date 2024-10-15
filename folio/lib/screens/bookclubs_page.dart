@@ -185,13 +185,12 @@ class _ClubsBodyState extends State<ClubsBody> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.grey.withOpacity(0.2),
+                      image: DecorationImage(
+            image: AssetImage('assets/images/clubs.jpg'),
+            fit: BoxFit.cover,
+          ),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'No Image Available',
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      ),
-                    ),
+                   
                   ),
             const SizedBox(height: 2),
             // Use Flexible here to handle overflow
@@ -220,7 +219,22 @@ class _ClubsBodyState extends State<ClubsBody> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading // Conditional rendering based on loading state
+     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Book Clubs',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+            color: Color(0xFF351F1F),
+          ),
+        ),
+        backgroundColor: Color(0xFFF8F8F3),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+      ),
+      backgroundColor: Color(0xFFF8F8F3),
+    body: isLoading // Conditional rendering based on loading state
         ? Center(
             child: CircularProgressIndicator(),
           )
@@ -251,19 +265,27 @@ class _ClubsBodyState extends State<ClubsBody> {
               ),
 
               // List of clubs
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                  ),
-                  itemCount: filteredClubs.length,
-                  itemBuilder: (context, index) {
-                    return buildClubCard(filteredClubs[index]);
-                  },
-                ),
-              ),
+             Expanded(
+              child: filteredClubs.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No clubs found for your search.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    )
+                  : GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.75,
+                      ),
+                      itemCount: filteredClubs.length,
+                      itemBuilder: (context, index) {
+                        return buildClubCard(filteredClubs[index]);
+                      },
+                    ),
+            ),
             ],
-          );
+          ),
+     );
   }
 }
