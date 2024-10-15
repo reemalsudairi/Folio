@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/createClubPage.dart';
 import 'package:folio/screens/viewClub.dart';
 
 class Club {
@@ -286,6 +287,32 @@ class _ClubsBodyState extends State<ClubsBody> {
                 ),
               ],
             ),
+      floatingActionButton: ClipOval(
+        child: SizedBox(
+          width: 70, // Set the width to make it bigger
+          height: 70, // Set the height to make it bigger
+          child: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      CreateClubPage(), // Navigate to the Create Club page
+                ),
+              );
+            },
+            backgroundColor:
+                const Color(0xFFF790AD), // Set the background color to pink
+            child: const Icon(
+              Icons.add, // Use the add icon
+              color: Colors.white, // Set the icon color to white for contrast
+              size: 50, // Optional: Increase the icon size
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat, // Positioning
     );
   }
 }
