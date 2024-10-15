@@ -126,23 +126,23 @@ class _CreateClubPageState extends State<CreateClubPage> {
     // widget.onImagePicked(null);
   }
 
-  // Function to create a new club
-  Future<void> _createClub() async {
-    // Check if the club name is empty or contains only whitespace
-    if (_clubNameController.text.trim().isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter a club name.';
-      });
-      return;
-    }
-
+// Function to create a new club
+Future<void> _createClub() async {
+  // Check if the club name is empty or contains only whitespace
+  if (_clubNameController.text.trim().isEmpty) {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null; // Reset error message
+      _errorMessage = 'Please enter a club name.';
     });
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+    _errorMessage = null; // Reset error message
+  });
 
   try {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser ;
 
     // Upload the club picture if available
     if (_clubImageFile != null) {
@@ -159,50 +159,50 @@ class _CreateClubPageState extends State<CreateClubPage> {
         'name': _clubNameController.text
             .trim(), // Ensure no leading/trailing spaces
         'description': _descriptionController.text.trim(),
-        'discussionDate': _discussionDate,
         'language': _selectedLanguage ?? '',
-        'currentBookID':
-            _selectedBookId ?? '', // Use _selectedBookId instead of text
+        'currentBookID': _selectedBookId ?? '', // Store book ID
         'ownerID': user.uid,
         'picture': _clubImageUrl ?? null, // Change here
+        if (_selectedBookId != null && _discussionDate != null)
+          'discussionDate': _discussionDate,
       });
 
-        // Show success message
-        _showConfirmationMessage();
-        // Navigate to Clubs page after successful creation
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => const Clubs(), // Correctly reference the Clubs widget
-        //   ),
-        // );
+      // Show success message
+      _showConfirmationMessage();
+      // Navigate to Clubs page after successful creation
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => const Clubs(), // Correctly reference the Clubs widget
+      //   ),
+      // );
 
-        // Clear the form
-        _clubNameController.clear();
-        _descriptionController.clear();
-        _currentBookController.clear();
+      // Clear the form
+      _clubNameController.clear();
+      _descriptionController.clear();
+      _currentBookController.clear();
 
-        setState(() {
-          _discussionDate = null;
-          _clubImageFile = null;
-          _currentImage = const AssetImage(
-              'assets/images/clubs.jpg'); // Revert to default image
-          _selectedLanguage = null;
-          _selectedBookId = null; // Clear the selected book ID
-          _bookCover = null; // Clear the book cover URL
-          _bookAuthor = null; // Clear the author name
-        });
-      }
-    } catch (e) {
       setState(() {
-        _errorMessage = "Error creating club. Please try again.";
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
+        _discussionDate = null;
+        _clubImageFile = null;
+        _currentImage = const AssetImage(
+            'assets/images/clubs.jpg'); // Revert to default image
+        _selectedLanguage = null;
+        _selectedBookId = null; // Clear the selected book ID
+        _bookCover = null; // Clear the book cover URL
+        _bookAuthor = null; // Clear the author name
       });
     }
+  } catch (e) {
+    setState(() {
+      _errorMessage = "Error creating club: $e";
+    });
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   void _showCreateClubConfirmation() {
     showDialog(
@@ -594,95 +594,80 @@ class _CreateClubPageState extends State<CreateClubPage> {
 
               Column(
                 children: [
-                  // Current Book Field with custom styling
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            // Navigate to SelectBookPage when the container is tapped
-                            final selectedBook = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SelectBookPage(),
-                              ),
-                            );
+// Current Book Field with custom styling
+Row(
+  children: [
+    Expanded(
+      child: GestureDetector(
+        onTap: () async {
+          // Navigate to SelectBookPage when the container is tapped
+          final selectedBook = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SelectBookPage(),
+            ),
+          );
 
-                            // Check if a book was selected
-                            if (selectedBook != null) {
-                              setState(() {
-                                _selectedBookId =
-                                    selectedBook['id']; // Store book ID
-                                _currentBookController.text =
-                                    selectedBook['title']; // Set title
-                                _bookCover = selectedBook[
-                                    'coverImage']; // Store book cover
-                                _bookAuthor =
-                                    selectedBook['author']; // Store author name
-                              });
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.circular(40), // Match the design
-                              border: Border.all(
-                                  color:
-                                      const Color(0xFFF790AD)), // Border color
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    _currentBookController.text.isNotEmpty
-                                        ? _currentBookController.text
-                                        : 'Select a Book',
-                                    maxLines: 2,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color:
-                                          _currentBookController.text.isNotEmpty
-                                              ? Colors.black
-                                              : Colors.grey,
-                                    ),
-                                    overflow: TextOverflow
-                                        .ellipsis, // Truncate if too long
-                                  ),
-                                ),
-                                // Search icon
-                                const Icon(
-                                  Icons.search,
-                                  color:
-                                      Color(0xFFF790AD), // Customize icon color
-                                ),
-                                if (_currentBookController.text.isNotEmpty)
-                                  IconButton(
-                                    icon: const Icon(Icons.close,
-                                        color: Colors.red), // X icon
-                                    onPressed: () {
-                                      setState(() {
-                                        _currentBookController
-                                            .clear(); // Clear the book title
-                                        _bookCover =
-                                            null; // Clear the book cover
-                                        _bookAuthor =
-                                            null; // Clear the author name
-                                        _selectedBookId =
-                                            null; // Clear the book ID
-                                      });
-                                    },
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+          // Check if a book was selected
+          if (selectedBook != null) {
+            setState(() {
+              _selectedBookId = selectedBook['id']; // Store book ID
+              _currentBookController.text = selectedBook['title']; // Set title
+              _bookCover = selectedBook['coverImage']; // Store book cover
+              _bookAuthor = selectedBook['author']; // Store author name
+            });
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(40), // Match the design
+            border: Border.all(color: const Color(0xFFF790AD)), // Border color
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  _currentBookController.text.isNotEmpty
+                      ? _currentBookController.text
+                      : 'Select a Book',
+                  maxLines: 2,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: _currentBookController.text.isNotEmpty
+                        ? Colors.black
+                        : Colors.grey,
                   ),
+                  overflow: TextOverflow.ellipsis, // Truncate if too long
+                ),
+              ),
+              // Search icon
+              const Icon(
+                Icons.search,
+                color: Color(0xFFF790AD), // Customize icon color
+              ),
+              if (_currentBookController.text.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red), // X icon
+                  onPressed: () {
+                    setState(() {
+                      _currentBookController.clear(); // Clear the book title
+                      _bookCover = null; // Clear the book cover
+                      _bookAuthor = null; // Clear the author name
+                      _selectedBookId = null; // Clear the book ID
+                      _discussionDate = null; // Clear the discussion date
+                    });
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  ],
+),
 
                   // Display the selected book cover and author
                   if (_bookCover != null) ...[
@@ -712,32 +697,38 @@ class _CreateClubPageState extends State<CreateClubPage> {
 
               const SizedBox(height: 20),
 
-              // Next Discussion Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Next Discussion (Optional):',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _pickDiscussionDate,
-                    child: Text(
-                      _discussionDate != null
-                          ? _formatTimestamp(_discussionDate!)
-                          : 'Pick a date & time',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFFF790AD),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+// Next Discussion Section
+Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    const Text(
+      'Next Discussion (Optional):',
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    TextButton(
+      onPressed: _selectedBookId != null ? _pickDiscussionDate : null,
+      child: Text(
+        _discussionDate != null
+            ? _formatTimestamp(_discussionDate!)
+            : _selectedBookId != null
+                ? 'Pick a date & time'
+                : 'Select a book first',
+        style: TextStyle(
+          fontSize: 14,
+          color: _selectedBookId != null
+              ? const Color(0xFFF790AD)
+              : Colors.grey, // Disable color if no book is selected
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ),
+  ],
+),
+
+
               const SizedBox(height: 20),
 // Create Club Button with loading spinner
               // Create Club Button with loading spinner
