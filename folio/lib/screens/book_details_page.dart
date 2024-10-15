@@ -146,7 +146,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               .collection(list)
               .doc(widget.bookId)
               .delete();
-          if (list == 'Finished') {
+          if (list == 'finished') {
             await _decrementBooksRead();
           }
         }
@@ -221,38 +221,38 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     });
   }
 
+
 // Increment books read when a book is moved to "Finished"
-  Future<void> _incrementBooksRead() async {
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+Future<void> _incrementBooksRead() async {
+  try {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('reader')
+        .doc(userId)
+        .get();
+
+    if (userDoc.exists && userDoc.data() != null) {
+      Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+      int booksRead = data?['booksRead'] ?? 0;
+
+      await FirebaseFirestore.instance
           .collection('reader')
           .doc(userId)
-          .get();
+          .update({'booksRead': booksRead + 1});
 
-      if (userDoc.exists && userDoc.data() != null) {
-        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
-        int booksRead = data?['booksRead'] ?? 0;
-
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .update({'booksRead': booksRead + 1});
-
-        print('Books read incremented');
-      } else {
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .update({'booksRead': 1});
-        print('Books read initialized and incremented');
-      }
-    } catch (e) {
-      print('Error incrementing books read: $e');
+      print('Books read incremented');
+    } else {
+      await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(userId)
+          .update({'booksRead': 1});
+      print('Books read initialized and incremented');
     }
+  } catch (e) {
+    print('Error incrementing books read: $e');
   }
+}
 
-// Decrement books read when a book is removed from "Finished"
-  Future<void> _decrementBooksRead() async {
+Future<void> _decrementBooksRead() async {
     try {
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('reader')
@@ -278,6 +278,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       print('Error decrementing books read: $e');
     }
   }
+
+
 
   // Handle tab switching
   void _onItemTapped(int index) {
