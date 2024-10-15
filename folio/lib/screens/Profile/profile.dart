@@ -106,11 +106,11 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F1),
+      backgroundColor:  const Color(0xFFF8F8F3),
       appBar: PreferredSize(
         preferredSize: const Size(412, 56),
         child: AppBar(
-          backgroundColor: const Color(0xFFF8F5F1),
+          backgroundColor: const Color(0xFFF8F8F3),
           elevation: 0,
           automaticallyImplyLeading: false,
           actions: [
@@ -133,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: Container(
-        color: const Color(0xFFF8F5F1),
+        color:  const Color(0xFFF8F8F3),
         child: Column(
           children: [
             CircleAvatar(
