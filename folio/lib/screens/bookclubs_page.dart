@@ -250,18 +250,25 @@ class _ClubsBodyState extends State<ClubsBody> {
               ),
 
               // List of clubs
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                  ),
-                  itemCount: filteredClubs.length,
-                  itemBuilder: (context, index) {
-                    return buildClubCard(filteredClubs[index]);
-                  },
-                ),
-              ),
+             Expanded(
+              child: filteredClubs.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No clubs found for your search.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    )
+                  : GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.75,
+                      ),
+                      itemCount: filteredClubs.length,
+                      itemBuilder: (context, index) {
+                        return buildClubCard(filteredClubs[index]);
+                      },
+                    ),
+            ),
             ],
           );
   }
