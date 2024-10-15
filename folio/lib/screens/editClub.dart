@@ -260,9 +260,7 @@ Future<void> _updateClub() async {
       'description': _descriptionController.text.trim(),
       'language': _selectedLanguage ?? '',
       'currentBookID': _selectedBookId ?? '',
-      'currentBookTitle': _currentBookController.text.trim(),
-      'currentBookCover': _bookCover ?? '',
-      'currentBookAuthor': _bookAuthor ?? '',
+
       'discussionDate': _discussionDate,
     };
 
