@@ -186,7 +186,7 @@ class _ClubsBodyState extends State<ClubsBody> {
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.grey.withOpacity(0.2),
                       image: DecorationImage(
-            image: AssetImage('assets/images/default_image.png'),
+            image: AssetImage('assets/images/clubs.jpg'),
             fit: BoxFit.cover,
           ),
                     ),
