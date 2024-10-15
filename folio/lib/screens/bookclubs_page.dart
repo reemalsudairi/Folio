@@ -219,7 +219,22 @@ class _ClubsBodyState extends State<ClubsBody> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading // Conditional rendering based on loading state
+     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Book Clubs',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+            color: Color(0xFF351F1F),
+          ),
+        ),
+        backgroundColor: Color(0xFFF8F8F3),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+      ),
+      backgroundColor: Color(0xFFF8F8F3),
+    body: isLoading // Conditional rendering based on loading state
         ? Center(
             child: CircularProgressIndicator(),
           )
@@ -270,6 +285,7 @@ class _ClubsBodyState extends State<ClubsBody> {
                     ),
             ),
             ],
-          );
+          ),
+     );
   }
 }
