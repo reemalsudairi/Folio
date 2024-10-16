@@ -115,7 +115,7 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
       ),
     );
 
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -286,35 +286,114 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
     }
   }
 
-  // Increment books read when a book is moved to "Finished"
-  Future<void> _incrementBooksRead() async {
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+Future<void> _incrementBooksRead() async {
+  try {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('reader')
+        .doc(userId)
+        .get();
+
+    if (userDoc.exists && userDoc.data() != null) {
+      Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+      int booksRead = data?['booksRead'] ?? 0;
+      int booksGoal = data?['books'] ?? 0;
+      bool goalAchievedOnce = data?['goalAchievedOnce'] ?? false; // Flag to check if message was shown
+
+      // Increment the booksRead field
+      booksRead++;
+      print('Books read incremented to: $booksRead');
+
+      await FirebaseFirestore.instance
           .collection('reader')
           .doc(userId)
-          .get();
+          .update({'booksRead': booksRead});
 
-      if (userDoc.exists && userDoc.data() != null) {
-        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
-        int booksRead = data?['booksRead'] ?? 0;
+      // Check if the yearly goal is met and the message has not been shown yet
+      if (booksRead >= booksGoal && !goalAchievedOnce) {
+        print('Goal reached for the first time!');
+        _showGoalAchievedDialog();  // Show the goal achieved dialog
 
+        // Update the flag so the message doesn't appear again
         await FirebaseFirestore.instance
             .collection('reader')
             .doc(userId)
-            .update({'booksRead': booksRead + 1});
-
-        print('Books read incremented');
-      } else {
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .update({'booksRead': 1});
-        print('Books read initialized and incremented');
+            .update({'goalAchievedOnce': true});
       }
-    } catch (e) {
-      print('Error incrementing books read: $e');
+    } else {
+      // Initialize the booksRead field if it doesn't exist
+      await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(userId)
+          .update({'booksRead': 1});
+      print('Books read initialized and incremented');
     }
+  } catch (e) {
+    print('Error incrementing books read: $e');
   }
+}
+
+void _showGoalAchievedDialog() {
+  if (!mounted) return; // Ensure the widget is still mounted
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.celebration,
+              color: Color(0xFFF790AD),// Icon color matching the progress bar
+              size: 50,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Goal Achieved!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.brown[800],  // Matching design colors
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Congratulations, you have reached your yearly reading goal!',
+              style: TextStyle(
+                color: Colors.brown[600],  // Keeping a consistent color palette
+                fontWeight: FontWeight.bold,
+                  fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            LinearProgressIndicator(
+              value: 1,  // Full progress to signify the goal is met
+              backgroundColor: Colors.grey[300],
+              valueColor: const AlwaysStoppedAnimation(Color(0xFFF790AD)),
+              minHeight: 13,
+              borderRadius: const BorderRadius.all(Radius.circular(20)),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+
+  // Automatically close the dialog after 5 seconds
+  Future.delayed(const Duration(seconds: 3), () {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  });
+}
 
   // Decrement books read when a book is removed from "Finished"
   Future<void> _decrementBooksRead() async {

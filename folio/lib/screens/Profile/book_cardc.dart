@@ -68,29 +68,34 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                         color: Color(0xFFF790AD),
                         size: 30,
                       ),
+                      color: const Color.fromARGB(255, 255, 255, 255), 
                       itemBuilder: (BuildContext context) =>
                           <PopupMenuEntry<String>>[
                         const PopupMenuItem<String>(
                           value: 'Move to Finished',
                           child: ListTile(
-                            leading:
-                                Icon(Icons.check_circle, color: Colors.brown),
-                            title: Text('Move to Finished'),
+                            leading: Icon(Icons.check_circle, color: Color(0xFF351F1F)), // Custom color
+                            title: Text(
+                              'Move to Finished',
+                              style: TextStyle(color: Color(0xFF351F1F)), // Custom text color
+                            ),
                           ),
                         ),
                         const PopupMenuItem<String>(
                           value: 'Move to Saved',
                           child: ListTile(
-                            leading: Icon(Icons.bookmark, color: Colors.brown),
-                            title: Text('Move to Saved'),
+                            leading: Icon(Icons.bookmark, color: Color(0xFF351F1F)), // Custom color
+                            title: Text(
+                              'Move to Saved',
+                              style: TextStyle(color: Color(0xFF351F1F)), // Custom text color
+                            ),
                           ),
                         ),
-                        PopupMenuItem<String>(
+                        const PopupMenuItem<String>(
                           value: 'Remove from Currently Reading',
                           child: ListTile(
-                            leading:
-                                const Icon(Icons.delete, color: Colors.red),
-                            title: const Text(
+                            leading: Icon(Icons.delete, color: Colors.red),
+                            title: Text(
                               'Remove from Currently Reading',
                               style: TextStyle(color: Colors.red),
                             ),

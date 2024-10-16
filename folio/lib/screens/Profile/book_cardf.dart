@@ -52,8 +52,7 @@ class FinishedBookCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                right:
-                    -30, // Adjusted for visibility, ensure it fits your UI design
+                right: -40,
                 top: 5,
                 child: PopupMenuButton<String>(
                   onSelected: (String result) {
@@ -61,23 +60,29 @@ class FinishedBookCard extends StatelessWidget {
                   },
                   icon: const Icon(
                     Icons.more_vert,
-                    color: Color(0xFFF790AD),
+                    color: Color(0xFFF790AD), // Same pink color as BookCard C
                     size: 30,
                   ),
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
+                  color: const Color.fromARGB(255, 255, 255, 255), // White background
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
                       value: 'Move to Currently Reading',
                       child: ListTile(
-                        leading: Icon(Icons.menu_book, color: Colors.brown),
-                        title: Text('Move to Currently Reading'),
+                        leading: Icon(Icons.menu_book, color: Color(0xFF351F1F)), // Custom color
+                        title: Text(
+                          'Move to Currently Reading',
+                          style: TextStyle(color: Color(0xFF351F1F)), // Custom text color
+                        ),
                       ),
                     ),
                     const PopupMenuItem<String>(
                       value: 'Move to Saved',
                       child: ListTile(
-                        leading: Icon(Icons.bookmark, color: Colors.brown),
-                        title: Text('Move to Saved'),
+                        leading: Icon(Icons.bookmark, color: Color(0xFF351F1F)), // Custom color
+                        title: Text(
+                          'Move to Saved',
+                          style: TextStyle(color: Color(0xFF351F1F)), // Custom text color
+                        ),
                       ),
                     ),
                     PopupMenuItem<String>(
@@ -95,7 +100,7 @@ class FinishedBookCard extends StatelessWidget {
               ),
             ],
           ),
-          // const SizedBox(height: 10),
+          //const SizedBox(height: 10), // Spacer between image and text
           Expanded(
             child: SizedBox(
               width: 120,
@@ -111,7 +116,7 @@ class FinishedBookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                  // const SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     book.author,
                     style: const TextStyle(
