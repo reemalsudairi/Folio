@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/MemberListPage.dart';
+import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/editClub.dart';
 import 'package:folio/view/callPage.dart';
 import 'package:http/http.dart' as http;
@@ -25,7 +26,7 @@ Future _fetchBookData(String clubId) async {
   final bookDataSnapshot = await bookDataRef.get();
   if (bookDataSnapshot.exists) {
     final clubData = bookDataSnapshot.data() as Map<String, dynamic>;
- 
+
     // Fetch book details from Google Books API
     if (clubData['currentBookID'] != null) {
       final bookResponse = await http.get(Uri.parse(
@@ -33,6 +34,7 @@ Future _fetchBookData(String clubId) async {
       if (bookResponse.statusCode == 200) {
         final bookData = jsonDecode(bookResponse.body);
         return {
+          'bookID': clubData['currentBookID'], // Fetch the book ID
           'title': bookData['volumeInfo']['title'] ?? '',
           'author': bookData['volumeInfo']['authors']?[0] ?? '',
           'image': bookData['volumeInfo']['imageLinks']['thumbnail'] ?? '',
@@ -818,22 +820,40 @@ FutureBuilder(
         style: TextStyle(fontSize: 14, color: Colors.grey),
       );
     }
- 
+
     final bookData = snapshot.data;
- 
+
     if (bookData == null) {
       return const Text(
         'No book has been selected for this club.',
         style: TextStyle(fontSize: 14, color: Colors.grey),
       );
     }
- 
+
     return Column(
       children: [
         const SizedBox(height: 16),
         Row(
           children: [
             GestureDetector(
+              onTap: () {
+                // Navigate to BookDetailsPage when the book cover is tapped
+                if (bookData['bookID'] != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookDetailsPage(
+                        bookId: bookData['bookID'],
+                        userId: FirebaseAuth.instance.currentUser !.uid,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Book ID is not available.')),
+                  );
+                }
+              },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
                 child: Container(
@@ -851,7 +871,24 @@ FutureBuilder(
             const SizedBox(width: 16),
             Expanded(
               child: GestureDetector(
-               
+                onTap: () {
+                  // Navigate to BookDetailsPage when the book title is tapped
+                  if (bookData['bookID'] != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookDetailsPage(
+                          bookId: bookData['bookID'],
+                          userId: FirebaseAuth.instance.currentUser !.uid,
+                        ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Book ID is not available.')),
+                    );
+                  }
+                },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -898,7 +935,6 @@ FutureBuilder(
     );
   },
 ),
- 
                     SizedBox(height: 16),
                     Divider(color: Colors.grey),
                     SizedBox(height: 16),
