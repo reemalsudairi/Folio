@@ -164,7 +164,7 @@ class _ClubsPageState extends State<ClubsPage> {
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
-                      height: 180,
+                      height: 120,
                       width: double.infinity,
                       child: Image.network(
                         club.picture,
