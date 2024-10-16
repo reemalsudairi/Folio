@@ -143,7 +143,7 @@ Future<int> fetchMemberCount(String clubId) async {
         .collection('members')
         .get();
 
-    return membersSnapshot.size; // Return the correct count
+    return membersSnapshot.size+1; // Return the correct count
   } catch (e) {
     print('Error fetching member count for club $clubId: $e');
     return 0;
