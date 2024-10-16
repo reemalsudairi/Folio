@@ -102,7 +102,7 @@ class _ClubsBodyState extends State<ClubsBody> {
           .collection('members')
           .get();
 
-      return membersSnapshot.size;
+      return membersSnapshot.size+1;
     } catch (e) {
       print('Error fetching member count for club $clubId: $e');
       return 0;
