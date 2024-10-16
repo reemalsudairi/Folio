@@ -63,25 +63,31 @@ class SavedBookCard extends StatelessWidget {
                     color: Color(0xFFF790AD), // Same pink color as BookCard C
                     size: 30,
                   ),
-                  color: const Color.fromARGB(255, 255, 255, 255), // White background
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  color: const Color.fromARGB(
+                      255, 255, 255, 255), // White background
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
                       value: 'Move to Currently Reading',
                       child: ListTile(
-                        leading: Icon(Icons.menu_book, color: Color(0xFF351F1F)), // Custom color
+                        leading: Icon(Icons.menu_book,
+                            color: Color(0xFF351F1F)), // Custom color
                         title: Text(
                           'Move to Currently Reading',
-                          style: TextStyle(color: Color(0xFF351F1F)), // Custom text color
+                          style: TextStyle(
+                              color: Color(0xFF351F1F)), // Custom text color
                         ),
                       ),
                     ),
                     const PopupMenuItem<String>(
                       value: 'Move to Finished',
                       child: ListTile(
-                        leading: Icon(Icons.check_circle, color: Color(0xFF351F1F)), // Custom color
+                        leading: Icon(Icons.check_circle,
+                            color: Color(0xFF351F1F)), // Custom color
                         title: Text(
                           'Move to Finished',
-                          style: TextStyle(color: Color(0xFF351F1F)), // Custom text color
+                          style: TextStyle(
+                              color: Color(0xFF351F1F)), // Custom text color
                         ),
                       ),
                     ),
@@ -100,7 +106,7 @@ class SavedBookCard extends StatelessWidget {
               ),
             ],
           ),
-        //  const SizedBox(height: 10), // Spacer between image and text
+          // const SizedBox(height: 10),
           Expanded(
             child: SizedBox(
               width: 120,
@@ -116,7 +122,7 @@ class SavedBookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 2),
+                  // const SizedBox(height: 2),
                   Text(
                     book.author,
                     style: const TextStyle(
