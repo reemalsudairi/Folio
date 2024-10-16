@@ -291,9 +291,20 @@ Widget _buildMemberList() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F3),
       appBar: AppBar(
-        title: const Text('Members'),
+      backgroundColor: Colors.transparent, // Set the AppBar background to transparent
+      elevation: 0, // Remove shadow
+      centerTitle: true,
+      title: const Text(
+        'Members',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 26,
+          color: Color(0xFF351F1F), // Set the title color
+        ),
       ),
+    ),
       body: _buildMemberList(),
     );
   }
