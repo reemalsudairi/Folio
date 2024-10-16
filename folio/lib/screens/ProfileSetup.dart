@@ -10,20 +10,20 @@ import 'package:folio/screens/login.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CustomTextInputFormatter extends TextInputFormatter {
- @override
- TextEditingValue formatEditUpdate(
-     TextEditingValue oldValue, TextEditingValue newValue) {
-   if (newValue.text.isEmpty) {
-     return newValue;
-   }
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
 
-   int? value = int.tryParse(newValue.text);
-   if (value == null || value < 0 || value > 1000) {
-     return oldValue;
-   }
+    int? value = int.tryParse(newValue.text);
+    if (value == null || value < 1 || value > 1000) {
+      return oldValue;
+    }
 
-   return newValue;
- }
+    return newValue;
+  }
 }
 
                     
@@ -142,17 +142,13 @@ void _showConfirmationMessage() {
      try {
        final userId = widget.userId; // Use the passed userId
 
-       // Prepare the profile data
-       final userProfile = {
-         'name': _nameController.text,
-         'bio': _bioController.text,
-         // Only parse booksController if the field is not empty
-         'books': _booksController.text.isNotEmpty
-             ? int.tryParse(_booksController.text)
-             : null, // If empty, set to null
-         'profilePhoto':
-             _imageFile != null ? await _uploadProfilePhoto(userId) : null,
-       };
+      // Prepare the profile data
+final userProfile = {
+  'name': _nameController.text,
+  'bio': _bioController.text,
+  'books': _booksController.text.isEmpty ? 10 : int.parse(_booksController.text),
+  'profilePhoto': _imageFile != null ? await _uploadProfilePhoto(userId) : null,
+};
 
        // Update the Firestore document
        await _firestore
