@@ -10,6 +10,7 @@ import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/screens/categories_page.dart';
 import 'package:folio/screens/extendedclubs.dart';
 import 'package:folio/screens/settings.dart';
+import 'package:folio/screens/viewClub.dart';
 import 'package:http/http.dart' as http;
 
 import 'Profile/book.dart';
@@ -179,14 +180,25 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<int> fetchMemberCount(String clubId) async {
-    final memberSnapshot = await FirebaseFirestore.instance
+    try {
+    // Get the members subcollection snapshot
+    QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
         .collection('clubs')
         .doc(clubId)
         .collection('members')
         .get();
 
-    return memberSnapshot.docs.length +
-        1; // Always exceed the actual member size by 1
+    // If the members collection is empty, return 0 to indicate no members beyond the owner.
+    if (membersSnapshot.size == 0) {
+      return 1;
+    }
+
+    // Otherwise, return the size of the members collection.
+    return membersSnapshot.size;
+  } catch (e) {
+    print('Error fetching member count for club $clubId: $e');
+    return 1; // Default to 1 if an error occurs.
+  } // Always exceed the actual member size by 1
   }
 
   void _onItemTapped(int index) {
@@ -587,7 +599,19 @@ class HomePageContent extends StatelessWidget {
   }
 
   Widget _buildClubCard(BuildContext context, Club club) {
-    return Container(
+     return GestureDetector(
+      // Wrap with GestureDetector
+      onTap: () {
+        // Navigate to ViewClub page and pass the club ID
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ViewClub(
+                clubId: club.id), // Replace with your actual ViewClub widget
+          ),
+        );
+      },
+    child: Container(
       width: 200, // Set a fixed width to ensure consistent card sizes
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       padding: const EdgeInsets.all(12),
@@ -659,6 +683,7 @@ class HomePageContent extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
