@@ -116,6 +116,7 @@ class _SelectBookPageState extends State<SelectBookPage> {
         ),
         centerTitle: true,
       ),
+      backgroundColor: const Color(0xFFF8F8F3),
       body: Column(
         children: [
           Padding(
@@ -196,7 +197,6 @@ class _SelectBookPageState extends State<SelectBookPage> {
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(30.0),
                       child: Container(
-                        color: const Color(0xFFF8F8F3),
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
@@ -207,32 +207,35 @@ class _SelectBookPageState extends State<SelectBookPage> {
                                   flex: 5,
                                   child: AspectRatio(
                                     aspectRatio: 0.66,
-                                    child: Image.network(
-                                      thumbnail,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return const Center(
-                                            child: Icon(Icons.error));
-                                      },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          10), // Apply circular border radius
+                                      child: Image.network(
+                                        thumbnail,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return const Center(
+                                              child: Icon(Icons.error));
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
                                 Flexible(
-                                  flex: 2,
+                                  flex: 1,
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
                                       title,
                                       style: const TextStyle(
-                                        color: Color(0xFF351F1F),
-                                        fontSize: 16,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                       ),
-                                      textAlign: TextAlign.center,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
@@ -244,18 +247,19 @@ class _SelectBookPageState extends State<SelectBookPage> {
                                     child: Text(
                                       authors,
                                       style: const TextStyle(
-                                        color: Color(0xFF9b9b9b),
-                                        fontSize: 15,
+                                        fontSize: 12,
+                                        color: Colors.grey,
                                       ),
-                                      textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            Positioned(
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30.0),
                               child: ElevatedButton(
                                 onPressed: () {
                                   final selectedBook = {
@@ -282,7 +286,7 @@ class _SelectBookPageState extends State<SelectBookPage> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF790AD),
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 12),
+                                      horizontal: 16, vertical: 10),
                                 ),
                                 child: const Text(
                                   'Select',
