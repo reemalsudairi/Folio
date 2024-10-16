@@ -15,7 +15,7 @@ class CustomTextInputFormatter extends TextInputFormatter {
     }
 
     int? value = int.tryParse(newValue.text);
-    if (value == null || value < 0 || value > 1000) {
+    if (value == null || value < 1 || value > 1000) {
       return oldValue;
     }
 
@@ -195,7 +195,7 @@ Future<void> _saveProfile() async {
         'name': _nameController.text.trim(), // Trim trailing spaces from name
         'bio': _bioController.text,
         'books': _booksController.text.isEmpty
-            ? 0
+            ? 10 // Set book goal to 10 if the field is empty
             : int.parse(_booksController.text),
         'profilePhoto': profilePhotoUrl,
         'email': widget.email,
@@ -553,11 +553,14 @@ Widget _buildTextField({
           : null,
     ),
     validator: (value) {
-      if (!optional && (value == null || value.isEmpty)) {
-        return 'Please enter your $hintText';
-      }
-      return null;
-    },
+  if (!optional && (value == null || value.isEmpty)) {
+    return 'Please enter your $hintText';
+  }
+  if (controller == _booksController && value == "0") {
+    return 'Please enter a valid books goal';
+  }
+  return null;
+},
   );
 }
 
