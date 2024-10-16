@@ -62,6 +62,7 @@ class _ViewClubState extends State<ViewClub> {
   final Uuid uuid = Uuid(); // Initialize UUID generator
   String _callID = ''; // Newly added state variable
   String _clubOwnerProfilePhoto = '';
+  String _language = '';
  
   @override
   void initState() {
@@ -75,72 +76,73 @@ class _ViewClubState extends State<ViewClub> {
     return uuid.v4();
   }
  
-  Future<void> _fetchClubData() async {
-    try {
-      // Fetch the club data using the passed clubId
-      final clubDoc = await FirebaseFirestore.instance
-          .collection('clubs')
-          .doc(widget.clubId)
-          .get();
- 
-      if (clubDoc.exists) {
-        final clubData = clubDoc.data()!;
-        _clubOwnerID = clubData['ownerID'] ?? '';
- 
-        // Check if the current user is the owner
-        String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-        _isOwner = _clubOwnerID == currentUserId;
- 
-        // Fetch the owner's name
-        await _fetchOwnerName(_clubOwnerID);
- 
-        // Parse the discussion date and handle callID
-        if (clubData['discussionDate'] != null) {
-          _discussionDate = (clubData['discussionDate'] as Timestamp).toDate();
-          _isDiscussionScheduled = true;
- 
-          // Check if callID exists
-          if (clubData['callID'] != null &&
-              clubData['callID'].toString().isNotEmpty) {
-            _callID = clubData['callID'];
-          } else {
-            // Generate a new callID and store it in Firestore
-            _callID = _generateCallID();
-            await FirebaseFirestore.instance
-                .collection('clubs')
-                .doc(widget.clubId)
-                .update({'callID': _callID});
-          }
- 
-          _clubDiscussionDate =
-              DateFormat.yMMMd().add_jm().format(_discussionDate!.toLocal());
+Future<void> _fetchClubData() async {
+  try {
+    // Fetch the club data using the passed clubId
+    final clubDoc = await FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(widget.clubId)
+        .get();
+
+    if (clubDoc.exists) {
+      final clubData = clubDoc.data()!;
+      _clubOwnerID = clubData['ownerID'] ?? '';
+
+      // Check if the current user is the owner
+      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+      _isOwner = _clubOwnerID == currentUserId;
+
+      // Fetch the owner's name
+      await _fetchOwnerName(_clubOwnerID);
+
+      // Parse the discussion date and handle callID
+      if (clubData['discussionDate'] != null) {
+        _discussionDate = (clubData['discussionDate'] as Timestamp).toDate();
+        _isDiscussionScheduled = true;
+
+        // Check if callID exists
+        if (clubData['callID'] != null &&
+            clubData['callID'].toString().isNotEmpty) {
+          _callID = clubData['callID'];
         } else {
-          _discussionDate = null;
-          _isDiscussionScheduled = false;
-          _clubDiscussionDate = 'No discussion scheduled yet';
-          _callID = ''; // Reset callID when no discussion is scheduled
+          // Generate a new callID and store it in Firestore
+          _callID = _generateCallID();
+          await FirebaseFirestore.instance
+              .collection('clubs')
+              .doc(widget.clubId)
+              .update({'callID': _callID});
         }
- 
-        setState(() {
-          _name = clubData['name'] ?? 'No Name Available';
-          _clubDescription =
-              clubData['description'] ?? 'No Description Available';
-          _picture = clubData['picture'] ?? '';
-          _isLoading = false;
-        });
+
+        _clubDiscussionDate =
+            DateFormat.yMMMd().add_jm().format(_discussionDate!.toLocal());
       } else {
-        print('Club document does not exist.');
-        setState(() {
-          _isLoading = false;
-        });
+        _discussionDate = null;
+        _isDiscussionScheduled = false;
+        _clubDiscussionDate = 'No discussion scheduled yet';
+        _callID = ''; // Reset callID when no discussion is scheduled
       }
-    } catch (e) {
-      print('Error fetching club data: $e');
+
+      setState(() {
+        _name = clubData['name'] ?? 'No Name Available';
+        _clubDescription =
+            clubData['description'] ?? 'No Description Available';
+        _picture = clubData['picture'] ?? '';
+        _language = clubData['language'] ?? 'Unknown Language';
+        _isLoading = false;
+      });
+    } else {
+      print('Club document does not exist.');
       setState(() {
         _isLoading = false;
       });
     }
+  } catch (e) {
+    print('Error fetching club data: $e');
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
  
   Future<void> _fetchOwnerName(String ownerID) async {
   try {
@@ -794,6 +796,26 @@ const SizedBox(height: 16),
                     const SizedBox(height: 16),
                     const Divider(color: Colors.grey),
                     const SizedBox(height: 16),
+
+                    RichText(
+  text: TextSpan(
+    style: TextStyle(
+      fontSize: 14,
+      color: Color(0xFF4A2E2A),
+    ),
+    children: [
+      TextSpan(
+        text: "Club's language: ",
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      TextSpan(text: _language),
+    ],
+  ),
+),
+
+ const SizedBox(height: 16),
+                    const Divider(color: Colors.grey),
+                    const SizedBox(height: 16),
                     // Currently reading book section
                     const Text(
                       'Currently reading',
@@ -804,7 +826,8 @@ const SizedBox(height: 16),
                       ),
                     ),
                     const SizedBox(height: 16),
- 
+
+
                    // Currently reading book section
 FutureBuilder(
   future: _fetchBookData(widget.clubId),
@@ -1040,5 +1063,3 @@ Row(
           );
   }
 }
- 
- 
