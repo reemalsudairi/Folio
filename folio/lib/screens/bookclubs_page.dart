@@ -13,7 +13,7 @@ class Club {
       {required this.id,
       required this.name,
       required this.picture,
-      this.memberCount = 0});
+      this.memberCount = 1});
 
   factory Club.fromMap(
       Map<String, dynamic> data, String documentId, int memberCount) {
@@ -96,17 +96,24 @@ class _ClubsBodyState extends State<ClubsBody> {
 
   Future<int> fetchMemberCount(String clubId) async {
     try {
-      QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
-          .collection('clubs')
-          .doc(clubId)
-          .collection('members')
-          .get();
+    // Get the members subcollection snapshot
+    QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(clubId)
+        .collection('members')
+        .get();
 
-      return membersSnapshot.size+1;
-    } catch (e) {
-      print('Error fetching member count for club $clubId: $e');
-      return 0;
+    // If the members collection is empty, return 0 to indicate no members beyond the owner.
+    if (membersSnapshot.size == 0) {
+      return 1;
     }
+
+    // Otherwise, return the size of the members collection.
+    return membersSnapshot.size;
+  } catch (e) {
+    print('Error fetching member count for club $clubId: $e');
+    return 1; // Default to 1 if an error occurs.
+  }
   }
 
   void filterClubs(String query) {
