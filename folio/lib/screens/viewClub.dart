@@ -431,8 +431,7 @@ class _ViewClubState extends State<ViewClub> {
                   const SizedBox(width: 12), // Space between buttons
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(
-                          255, 131, 201, 133), // No button color
+                      backgroundColor: Colors.grey, // No button color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -617,11 +616,10 @@ class _ViewClubState extends State<ViewClub> {
   @override
   Widget build(BuildContext context) {
     // Determine if the discussion date has been reached
-    bool isDiscussionDateReached = _discussionDate != null &&
-        DateTime.now().isAfter(_discussionDate!.toLocal());
+bool isDiscussionDateReached = _discussionDate != null && DateTime.now().isAfter(_discussionDate!.toLocal());
  
     // Determine if the "Join Discussion" button should be visible and enabled
-    bool canJoinDiscussion = (_isMember || _isOwner) && isDiscussionDateReached;
+bool canJoinDiscussion = (_isMember || _isOwner) && _isDiscussionScheduled && isDiscussionDateReached;
  
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F0),
@@ -938,71 +936,63 @@ FutureBuilder(
                     SizedBox(height: 16),
                     Divider(color: Colors.grey),
                     SizedBox(height: 16),
-                    // Join Discussion Button and Close Meeting Button
-                    Row(
-                      children: [
-                        // Join Discussion Button
-                        ElevatedButton(
-                          onPressed: canJoinDiscussion
-                              ? () {
-                                  if (_callID.isNotEmpty) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => CallPage(
-                                          callID:
-                                              _callID, // Use the stored callID
-                                          userId: FirebaseAuth
-                                              .instance
-                                              .currentUser!
-                                              .uid, // Pass the current user's UID
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    // Handle the case where callID is missing
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Call ID is not available. Please try again later.')),
-                                    );
-                                  }
-                                }
-                              : null, // Disable if discussion date is not reached
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Color(0xFFF790AD), // Button color
-                          ),
-                          child: Text(
-                            "Join Meeting",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        // Close Meeting Button (Visible only to Owner)
-                        if (_isOwner && _isDiscussionScheduled)
-                          ElevatedButton(
-                            onPressed:
-                                _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors
-                                  .red, // Red button for closing the meeting
-                            ),
-                            child: Text(
-                              'Close Meeting',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                      ],
+// Join Discussion Button and Close Meeting Button
+Row(
+  children: [
+    // Join Discussion Button
+    ElevatedButton(
+      onPressed: canJoinDiscussion
+          ? () {
+              if (_callID.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CallPage(
+                      callID: _callID, // Use the stored callID
+                      userId: FirebaseAuth.instance.currentUser!.uid, // Pass the current user's UID
                     ),
+                  ),
+                );
+              } else {
+                // Handle the case where callID is missing
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Call ID is not available. Please try again later.')),
+                );
+              }
+            }
+          : null, // Disable if discussion date is not reached
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Color(0xFFF790AD), // Button color
+      ),
+      child: Text(
+        "Join Meeting",
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    ),
+    SizedBox(width: 16),
+    // Close Meeting Button (Visible only to Owner)
+    if (_isOwner && _isDiscussionScheduled && DateTime.now().isAfter(_discussionDate!.toLocal()))
+      ElevatedButton(
+        onPressed: _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color.fromARGB(
+                                    255, 245, 114, 105), // Red button for closing the meeting
+        ),
+        child: Text(
+          'End Meeting',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+  ],
+),
                     SizedBox(height: 16),
                     Divider(color: Colors.grey),
                     SizedBox(height: 16),
