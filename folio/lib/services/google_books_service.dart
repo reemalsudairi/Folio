@@ -41,26 +41,20 @@ class GoogleBooksService {
   }
 
   // Search books based on query; fetch books in both English and Arabic
-  Future<List<dynamic>> searchBooks(String query) async {
-    List<dynamic> books = [];
+  Future<List<dynamic>> searchBooks(String query,
+      {bool isCategory = false}) async {
+    List<dynamic> allBooks = [];
+    String queryString = isCategory ? 'subject:$query' : query;
 
-    // Check if the query contains Arabic characters (using Arabic Unicode range)
-    bool isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(query);
+    // Fetch books in both English and Arabic
+    List<dynamic> englishBooks = await _fetchBooks(queryString, 'en');
+    List<dynamic> arabicBooks = await _fetchBooks(queryString, 'ar');
 
-    if (isArabic) {
-      // Fetch only Arabic books
-      books = await _fetchBooks(query, 'ar');
-    } else {
-      // Fetch books in both English and Arabic if the query is not Arabic
-      List<dynamic> englishBooks = await _fetchBooks(query, 'en');
-      List<dynamic> arabicBooks = await _fetchBooks(query, 'ar');
-
-      books.addAll(englishBooks);
-      books.addAll(arabicBooks);
-    }
+    allBooks.addAll(englishBooks);
+    allBooks.addAll(arabicBooks);
 
     // Process and return the books
-    return _processBooks(books, query);
+    return _processBooks(allBooks, query);
   }
 
   // Fetch books from the API in a specific language

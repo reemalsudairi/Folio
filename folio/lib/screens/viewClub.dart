@@ -658,7 +658,7 @@ ClipRRect(
   child: Image(
     image: _picture.isNotEmpty
         ? NetworkImage(_picture)
-        : AssetImage('assets/images/clubs.jpg'),
+        : AssetImage('folio/assets/images/clubs.jpg'),
     width: double.infinity,
     height: 200,
     fit: BoxFit.cover,
