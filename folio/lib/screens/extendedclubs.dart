@@ -119,16 +119,24 @@ class _ClubsPageState extends State<ClubPage> {
 
   Future<int> fetchMemberCount(String clubId) async {
     try {
-      QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
-          .collection('clubs')
-          .doc(clubId)
-          .collection('members')
-          .get();
-      return membersSnapshot.size + 1;
-    } catch (e) {
-      print('Error fetching member count for club $clubId: $e');
+    // Get the members subcollection snapshot
+    QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(clubId)
+        .collection('members')
+        .get();
+
+    // If the members collection is empty, return 0 to indicate no members beyond the owner.
+    if (membersSnapshot.size == 0) {
       return 1;
     }
+
+    // Otherwise, return the size of the members collection.
+    return membersSnapshot.size;
+  } catch (e) {
+    print('Error fetching member count for club $clubId: $e');
+    return 1; // Default to 1 if an error occurs.
+  } // Always exceed the actual member size by 1
   }
 
   Widget buildClubCard(Clubs club) {
