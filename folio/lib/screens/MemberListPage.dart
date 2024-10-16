@@ -186,11 +186,16 @@ Widget _buildMemberList() {
 
       final members = memberSnapshot.data?.docs ?? [];
 
-      return FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
+      // Check if members exist
+      if (members.isEmpty) {
+        return const Center(child: Text('No members found.'));
+      }
+
+      return StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
             .collection('reader')
             .doc(widget.ownerID)
-            .get(),
+            .snapshots(), // Use snapshots for real-time updates
         builder: (context, ownerSnapshot) {
           if (ownerSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -227,20 +232,13 @@ Widget _buildMemberList() {
                   future: FirebaseFirestore.instance
                       .collection('reader')
                       .doc(member.id)
-                      .get(),
+                      .get(), // Change to FutureBuilder for individual fetch
                   builder: (context, memberSnapshot) {
                     if (memberSnapshot.connectionState == ConnectionState.waiting) {
                       return const SizedBox.shrink(); // Return an empty widget while loading
                     }
 
                     if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
-                      // If the user is not found, remove them from the 'members' subcollection
-                      FirebaseFirestore.instance
-                          .collection('clubs')
-                          .doc(widget.clubID)
-                          .collection('members')
-                          .doc(member.id)
-                          .delete();
                       return const SizedBox.shrink(); // Don't display this member
                     }
 
@@ -280,6 +278,7 @@ Widget _buildMemberList() {
     },
   );
 }
+
 
 
 

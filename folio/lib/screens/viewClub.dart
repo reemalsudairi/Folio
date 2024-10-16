@@ -21,32 +21,36 @@ class ViewClub extends StatefulWidget {
   _ViewClubState createState() => _ViewClubState();
 }
 
-Future _fetchBookData(String clubId) async {
-  final bookDataRef =
-      FirebaseFirestore.instance.collection('clubs').doc(clubId);
-  final bookDataSnapshot = await bookDataRef.get();
-  if (bookDataSnapshot.exists) {
-    final clubData = bookDataSnapshot.data() as Map<String, dynamic>;
+Stream<Map<String, dynamic>?> _fetchBookData(String clubId) async* {
+  final bookDataRef = FirebaseFirestore.instance.collection('clubs').doc(clubId);
 
-    // Fetch book details from Google Books API
-    if (clubData['currentBookID'] != null) {
-      final bookResponse = await http.get(Uri.parse(
-          'https://www.googleapis.com/books/v1/volumes/${clubData['currentBookID']}'));
-      if (bookResponse.statusCode == 200) {
-        final bookData = jsonDecode(bookResponse.body);
-        return {
-          'bookID': clubData['currentBookID'], // Fetch the book ID
-          'title': bookData['volumeInfo']['title'] ?? '',
-          'author': bookData['volumeInfo']['authors']?[0] ?? '',
-          'image': bookData['volumeInfo']['imageLinks']['thumbnail'] ?? '',
-        };
-      } else {
-        print('Failed to retrieve book details from Google Books API');
+  // Using snapshots() to listen for real-time updates
+  await for (var bookDataSnapshot in bookDataRef.snapshots()) {
+    if (bookDataSnapshot.exists) {
+      final clubData = bookDataSnapshot.data() as Map<String, dynamic>;
+
+      // Fetch book details from Google Books API
+      if (clubData['currentBookID'] != null) {
+        final bookResponse = await http.get(Uri.parse(
+            'https://www.googleapis.com/books/v1/volumes/${clubData['currentBookID']}'));
+        if (bookResponse.statusCode == 200) {
+          final bookData = jsonDecode(bookResponse.body);
+          yield {
+            'bookID': clubData['currentBookID'], // Fetch the book ID
+            'title': bookData['volumeInfo']['title'] ?? '',
+            'author': bookData['volumeInfo']['authors']?[0] ?? '',
+            'image': bookData['volumeInfo']['imageLinks']['thumbnail'] ?? '',
+          };
+        } else {
+          print('Failed to retrieve book details from Google Books API');
+          yield null; // In case of failure
+        }
       }
     }
+    yield null;
   }
-  return null;
 }
+
 
 class _ViewClubState extends State<ViewClub> {
   String _name = '';
@@ -801,66 +805,64 @@ const SizedBox(height: 8),
                         ),
                         const Spacer(),
                         // Dynamic member count
-                        FutureBuilder<QuerySnapshot>(
-                          future: FirebaseFirestore.instance
-                              .collection('clubs')
-                              .doc(widget.clubId)
-                              .collection('members')
-                              .get(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            }
-                            if (snapshot.hasError) {
-                              return const Text(
-                                'Members',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              );
-                            }
+                       StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('clubs')
+      .doc(widget.clubId)
+      .collection('members')
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    }
+    if (snapshot.hasError) {
+      return const Text(
+        'Members',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+          decoration: TextDecoration.underline,
+        ),
+      );
+    }
 
-                            // Get the number of members
-                            final memberCount = snapshot.data!.docs.length;
+    // Get the number of members
+    final memberCount = snapshot.data!.docs.length;
 
-                            // Set display count to 1 if there are no members, otherwise display the actual count
-                            final displayCount =
-                                memberCount == 0 ? 1 : memberCount;
+    // Set display count to 1 if there are no members, otherwise display the actual count
+    final displayCount = memberCount == 0 ? 1 : memberCount;
 
-                            return GestureDetector(
-                              onTap: () {
-                                // Check if clubID and ownerID are valid
-                                if (widget.clubId.isNotEmpty &&
-                                    _clubOwnerID.isNotEmpty) {
-                                  // Navigate to the MemberListPage
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MemberListPage(
-                                        clubID: widget.clubId,
-                                        ownerID: _clubOwnerID,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  // Handle the error appropriately, e.g., show a snackbar or log the issue
-                                  print('Club ID or Owner ID is empty.');
-                                }
-                              },
-                              child: Text(
-                                '$displayCount Members', // Use the display count
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+    return GestureDetector(
+      onTap: () {
+        // Check if clubID and ownerID are valid
+        if (widget.clubId.isNotEmpty && _clubOwnerID.isNotEmpty) {
+          // Navigate to the MemberListPage
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MemberListPage(
+                clubID: widget.clubId,
+                ownerID: _clubOwnerID,
+              ),
+            ),
+          );
+        } else {
+          // Handle the error appropriately, e.g., show a snackbar or log the issue
+          print('Club ID or Owner ID is empty.');
+        }
+      },
+      child: Text(
+        '$displayCount Members', // Use the display count
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
+  },
+),
+
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -897,121 +899,115 @@ const SizedBox(height: 8),
                     ),
                     const SizedBox(height: 2),
 
-                    // Currently reading book section
-                    FutureBuilder(
-                      future: _fetchBookData(widget.clubId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        }
-                        if (snapshot.hasError) {
-                          return const Text(
-                            'Error fetching data',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          );
-                        }
+                   // Currently reading book section
+StreamBuilder<Map<String, dynamic>?>(
+  stream: _fetchBookData(widget.clubId),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    }
+    if (snapshot.hasError) {
+      return const Text(
+        'Error fetching data',
+        style: TextStyle(fontSize: 14, color: Colors.grey),
+      );
+    }
 
-                        final bookData = snapshot.data;
+    final bookData = snapshot.data;
 
-                        if (bookData == null) {
-                          return const Text(
-                            'No book has been selected for this club.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          );
-                        }
+    if (bookData == null) {
+      return const Text(
+        'No book has been selected for this club.',
+        style: TextStyle(fontSize: 14, color: Colors.grey),
+      );
+    }
 
-                        return Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    // Navigate to BookDetailsPage when the book cover is tapped
-                                    if (bookData['bookID'] != null) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => BookDetailsPage(
-                                            bookId: bookData['bookID'],
-                                            userId: FirebaseAuth
-                                                .instance.currentUser!.uid,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                'Book ID is not available.')),
-                                      );
-                                    }
-                                  },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    child: Container(
-                                      width: 80,
-                                      height: 120,
-                                      child: bookData['image'] != null
-                                          ? Image.network(
-                                              bookData['image'],
-                                              fit: BoxFit.cover,
-                                            )
-                                          : Image.asset(
-                                              'folio/assets/images/clubs.jpg'), // Display default image
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      // Navigate to BookDetailsPage when the book title is tapped
-                                      if (bookData['bookID'] != null) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                BookDetailsPage(
-                                              bookId: bookData['bookID'],
-                                              userId: FirebaseAuth
-                                                  .instance.currentUser!.uid,
-                                            ),
-                                          ),
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Book ID is not available.')),
-                                        );
-                                      }
-                                    },
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        if (bookData['title'] != null)
-                                          Text(
-                                            bookData['title'],
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF4A2E2A),
-                                            ),
-                                          ),
-                                        if (bookData['author'] != null)
-                                          Text(
-                                            bookData['author'],
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        const SizedBox(height: 16),
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                // Navigate to BookDetailsPage when the book cover is tapped
+                if (bookData['bookID'] != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookDetailsPage(
+                        bookId: bookData['bookID'],
+                        userId: FirebaseAuth.instance.currentUser!.uid,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Book ID is not available.'),
+                    ),
+                  );
+                }
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  width: 80,
+                  height: 120,
+                  child: bookData['image'] != null
+                      ? Image.network(
+                          bookData['image'],
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'folio/assets/images/clubs.jpg', // Display default image
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  // Navigate to BookDetailsPage when the book title is tapped
+                  if (bookData['bookID'] != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookDetailsPage(
+                          bookId: bookData['bookID'],
+                          userId: FirebaseAuth.instance.currentUser!.uid,
+                        ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Book ID is not available.'),
+                      ),
+                    );
+                  }
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (bookData['title'] != null)
+                      Text(
+                        bookData['title'],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4A2E2A),
+                        ),
+                      ),
+                    if (bookData['author'] != null)
+                      Text(
+                        bookData['author'],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    const SizedBox(height: 16),
                                         const Text(
                                           'Next discussion date',
                                           style: TextStyle(

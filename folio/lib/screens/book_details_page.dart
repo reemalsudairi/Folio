@@ -665,100 +665,88 @@ Future<void> _decrementBooksRead() async {
               
 
               // Add to Library button with dropdown and checkmark
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 300, // Fixed width for button
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF790AD),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment
-                            .center, // Center the text inside the button
-                        children: [
-                          Flexible(
-                            child: Text(
-                              selectedOption == 'Add to'
-                                  ? 'Add to'
-                                  : '$selectedOption',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.fade, // Handle long text
-                              maxLines: 1,
-                              softWrap: false,
-                            ),
-                          ),
-                          if (selectedOption != 'Add to')
-                            const Icon(Icons.check, color: Colors.white),
-                          PopupMenuButton<String>(
-                            onSelected: _onMenuSelected, // Enable selection
-                            itemBuilder: (BuildContext context) {
-                              return <PopupMenuEntry<String>>[
-                                PopupMenuItem<String>(
-                                  value: 'Save',
-                                  child: ListTile(
-                                    leading: Icon(
-                                      Icons.bookmark,
-                                      color: selectedOption == 'Save'
-                                          ? const Color(0xFFF790AD)
-                                          : null,
-                                    ),
-                                    title: const Text('Save'),
-                                  ),
-                                ),
-                                PopupMenuItem<String>(
-                                  value: 'Currently Reading',
-                                  child: ListTile(
-                                    leading: Icon(
-                                      Icons.menu_book,
-                                      color:
-                                          selectedOption == 'Currently Reading'
-                                              ? const Color(0xFFF790AD)
-                                              : null,
-                                    ),
-                                    title: const Text('Currently Reading'),
-                                  ),
-                                ),
-                                PopupMenuItem<String>(
-                                  value: 'Finished',
-                                  child: ListTile(
-                                    leading: Icon(
-                                      Icons.check_circle,
-                                      color: selectedOption == 'Finished'
-                                          ? const Color(0xFFF790AD)
-                                          : null,
-                                    ),
-                                    title: const Text('Finished'),
-                                  ),
-                                ),
-                              ];
-                            },
-                            icon: const Icon(
-                              Icons.arrow_drop_down,
-                              color: Colors.white,
-                            ),
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+SizedBox(
+  width: 300, // Fixed width for button
+  child: PopupMenuTheme(
+    data: const PopupMenuThemeData(
+      color: Colors.white, // Set the menu background color to white
+    ),
+    child: PopupMenuButton<String>(
+      offset: const Offset(0, 50), // Adjust the offset to move the menu down
+      onSelected: (String value) {
+        _onMenuSelected(value);
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          value: 'Save',
+          child: ListTile(
+            leading: Icon(
+              Icons.bookmark,
+              color: selectedOption == 'Save' ? const Color(0xFFF790AD) : null,
+            ),
+            title: const Text('Save'),
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'Currently Reading',
+          child: ListTile(
+            leading: Icon(
+              Icons.menu_book,
+              color: selectedOption.toLowerCase() == 'currently reading' ? const Color(0xFFF790AD) : null,
+            ),
+            title: const Text('Currently Reading'),
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'Finished',
+          child: ListTile(
+            leading: Icon(
+              Icons.check_circle,
+              color: selectedOption == 'Finished' ? const Color(0xFFF790AD) : null,
+            ),
+            title: const Text('Finished'),
+          ),
+        ),
+      ],
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD), // Set the desired button color here
+          borderRadius: BorderRadius.circular(20), // Match the button shape
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center, // Center the text inside the button
+          children: [
+            Flexible(
+              child: Text(
+                selectedOption == 'Add to' ? 'Add to' : '$selectedOption',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.fade, // Handle long text
+                maxLines: 1,
+                softWrap: false,
               ),
+            ),
+            if (selectedOption != 'Add to')
+              const Icon(Icons.check, color: Colors.white),
+            const Icon(
+              Icons.arrow_drop_down,
+              color: Colors.white,
+            ),
+          ],
+        ),
+      ),
+    ),
+  ),
+),
+  ],
+),
 
               const SizedBox(height: 20),
               // Custom TabBar design
