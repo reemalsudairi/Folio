@@ -624,33 +624,43 @@ class _ViewClubState extends State<ViewClub> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F5F0),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
+  backgroundColor: const Color(0xFFF8F5F0),
+  elevation: 0,
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
+    onPressed: () {
+      Navigator.pop(context);
+    },
+  ),
+  title: Center(
+    child: Text(
+      'Club Details',
+      style: const TextStyle(
+        color: Color(0xFF4A2E2A),
+        fontSize: 25, // You can adjust the font size as needed
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+  actions: [
+    if (_isOwner) // Show edit icon only if the current user is the owner
+      Container(
+        margin: const EdgeInsets.only(right: 30),
+        child: IconButton(
+          icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EditClub(
+                    clubId: widget.clubId), // Pass the clubId to EditClub
+              ),
+            );
           },
         ),
-        actions: [
-          if (_isOwner) // Show edit icon only if the current user is the owner
-            Container(
-              margin: const EdgeInsets.only(right: 30),
-              child: IconButton(
-                icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditClub(
-                          clubId: widget.clubId), // Pass the clubId to EditClub
-                    ),
-                  );
-                },
-              ),
-            ),
-        ],
       ),
+  ],
+),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
