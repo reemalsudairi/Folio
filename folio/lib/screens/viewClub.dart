@@ -10,19 +10,19 @@ import 'package:folio/view/callPage.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart'; // Import UUID package
- 
+
 class ViewClub extends StatefulWidget {
   final String clubId;
- 
+
   ViewClub({Key? key, required this.clubId}) : super(key: key);
- 
+
   @override
   _ViewClubState createState() => _ViewClubState();
 }
 
- 
 Future _fetchBookData(String clubId) async {
-  final bookDataRef = FirebaseFirestore.instance.collection('clubs').doc(clubId);
+  final bookDataRef =
+      FirebaseFirestore.instance.collection('clubs').doc(clubId);
   final bookDataSnapshot = await bookDataRef.get();
   if (bookDataSnapshot.exists) {
     final clubData = bookDataSnapshot.data() as Map<String, dynamic>;
@@ -46,7 +46,7 @@ Future _fetchBookData(String clubId) async {
   }
   return null;
 }
- 
+
 class _ViewClubState extends State<ViewClub> {
   String _name = '';
   String _clubDescription = '';
@@ -63,116 +63,117 @@ class _ViewClubState extends State<ViewClub> {
   String _callID = ''; // Newly added state variable
   String _clubOwnerProfilePhoto = '';
   String _language = '';
- 
+
   @override
   void initState() {
     super.initState();
     _fetchClubData();
     _checkMembership();
   }
- 
+
   // Generate a unique callID using UUID
   String _generateCallID() {
     return uuid.v4();
   }
- 
-Future<void> _fetchClubData() async {
-  try {
-    // Fetch the club data using the passed clubId
-    final clubDoc = await FirebaseFirestore.instance
-        .collection('clubs')
-        .doc(widget.clubId)
-        .get();
 
-    if (clubDoc.exists) {
-      final clubData = clubDoc.data()!;
-      _clubOwnerID = clubData['ownerID'] ?? '';
+  Future<void> _fetchClubData() async {
+    try {
+      // Fetch the club data using the passed clubId
+      final clubDoc = await FirebaseFirestore.instance
+          .collection('clubs')
+          .doc(widget.clubId)
+          .get();
 
-      // Check if the current user is the owner
-      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-      _isOwner = _clubOwnerID == currentUserId;
+      if (clubDoc.exists) {
+        final clubData = clubDoc.data()!;
+        _clubOwnerID = clubData['ownerID'] ?? '';
 
-      // Fetch the owner's name
-      await _fetchOwnerName(_clubOwnerID);
+        // Check if the current user is the owner
+        String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+        _isOwner = _clubOwnerID == currentUserId;
 
-      // Parse the discussion date and handle callID
-      if (clubData['discussionDate'] != null) {
-        _discussionDate = (clubData['discussionDate'] as Timestamp).toDate();
-        _isDiscussionScheduled = true;
+        // Fetch the owner's name
+        await _fetchOwnerName(_clubOwnerID);
 
-        // Check if callID exists
-        if (clubData['callID'] != null &&
-            clubData['callID'].toString().isNotEmpty) {
-          _callID = clubData['callID'];
+        // Parse the discussion date and handle callID
+        if (clubData['discussionDate'] != null) {
+          _discussionDate = (clubData['discussionDate'] as Timestamp).toDate();
+          _isDiscussionScheduled = true;
+
+          // Check if callID exists
+          if (clubData['callID'] != null &&
+              clubData['callID'].toString().isNotEmpty) {
+            _callID = clubData['callID'];
+          } else {
+            // Generate a new callID and store it in Firestore
+            _callID = _generateCallID();
+            await FirebaseFirestore.instance
+                .collection('clubs')
+                .doc(widget.clubId)
+                .update({'callID': _callID});
+          }
+
+          _clubDiscussionDate =
+              DateFormat.yMMMd().add_jm().format(_discussionDate!.toLocal());
         } else {
-          // Generate a new callID and store it in Firestore
-          _callID = _generateCallID();
-          await FirebaseFirestore.instance
-              .collection('clubs')
-              .doc(widget.clubId)
-              .update({'callID': _callID});
+          _discussionDate = null;
+          _isDiscussionScheduled = false;
+          _clubDiscussionDate = 'No discussion scheduled yet';
+          _callID = ''; // Reset callID when no discussion is scheduled
         }
 
-        _clubDiscussionDate =
-            DateFormat.yMMMd().add_jm().format(_discussionDate!.toLocal());
+        setState(() {
+          _name = clubData['name'] ?? 'No Name Available';
+          _clubDescription =
+              clubData['description'] ?? 'No Description Available';
+          _picture = clubData['picture'] ?? '';
+          _language = clubData['language'] ?? 'Unknown Language';
+          _isLoading = false;
+        });
       } else {
-        _discussionDate = null;
-        _isDiscussionScheduled = false;
-        _clubDiscussionDate = 'No discussion scheduled yet';
-        _callID = ''; // Reset callID when no discussion is scheduled
+        print('Club document does not exist.');
+        setState(() {
+          _isLoading = false;
+        });
       }
-
-      setState(() {
-        _name = clubData['name'] ?? 'No Name Available';
-        _clubDescription =
-            clubData['description'] ?? 'No Description Available';
-        _picture = clubData['picture'] ?? '';
-        _language = clubData['language'] ?? 'Unknown Language';
-        _isLoading = false;
-      });
-    } else {
-      print('Club document does not exist.');
+    } catch (e) {
+      print('Error fetching club data: $e');
       setState(() {
         _isLoading = false;
       });
     }
-  } catch (e) {
-    print('Error fetching club data: $e');
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
- 
-  Future<void> _fetchOwnerName(String ownerID) async {
-  try {
-    final readerDoc = await FirebaseFirestore.instance
-        .collection('reader')
-        .doc(ownerID)
-        .get();
 
-    if (readerDoc.exists) {
-      final readerData = readerDoc.data()!;
-      setState(() {
-        _clubOwnerName = readerData['username'] ?? 'Unknown Owner';
-        _clubOwnerProfilePhoto = readerData['profilePhoto'] ?? ''; // Fetch the owner's profile picture
-      });
-    } else {
+  Future<void> _fetchOwnerName(String ownerID) async {
+    try {
+      final readerDoc = await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(ownerID)
+          .get();
+
+      if (readerDoc.exists) {
+        final readerData = readerDoc.data()!;
+        setState(() {
+          _clubOwnerName = readerData['username'] ?? 'Unknown Owner';
+          _clubOwnerProfilePhoto = readerData['profilePhoto'] ??
+              ''; // Fetch the owner's profile picture
+        });
+      } else {
+        setState(() {
+          _clubOwnerName = 'Unknown Owner';
+          _clubOwnerProfilePhoto =
+              ''; // Initialize the profile picture to an empty string
+        });
+      }
+    } catch (e) {
       setState(() {
         _clubOwnerName = 'Unknown Owner';
-        _clubOwnerProfilePhoto = ''; // Initialize the profile picture to an empty string
+        _clubOwnerProfilePhoto =
+            ''; // Initialize the profile picture to an empty string
       });
     }
-  } catch (e) {
-    setState(() {
-      _clubOwnerName = 'Unknown Owner';
-      _clubOwnerProfilePhoto = ''; // Initialize the profile picture to an empty string
-    });
   }
-}
 
-
- 
   Future<void> _checkMembership() async {
     try {
       String currentUserId = FirebaseAuth.instance.currentUser!.uid;
@@ -182,7 +183,7 @@ Future<void> _fetchClubData() async {
           .collection('members')
           .doc(currentUserId)
           .get();
- 
+
       setState(() {
         _isMember = memberDoc.exists;
       });
@@ -190,7 +191,7 @@ Future<void> _fetchClubData() async {
       print('Error checking membership: $e');
     }
   }
- 
+
   void _showJoinLeaveConfirmation(bool isJoining) {
     showDialog(
       context: context,
@@ -200,14 +201,17 @@ Future<void> _fetchClubData() async {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+            color: const Color(0xFFF790AD)
+                .withOpacity(0.9), // Pinkish background with opacity
             borderRadius: BorderRadius.circular(30),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isJoining ? Icons.group_add : Icons.exit_to_app, // Icon changes based on action
+                isJoining
+                    ? Icons.group_add
+                    : Icons.exit_to_app, // Icon changes based on action
                 color: Colors.white,
                 size: 40,
               ),
@@ -225,17 +229,21 @@ Future<void> _fetchClubData() async {
               ),
               const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Center the buttons
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isJoining
-                          ? const Color.fromARGB(255, 131, 201, 133) // Green for join
-                          : const Color.fromARGB(255, 245, 114, 105), // Red for leave
+                          ? const Color.fromARGB(
+                              255, 131, 201, 133) // Green for join
+                          : const Color.fromARGB(
+                              255, 245, 114, 105), // Red for leave
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      minimumSize: const Size(100, 40), // Set button width and height
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
                     ),
                     onPressed: () {
                       Navigator.of(context).pop(); // Close the dialog
@@ -259,14 +267,17 @@ Future<void> _fetchClubData() async {
                   const SizedBox(width: 12), // Space between buttons
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
+                      backgroundColor: const Color.fromARGB(
+                          255, 160, 160, 160), // Grey for "No" button
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      minimumSize: const Size(100, 40), // Set button width and height
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
                     ),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close the dialog without action
+                      Navigator.of(context)
+                          .pop(); // Close the dialog without action
                     },
                     child: const Text(
                       'No',
@@ -285,7 +296,7 @@ Future<void> _fetchClubData() async {
       ),
     );
   }
- 
+
   void _showConfirmationMessageJoinClub() {
     showDialog(
       context: context,
@@ -321,13 +332,13 @@ Future<void> _fetchClubData() async {
         ),
       ),
     );
- 
+
     // Automatically close the confirmation dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
- 
+
   void _showConfirmationMessageLeaveClub() {
     showDialog(
       context: context,
@@ -363,13 +374,13 @@ Future<void> _fetchClubData() async {
         ),
       ),
     );
- 
+
     // Automatically close the confirmation dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
- 
+
   // **New Method Added Below**
   void _showCloseMeetingConfirmation() {
     showDialog(
@@ -462,7 +473,7 @@ Future<void> _fetchClubData() async {
     );
   }
   // **End of New Method**
- 
+
   void _showConfirmationMessageCloseMeeting() {
     showDialog(
       context: context,
@@ -498,33 +509,38 @@ Future<void> _fetchClubData() async {
         ),
       ),
     );
- 
+
     // Automatically close the confirmation dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
- 
+
   Future<void> _joinClub() async {
     try {
       String currentUserId = FirebaseAuth.instance.currentUser!.uid;
- 
+
       // Reference to the club's members subcollection
-      var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
- 
+      var clubRef =
+          FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
+
       // Check the club data
       var clubData = await clubRef.get();
       String ownerID = clubData['ownerID'];
- 
+
       // Add the owner to the members subcollection if not already present
       var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
       if (!ownerDoc.exists) {
-        var ownerData = await FirebaseFirestore.instance.collection('reader').doc(ownerID).get();
+        var ownerData = await FirebaseFirestore.instance
+            .collection('reader')
+            .doc(ownerID)
+            .get();
         if (ownerData.exists) {
           String ownerName = ownerData['name'] ?? 'No Name';
           String ownerUsername = ownerData['username'] ?? 'No Username';
-          String ownerProfilePhoto = ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
- 
+          String ownerProfilePhoto = ownerData['profilePhoto'] ??
+              'assets/profile_pic.png'; // Default profile picture
+
           // Add the owner to the members subcollection
           await clubRef.collection('members').doc(ownerID).set({
             'joinedAt': FieldValue.serverTimestamp(),
@@ -534,16 +550,20 @@ Future<void> _fetchClubData() async {
           });
         }
       }
- 
+
       // Fetch the current user's profile data
-      var userDoc = await FirebaseFirestore.instance.collection('reader').doc(currentUserId).get();
- 
+      var userDoc = await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(currentUserId)
+          .get();
+
       if (userDoc.exists) {
         var userData = userDoc.data()!;
         String name = userData['name'] ?? 'No Name';
         String username = userData['username'] ?? 'No Username';
-        String profilePhoto = userData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
- 
+        String profilePhoto = userData['profilePhoto'] ??
+            'assets/profile_pic.png'; // Default profile picture
+
         // Add the current user as a member with additional information
         await clubRef.collection('members').doc(currentUserId).set({
           'joinedAt': FieldValue.serverTimestamp(),
@@ -552,29 +572,30 @@ Future<void> _fetchClubData() async {
           'profilePhoto': profilePhoto,
         });
       }
- 
+
       setState(() {
         _isMember = true;
       });
     } catch (e) {
       print('Error joining club: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to join the club. Please try again.')),
+        const SnackBar(
+            content: Text('Failed to join the club. Please try again.')),
       );
     }
   }
- 
+
   Future<void> _leaveClub() async {
     try {
       String currentUserId = FirebaseAuth.instance.currentUser!.uid;
- 
+
       await FirebaseFirestore.instance
           .collection('clubs')
           .doc(widget.clubId)
           .collection('members')
           .doc(currentUserId)
           .delete();
- 
+
       setState(() {
         _isMember = false;
       });
@@ -586,7 +607,7 @@ Future<void> _fetchClubData() async {
       );
     }
   }
- 
+
   void _closeMeeting() async {
     try {
       // Update the club document to indicate the meeting is closed
@@ -597,14 +618,14 @@ Future<void> _fetchClubData() async {
         'discussionDate': null, // Clear the discussion date
         'callID': FieldValue.delete(), // Remove the callID field
       });
- 
+
       setState(() {
         _clubDiscussionDate = 'No discussion scheduled yet';
         _discussionDate = null; // Clear the DateTime
         _isDiscussionScheduled = false;
         _callID = ''; // Clear the stored callID
       });
- 
+
       _showConfirmationMessageCloseMeeting();
     } catch (e) {
       print('Error closing meeting: $e');
@@ -614,55 +635,58 @@ Future<void> _fetchClubData() async {
       );
     }
   }
- 
+
   @override
   Widget build(BuildContext context) {
     // Determine if the discussion date has been reached
-bool isDiscussionDateReached = _discussionDate != null && DateTime.now().isAfter(_discussionDate!.toLocal());
- 
+    bool isDiscussionDateReached = _discussionDate != null &&
+        DateTime.now().isAfter(_discussionDate!.toLocal());
+
     // Determine if the "Join Discussion" button should be visible and enabled
-bool canJoinDiscussion = (_isMember || _isOwner) && _isDiscussionScheduled && isDiscussionDateReached;
- 
+    bool canJoinDiscussion = (_isMember || _isOwner) &&
+        _isDiscussionScheduled &&
+        isDiscussionDateReached;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F0),
       appBar: AppBar(
-  backgroundColor: const Color(0xFFF8F5F0),
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
-    onPressed: () {
-      Navigator.pop(context);
-    },
-  ),
-  title: Center(
-    child: Text(
-      'Club Details',
-      style: const TextStyle(
-        color: Color(0xFF4A2E2A),
-        fontSize: 25, // You can adjust the font size as needed
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  ),
-  actions: [
-    if (_isOwner) // Show edit icon only if the current user is the owner
-      Container(
-        margin: const EdgeInsets.only(right: 30),
-        child: IconButton(
-          icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
+        backgroundColor: const Color(0xFFF8F5F0),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EditClub(
-                    clubId: widget.clubId), // Pass the clubId to EditClub
-              ),
-            );
+            Navigator.pop(context);
           },
         ),
+        title: Center(
+          child: Text(
+            'Club Details',
+            style: const TextStyle(
+              color: Color(0xFF4A2E2A),
+              fontSize: 25, // You can adjust the font size as needed
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        actions: [
+          if (_isOwner) // Show edit icon only if the current user is the owner
+            Container(
+              margin: const EdgeInsets.only(right: 30),
+              child: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditClub(
+                          clubId: widget.clubId), // Pass the clubId to EditClub
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
-  ],
-),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -671,19 +695,19 @@ bool canJoinDiscussion = (_isMember || _isOwner) && _isDiscussionScheduled && is
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                   // Club picture
-ClipRRect(
-  borderRadius: BorderRadius.circular(8.0),
-  child: Image(
-    image: _picture.isNotEmpty
-        ? NetworkImage(_picture)
-        : AssetImage('assets/images/clubs.jpg'),
-    width: double.infinity,
-    height: 200,
-    fit: BoxFit.cover,
-  ),
-),
-const SizedBox(height: 16),
+                    // Club picture
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image(
+                        image: _picture.isNotEmpty
+                            ? NetworkImage(_picture)
+                            : AssetImage('assets/images/clubs.jpg'),
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     // Club name
                     Text(
                       _name,
@@ -706,12 +730,14 @@ const SizedBox(height: 16),
                     // Club owner and members
                     Row(
                       children: [
-                      CircleAvatar(
-  radius: 20,
-  backgroundImage: (_clubOwnerProfilePhoto.isNotEmpty)
-      ? NetworkImage(_clubOwnerProfilePhoto)
-      : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
-),
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundImage: (_clubOwnerProfilePhoto.isNotEmpty)
+                              ? NetworkImage(_clubOwnerProfilePhoto)
+                              : const AssetImage(
+                                      'assets/images/profile_pic.png')
+                                  as ImageProvider,
+                        ),
                         const SizedBox(width: 8),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -752,14 +778,14 @@ const SizedBox(height: 16),
                                 ),
                               );
                             }
- 
+
                             // Get the number of members
                             final memberCount = snapshot.data!.docs.length;
- 
+
                             // Set display count to 1 if there are no members, otherwise display the actual count
                             final displayCount =
                                 memberCount == 0 ? 1 : memberCount;
- 
+
                             return GestureDetector(
                               onTap: () {
                                 // Check if clubID and ownerID are valid
@@ -798,22 +824,22 @@ const SizedBox(height: 16),
                     const SizedBox(height: 16),
 
                     RichText(
-  text: TextSpan(
-    style: TextStyle(
-      fontSize: 14,
-      color: Color(0xFF4A2E2A),
-    ),
-    children: [
-      TextSpan(
-        text: "Club's language: ",
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-      TextSpan(text: _language),
-    ],
-  ),
-),
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF4A2E2A),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Club's language: ",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(text: _language),
+                        ],
+                      ),
+                    ),
 
- const SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     const Divider(color: Colors.grey),
                     const SizedBox(height: 16),
                     // Currently reading book section
@@ -827,195 +853,215 @@ const SizedBox(height: 16),
                     ),
                     const SizedBox(height: 16),
 
+                    // Currently reading book section
+                    FutureBuilder(
+                      future: _fetchBookData(widget.clubId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        if (snapshot.hasError) {
+                          return const Text(
+                            'Error fetching data',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          );
+                        }
 
-                   // Currently reading book section
-FutureBuilder(
-  future: _fetchBookData(widget.clubId),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const CircularProgressIndicator();
-    }
-    if (snapshot.hasError) {
-      return const Text(
-        'Error fetching data',
-        style: TextStyle(fontSize: 14, color: Colors.grey),
-      );
-    }
+                        final bookData = snapshot.data;
 
-    final bookData = snapshot.data;
+                        if (bookData == null) {
+                          return const Text(
+                            'No book has been selected for this club.',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          );
+                        }
 
-    if (bookData == null) {
-      return const Text(
-        'No book has been selected for this club.',
-        style: TextStyle(fontSize: 14, color: Colors.grey),
-      );
-    }
-
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () {
-                // Navigate to BookDetailsPage when the book cover is tapped
-                if (bookData['bookID'] != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookDetailsPage(
-                        bookId: bookData['bookID'],
-                        userId: FirebaseAuth.instance.currentUser !.uid,
-                      ),
+                        return Column(
+                          children: [
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    // Navigate to BookDetailsPage when the book cover is tapped
+                                    if (bookData['bookID'] != null) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => BookDetailsPage(
+                                            bookId: bookData['bookID'],
+                                            userId: FirebaseAuth
+                                                .instance.currentUser!.uid,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Book ID is not available.')),
+                                      );
+                                    }
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: Container(
+                                      width: 80,
+                                      height: 120,
+                                      child: bookData['image'] != null
+                                          ? Image.network(
+                                              bookData['image'],
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Image.asset(
+                                              'folio/assets/images/clubs.jpg'), // Display default image
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      // Navigate to BookDetailsPage when the book title is tapped
+                                      if (bookData['bookID'] != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                BookDetailsPage(
+                                              bookId: bookData['bookID'],
+                                              userId: FirebaseAuth
+                                                  .instance.currentUser!.uid,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Book ID is not available.')),
+                                        );
+                                      }
+                                    },
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (bookData['title'] != null)
+                                          Text(
+                                            bookData['title'],
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF4A2E2A),
+                                            ),
+                                          ),
+                                        if (bookData['author'] != null)
+                                          Text(
+                                            bookData['author'],
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Next discussion date',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Color(0xFF4A2E2A),
+                                          ),
+                                        ),
+                                        Text(
+                                          _clubDiscussionDate, // Discussion date from Firestore
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF4A2E2A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Book ID is not available.')),
-                  );
-                }
-              },
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Container(
-                  width: 80,
-                  height: 120,
-                  child: bookData['image'] != null
-                      ? Image.network(
-                          bookData['image'],
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset('folio/assets/images/clubs.jpg'), // Display default image
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  // Navigate to BookDetailsPage when the book title is tapped
-                  if (bookData['bookID'] != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BookDetailsPage(
-                          bookId: bookData['bookID'],
-                          userId: FirebaseAuth.instance.currentUser !.uid,
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Book ID is not available.')),
-                    );
-                  }
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (bookData['title'] != null)
-                      Text(
-                        bookData['title'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4A2E2A),
-                        ),
-                      ),
-                    if (bookData['author'] != null)
-                      Text(
-                        bookData['author'],
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Next discussion date',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF4A2E2A),
-                      ),
-                    ),
-                    Text(
-                      _clubDiscussionDate, // Discussion date from Firestore
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4A2E2A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  },
-),
                     SizedBox(height: 16),
                     Divider(color: Colors.grey),
                     SizedBox(height: 16),
 // Join Discussion Button and Close Meeting Button
-Row(
-  children: [
-    // Join Discussion Button
-    ElevatedButton(
-      onPressed: canJoinDiscussion
-          ? () {
-              if (_callID.isNotEmpty) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CallPage(
-                      callID: _callID, // Use the stored callID
-                      userId: FirebaseAuth.instance.currentUser!.uid, // Pass the current user's UID
+                    Row(
+                      children: [
+                        // Join Discussion Button
+                        ElevatedButton(
+                          onPressed: canJoinDiscussion
+                              ? () {
+                                  if (_callID.isNotEmpty) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CallPage(
+                                          callID:
+                                              _callID, // Use the stored callID
+                                          userId: FirebaseAuth
+                                              .instance
+                                              .currentUser!
+                                              .uid, // Pass the current user's UID
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    // Handle the case where callID is missing
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Call ID is not available. Please try again later.')),
+                                    );
+                                  }
+                                }
+                              : null, // Disable if discussion date is not reached
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFFF790AD), // Button color
+                          ),
+                          child: Text(
+                            "Join Meeting",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        // Close Meeting Button (Visible only to Owner)
+                        if (_isOwner &&
+                            _isDiscussionScheduled &&
+                            DateTime.now().isAfter(_discussionDate!.toLocal()))
+                          ElevatedButton(
+                            onPressed:
+                                _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromARGB(255, 245, 114,
+                                  105), // Red button for closing the meeting
+                            ),
+                            child: Text(
+                              'End Meeting',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                );
-              } else {
-                // Handle the case where callID is missing
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Call ID is not available. Please try again later.')),
-                );
-              }
-            }
-          : null, // Disable if discussion date is not reached
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFFF790AD), // Button color
-      ),
-      child: Text(
-        "Join Meeting",
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-    ),
-    SizedBox(width: 16),
-    // Close Meeting Button (Visible only to Owner)
-    if (_isOwner && _isDiscussionScheduled && DateTime.now().isAfter(_discussionDate!.toLocal()))
-      ElevatedButton(
-        onPressed: _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color.fromARGB(
-                                    255, 245, 114, 105), // Red button for closing the meeting
-        ),
-        child: Text(
-          'End Meeting',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
-  ],
-),
                     SizedBox(height: 16),
                     Divider(color: Colors.grey),
                     SizedBox(height: 16),
@@ -1027,8 +1073,8 @@ Row(
                                 _showJoinLeaveConfirmation(false);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(
-                                    255, 245, 114, 105), // Button color for leaving
+                                backgroundColor: Color.fromARGB(255, 245, 114,
+                                    105), // Button color for leaving
                               ),
                               child: Text(
                                 "Leave Club",
@@ -1044,8 +1090,8 @@ Row(
                                 _showJoinLeaveConfirmation(true);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(
-                                    255, 131, 201, 133), // Button color for joining
+                                backgroundColor: Color.fromARGB(255, 131, 201,
+                                    133), // Button color for joining
                               ),
                               child: Text(
                                 "Join Club",
@@ -1056,10 +1102,11 @@ Row(
                                 ),
                               ),
                             ),
+                    const SizedBox(height: 25),
                   ],
                 ),
               ),
-),
-          );
+            ),
+    );
   }
 }
