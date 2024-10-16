@@ -1,5 +1,5 @@
 import 'dart:convert';
- 
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +18,7 @@ class ViewClub extends StatefulWidget {
   @override
   _ViewClubState createState() => _ViewClubState();
 }
+
  
 Future _fetchBookData(String clubId) async {
   final bookDataRef = FirebaseFirestore.instance.collection('clubs').doc(clubId);
@@ -58,6 +59,7 @@ class _ViewClubState extends State<ViewClub> {
   bool _isDiscussionScheduled = false; // To track if a discussion is scheduled
   final Uuid uuid = Uuid(); // Initialize UUID generator
   String _callID = ''; // Newly added state variable
+  String _clubOwnerProfilePhoto = '';
  
   @override
   void initState() {
@@ -139,28 +141,33 @@ class _ViewClubState extends State<ViewClub> {
   }
  
   Future<void> _fetchOwnerName(String ownerID) async {
-    try {
-      final readerDoc = await FirebaseFirestore.instance
-          .collection('reader')
-          .doc(ownerID)
-          .get();
- 
-      if (readerDoc.exists) {
-        final readerData = readerDoc.data()!;
-        setState(() {
-          _clubOwnerName = readerData['username'] ?? 'Unknown Owner';
-        });
-      } else {
-        setState(() {
-          _clubOwnerName = 'Unknown Owner';
-        });
-      }
-    } catch (e) {
+  try {
+    final readerDoc = await FirebaseFirestore.instance
+        .collection('reader')
+        .doc(ownerID)
+        .get();
+
+    if (readerDoc.exists) {
+      final readerData = readerDoc.data()!;
+      setState(() {
+        _clubOwnerName = readerData['username'] ?? 'Unknown Owner';
+        _clubOwnerProfilePhoto = readerData['profilePhoto'] ?? ''; // Fetch the owner's profile picture
+      });
+    } else {
       setState(() {
         _clubOwnerName = 'Unknown Owner';
+        _clubOwnerProfilePhoto = ''; // Initialize the profile picture to an empty string
       });
     }
+  } catch (e) {
+    setState(() {
+      _clubOwnerName = 'Unknown Owner';
+      _clubOwnerProfilePhoto = ''; // Initialize the profile picture to an empty string
+    });
   }
+}
+
+
  
   Future<void> _checkMembership() async {
     try {
@@ -687,10 +694,12 @@ const SizedBox(height: 16),
                     // Club owner and members
                     Row(
                       children: [
-                        const CircleAvatar(
-                          backgroundColor: Colors.grey,
-                          radius: 20,
-                        ),
+                      CircleAvatar(
+  radius: 20,
+  backgroundImage: (_clubOwnerProfilePhoto.isNotEmpty)
+      ? NetworkImage(_clubOwnerProfilePhoto)
+      : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
+),
                         const SizedBox(width: 8),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
