@@ -158,14 +158,14 @@ class _ClubsBodyState extends State<ClubsBody> {
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
-                      height: 140,
+                      height: 120,
                       width: double.infinity,
                       child: Image.network(
                         club.picture,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            height: 140,
+                            height: 120,
                             width: double.infinity,
                             color: Colors.red,
                             child: const Icon(Icons.error, color: Colors.white),
@@ -181,7 +181,7 @@ class _ClubsBodyState extends State<ClubsBody> {
                     ),
                   )
                 : Container(
-                    height: 140,
+                    height: 120,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
@@ -192,7 +192,7 @@ class _ClubsBodyState extends State<ClubsBody> {
                       ),
                     ),
                   ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             // Use Flexible here to handle overflow
             Flexible(
               child: Text(
@@ -205,7 +205,7 @@ class _ClubsBodyState extends State<ClubsBody> {
                     TextOverflow.ellipsis, // Adds "..." if the text is too long
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               '${club.memberCount} members',
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),

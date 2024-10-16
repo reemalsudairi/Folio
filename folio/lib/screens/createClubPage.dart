@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart';
+import 'package:folio/screens/bookclubs_page.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CreateClubPage extends StatefulWidget {
@@ -126,7 +127,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
     // widget.onImagePicked(null);
   }
 
-  // Function to create a new club
+// Function to create a new club
   Future<void> _createClub() async {
     // Check if the club name is empty or contains only whitespace
     if (_clubNameController.text.trim().isEmpty) {
@@ -141,41 +142,44 @@ class _CreateClubPageState extends State<CreateClubPage> {
       _errorMessage = null; // Reset error message
     });
 
-  try {
-    final user = FirebaseAuth.instance.currentUser;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
 
-    // Upload the club picture if available
-    if (_clubImageFile != null) {
-      final ref = _storage
-          .ref()
-          .child('club_pictures')
-          .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await ref.putFile(_clubImageFile!);
-      _clubImageUrl = await ref.getDownloadURL();
-    }
+      // Upload the club picture if available
+      if (_clubImageFile != null) {
+        final ref = _storage
+            .ref()
+            .child('club_pictures')
+            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await ref.putFile(_clubImageFile!);
+        _clubImageUrl = await ref.getDownloadURL();
+      }
 
-    if (user != null) {
-      await _firestore.collection('clubs').add({
-        'name': _clubNameController.text
-            .trim(), // Ensure no leading/trailing spaces
-        'description': _descriptionController.text.trim(),
-        'discussionDate': _discussionDate,
-        'language': _selectedLanguage ?? '',
-        'currentBookID':
-            _selectedBookId ?? '', // Use _selectedBookId instead of text
-        'ownerID': user.uid,
-        'picture': _clubImageUrl ?? null, // Change here
-      });
+      if (user != null) {
+        await _firestore.collection('clubs').add({
+          'name': _clubNameController.text
+              .trim(), // Ensure no leading/trailing spaces
+          'description': _descriptionController.text.trim(),
+          'language': _selectedLanguage ?? '',
+          'currentBookID': _selectedBookId ?? '', // Store book ID
+          'ownerID': user.uid,
+          'picture': _clubImageUrl ?? null, // Change here
+          if (_selectedBookId != null && _discussionDate != null)
+            'discussionDate': _discussionDate,
+        });
 
         // Show success message
         _showConfirmationMessage();
-        // Navigate to Clubs page after successful creation
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => const Clubs(), // Correctly reference the Clubs widget
-        //   ),
-        // );
+
+// Delay the navigation to allow the confirmation message to be displayed
+        await Future.delayed(const Duration(seconds: 2)); // 2-second delay
+
+// Navigate to the Clubs page after successful creation
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const ClubsBody()),
+          (route) => false, // Remove all previous routes
+        );
 
         // Clear the form
         _clubNameController.clear();
@@ -195,7 +199,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = "Error creating club. Please try again.";
+        _errorMessage = "Error creating club: $e";
       });
     } finally {
       setState(() {
@@ -491,11 +495,14 @@ class _CreateClubPageState extends State<CreateClubPage> {
                       '${_clubNameController.text.length}/30', // Character counter
                 ),
                 onChanged: (text) {
-                  // This triggers the rebuild of the widget to update the counter text dynamically
                   setState(() {
-                    // Clear the error message if the input is not empty
-                    if (text.trim().isNotEmpty) {
-                      _errorMessage = null; // Clear the error message
+                    // Prevent leading whitespaces by trimming only at the start
+                    if (text.startsWith(' ')) {
+                      _clubNameController.text = text.trimLeft();
+                      _clubNameController.selection =
+                          TextSelection.fromPosition(
+                        TextPosition(offset: _clubNameController.text.length),
+                      );
                     }
                   });
                 },
@@ -540,8 +547,17 @@ class _CreateClubPageState extends State<CreateClubPage> {
                       '${_descriptionController.text.length}/250', // Character counter
                 ),
                 onChanged: (text) {
-                  // This triggers the rebuild of the widget to update the counter text dynamically
-                  setState(() {});
+                  setState(() {
+                    // Prevent leading whitespaces by trimming only at the start
+                    if (text.startsWith(' ')) {
+                      _descriptionController.text = text.trimLeft();
+                      _descriptionController.selection =
+                          TextSelection.fromPosition(
+                        TextPosition(
+                            offset: _descriptionController.text.length),
+                      );
+                    }
+                  });
                 },
               ),
               const SizedBox(height: 35),
@@ -594,7 +610,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
 
               Column(
                 children: [
-                  // Current Book Field with custom styling
+// Current Book Field with custom styling
                   Row(
                     children: [
                       Expanded(
@@ -673,6 +689,8 @@ class _CreateClubPageState extends State<CreateClubPage> {
                                             null; // Clear the author name
                                         _selectedBookId =
                                             null; // Clear the book ID
+                                        _discussionDate =
+                                            null; // Clear the discussion date
                                       });
                                     },
                                   ),
@@ -712,7 +730,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
 
               const SizedBox(height: 20),
 
-              // Next Discussion Section
+// Next Discussion Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -724,20 +742,27 @@ class _CreateClubPageState extends State<CreateClubPage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: _pickDiscussionDate,
+                    onPressed:
+                        _selectedBookId != null ? _pickDiscussionDate : null,
                     child: Text(
                       _discussionDate != null
                           ? _formatTimestamp(_discussionDate!)
-                          : 'Pick a date & time',
-                      style: const TextStyle(
+                          : _selectedBookId != null
+                              ? 'Pick a date & time'
+                              : 'Select a book first',
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFFF790AD),
+                        color: _selectedBookId != null
+                            ? const Color(0xFFF790AD)
+                            : Colors
+                                .grey, // Disable color if no book is selected
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 20),
 // Create Club Button with loading spinner
               // Create Club Button with loading spinner

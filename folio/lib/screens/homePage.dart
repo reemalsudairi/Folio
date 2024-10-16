@@ -1,17 +1,18 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:folio/screens/Profile/currently_reading_page.dart';
 import 'package:folio/screens/Profile/profile.dart';
 import 'package:folio/screens/book_details_page.dart';
+import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/screens/categories_page.dart';
 import 'package:folio/screens/extendedclubs.dart';
 import 'package:folio/screens/settings.dart';
-import 'Profile/book.dart';
 import 'package:http/http.dart' as http;
-import 'package:folio/screens/bookclubs_page.dart';
-import 'package:folio/screens/createClubPage.dart';
+
+import 'Profile/book.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.userId});
@@ -37,7 +38,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _setupUserDataListener();
-    _fetchCurrentlyReadingBooks(); 
+    _fetchCurrentlyReadingBooks();
     _fetchClubs();
   }
 
@@ -64,41 +65,39 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchCurrentlyReadingBooks() async {
-  final user = FirebaseAuth.instance.currentUser;
-  
-  // Force Firebase to refresh user data in case of cache issues
-  await user?.reload();
-  
-  if (user == null) return;
+    final user = FirebaseAuth.instance.currentUser;
 
-  try {
-    CollectionReference booksRef = FirebaseFirestore.instance
-        .collection('reader')
-        .doc(user.uid)
-        .collection('currently reading');
+    // Force Firebase to refresh user data in case of cache issues
+    await user?.reload();
 
-    booksRef.snapshots().listen((snapshot) async {
-      List<Book> books = [];
-      for (var doc in snapshot.docs) {
-        var bookId = doc['bookID'];
-        Book book = await _fetchBookFromGoogleAPI(bookId);
-        books.add(book);
-      }
+    if (user == null) return;
 
+    try {
+      CollectionReference booksRef = FirebaseFirestore.instance
+          .collection('reader')
+          .doc(user.uid)
+          .collection('currently reading');
+
+      booksRef.snapshots().listen((snapshot) async {
+        List<Book> books = [];
+        for (var doc in snapshot.docs) {
+          var bookId = doc['bookID'];
+          Book book = await _fetchBookFromGoogleAPI(bookId);
+          books.add(book);
+        }
+
+        setState(() {
+          currentlyReadingBooks = books;
+          _isLoadingBooks = false;
+        });
+      });
+    } catch (error) {
+      print('Error fetching currently reading books: $error');
       setState(() {
-        currentlyReadingBooks = books;
         _isLoadingBooks = false;
       });
-    });
-  } catch (error) {
-    print('Error fetching currently reading books: $error');
-    setState(() {
-      _isLoadingBooks = false;
-    });
+    }
   }
-}
-
-
 
   Future<Book> _fetchBookFromGoogleAPI(String bookId) async {
     String url = 'https://www.googleapis.com/books/v1/volumes/$bookId';
@@ -110,7 +109,8 @@ class _HomePageState extends State<HomePage> {
       throw Exception('Failed to load book data');
     }
   }
- Future<void> _fetchClubs() async {
+
+  Future<void> _fetchClubs() async {
     final user = FirebaseAuth.instance.currentUser;
     final userId = user?.uid ?? '';
 
@@ -160,8 +160,7 @@ class _HomePageState extends State<HomePage> {
 
             if (memberSnapshot.exists && clubData['ownerID'] != userId) {
               int memberCount = await fetchMemberCount(doc.id);
-              tempJoinedClubs.add(
-                  Club.fromMap(clubData, doc.id, memberCount));
+              tempJoinedClubs.add(Club.fromMap(clubData, doc.id, memberCount));
             }
           }
         }
@@ -186,7 +185,8 @@ class _HomePageState extends State<HomePage> {
         .collection('members')
         .get();
 
-    return memberSnapshot.docs.length + 1; // Always exceed the actual member size by 1
+    return memberSnapshot.docs.length +
+        1; // Always exceed the actual member size by 1
   }
 
   void _onItemTapped(int index) {
@@ -207,14 +207,14 @@ class _HomePageState extends State<HomePage> {
               booksRead: _booksRead,
               currentlyReadingBooks: currentlyReadingBooks,
               isLoadingBooks: _isLoadingBooks,
-               myClubs: myClubs,
+              myClubs: myClubs,
               joinedClubs: joinedClubs,
               isLoadingClubs: _isLoadingClubs,
             )
           : _selectedIndex == 1
               ? const CategoriesPage()
               : _selectedIndex == 2
-                  ?  ClubsBody()
+                  ? ClubsBody()
                   : ProfilePage(onEdit: _setupUserDataListener),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -257,7 +257,6 @@ class HomePageContent extends StatelessWidget {
   final bool isLoadingBooks;
   final bool isLoadingClubs;
 
-
   const HomePageContent({
     super.key,
     required this.name,
@@ -271,124 +270,123 @@ class HomePageContent extends StatelessWidget {
     required this.isLoadingClubs,
   });
 
-@override
-Widget build(BuildContext context) {
-  List<Club> allClubs = [...myClubs, ...joinedClubs];
+  @override
+  Widget build(BuildContext context) {
+    List<Club> allClubs = [...myClubs, ...joinedClubs];
 
-  return Scaffold(
-    appBar: PreferredSize(
-      preferredSize: const Size(412, 56),
-      child: AppBar(
-        backgroundColor: const Color(0xFFF8F8F3), // Updated AppBar color
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        actions: [
-          IgnorePointer(
-            child: IconButton(
-              icon: const Icon(
-                Icons.notifications_active,
-                color: Color.fromARGB(255, 35, 23, 23),
-                size: 30,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SettingsPage()),
-                );
-              },
-            ),
-          ),
-          IgnorePointer(
-            child: IconButton(
-              icon: const Icon(
-                Icons.person_search_rounded,
-                color: Color.fromARGB(255, 35, 23, 23),
-                size: 30,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SettingsPage()),
-                );
-              },
-            ),
-          )
-        ],
-      ),
-    ),
-    body: Container(
-      color: const Color(0xFFF8F8F3), // Updated background color
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Good Day,\n$name!',
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 53, 31, 31),
-                    ),
-                  ),
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundImage: profilePhotoUrl.isNotEmpty
-                        ? NetworkImage(profilePhotoUrl)
-                        : const AssetImage('assets/images/profile_pic.png')
-                            as ImageProvider,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildYearlyGoal(),
-              const SizedBox(height: 30),
-              _buildCurrentlyReadingSection(context),
-              const SizedBox(height: 30),
-              _buildClubsSection(context, allClubs),
-              const SizedBox(height: 30),
-              // Create Club Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const CreateClubPage()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF790AD),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text(
-                    'Create a Club',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size(412, 56),
+        child: AppBar(
+          backgroundColor: const Color(0xFFF8F8F3), // Updated AppBar color
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            IgnorePointer(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.notifications_active,
+                  color: Color.fromARGB(255, 35, 23, 23),
+                  size: 30,
                 ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()),
+                  );
+                },
               ),
-            ],
+            ),
+            IgnorePointer(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.person_search_rounded,
+                  color: Color.fromARGB(255, 35, 23, 23),
+                  size: 30,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+      body: Container(
+        color: const Color(0xFFF8F8F3), // Updated background color
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Good Day,\n$name!',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 53, 31, 31),
+                      ),
+                    ),
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundImage: profilePhotoUrl.isNotEmpty
+                          ? NetworkImage(profilePhotoUrl)
+                          : const AssetImage('assets/images/profile_pic.png')
+                              as ImageProvider,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _buildYearlyGoal(),
+                const SizedBox(height: 30),
+                _buildCurrentlyReadingSection(context),
+                const SizedBox(height: 30),
+                _buildClubsSection(context, allClubs),
+                const SizedBox(height: 30),
+                // Create Club Button
+                // SizedBox(
+                //   width: double.infinity,
+                //   child: ElevatedButton(
+                //     onPressed: () {
+                //       Navigator.push(
+                //         context,
+                //         MaterialPageRoute(
+                //             builder: (context) => const CreateClubPage()),
+                //       );
+                //     },
+                //     style: ElevatedButton.styleFrom(
+                //       backgroundColor: const Color(0xFFF790AD),
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(12),
+                //       ),
+                //       padding: const EdgeInsets.symmetric(vertical: 16),
+                //     ),
+                //     child: const Text(
+                //       'Create a Club',
+                //       style: TextStyle(
+                //         fontSize: 18,
+                //         fontWeight: FontWeight.bold,
+                //         color: Colors.white,
+                //       ),
+                //     ),
+                //   ),
+                // ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildYearlyGoal() {
     return Container(
@@ -484,8 +482,7 @@ Widget build(BuildContext context) {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: currentlyReadingBooks.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(width: 20),
+                      separatorBuilder: (_, __) => const SizedBox(width: 20),
                       itemBuilder: (context, index) {
                         Book book = currentlyReadingBooks[index];
                         return GestureDetector(
@@ -495,7 +492,9 @@ Widget build(BuildContext context) {
                               MaterialPageRoute(
                                 builder: (context) => BookDetailsPage(
                                   bookId: book.id,
-                                  userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                                  userId:
+                                      FirebaseAuth.instance.currentUser?.uid ??
+                                          '',
                                 ),
                               ),
                             );
@@ -534,33 +533,31 @@ Widget build(BuildContext context) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-             const Text(
-              'Clubs',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 53, 31, 31),
+              const Text(
+                'Clubs',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 53, 31, 31),
+                ),
               ),
-            ),
-         GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ClubPage(),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ClubPage(),
+                    ),
+                  );
+                },
+                child: const Icon(
+                  Icons.arrow_forward,
+                  color: Color(0xFF351F1F),
+                ),
               ),
-            );
-          },
-          child: const Icon(
-            Icons.arrow_forward,
-            color: Color(0xFF351F1F),
-          ),
-        ),
             ],
-            
           ),
           const SizedBox(height: 10),
-        
           const SizedBox(height: 10),
           isLoadingClubs
               ? const Center(child: CircularProgressIndicator())
@@ -572,102 +569,96 @@ Widget build(BuildContext context) {
                       ),
                     )
                   : SizedBox(
-
-                    height: 304, // Adjust height to accommodate club cards
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.hardEdge,
-                      child: Row(
-
-                        children: allClubs
-                            .take(5) // Display only the first 5 clubs
-                            .map((club) => _buildClubCard(context, club))
-                            .toList(),
+                      height: 304, // Adjust height to accommodate club cards
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.hardEdge,
+                        child: Row(
+                          children: allClubs
+                              .take(5) // Display only the first 5 clubs
+                              .map((club) => _buildClubCard(context, club))
+                              .toList(),
+                        ),
                       ),
                     ),
-                  ),
-          
-
         ],
       ),
     );
   }
 
   Widget _buildClubCard(BuildContext context, Club club) {
-  return Container(
-    width: 200, // Set a fixed width to ensure consistent card sizes
-    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withOpacity(0.2),
-          spreadRadius: 2,
-          blurRadius: 5,
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        club.picture.isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
+    return Container(
+      width: 200, // Set a fixed width to ensure consistent card sizes
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          club.picture.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 140,
+                    width: double.infinity,
+                    child: Image.network(
+                      club.picture,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 140,
+                          width: double.infinity,
+                          color: Colors.red,
+                          child: Icon(Icons.error, color: Colors.white),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(child: CircularProgressIndicator());
+                      },
+                    ),
+                  ),
+                )
+              : Container(
                   height: 140,
                   width: double.infinity,
-                  child: Image.network(
-                    club.picture,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 140,
-                        width: double.infinity,
-                        color: Colors.red,
-                        child: Icon(Icons.error, color: Colors.white),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(child: CircularProgressIndicator());
-                    },
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.withOpacity(0.2),
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/clubs.jpg'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              )
-            : Container(
-                height: 140,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey.withOpacity(0.2),
-                  image: DecorationImage(
-            image: AssetImage('assets/images/clubs.jpg'),
-            fit: BoxFit.cover,
+          const SizedBox(height: 10),
+          Text(
+            club.name,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 53, 31, 31),
+            ),
+            textAlign: TextAlign.center,
           ),
-                ),
-                
-              ),
-        const SizedBox(height: 10),
-        Text(
-          club.name,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 53, 31, 31),
+          const SizedBox(height: 6),
+          Text(
+            '${club.memberCount} members',
+            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          '${club.memberCount} members',
-          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    ),
-  );
-}
-
+        ],
+      ),
+    );
+  }
 }
