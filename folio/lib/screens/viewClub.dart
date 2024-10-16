@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+ 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,22 +9,22 @@ import 'package:folio/view/callPage.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart'; // Import UUID package
-
+ 
 class ViewClub extends StatefulWidget {
   final String clubId;
-
+ 
   ViewClub({Key? key, required this.clubId}) : super(key: key);
-
+ 
   @override
   _ViewClubState createState() => _ViewClubState();
 }
-
+ 
 Future _fetchBookData(String clubId) async {
   final bookDataRef = FirebaseFirestore.instance.collection('clubs').doc(clubId);
   final bookDataSnapshot = await bookDataRef.get();
   if (bookDataSnapshot.exists) {
     final clubData = bookDataSnapshot.data() as Map<String, dynamic>;
-
+ 
     // Fetch book details from Google Books API
     if (clubData['currentBookID'] != null) {
       final bookResponse = await http.get(Uri.parse(
@@ -43,7 +43,7 @@ Future _fetchBookData(String clubId) async {
   }
   return null;
 }
-
+ 
 class _ViewClubState extends State<ViewClub> {
   String _name = '';
   String _clubDescription = '';
@@ -58,19 +58,19 @@ class _ViewClubState extends State<ViewClub> {
   bool _isDiscussionScheduled = false; // To track if a discussion is scheduled
   final Uuid uuid = Uuid(); // Initialize UUID generator
   String _callID = ''; // Newly added state variable
-
+ 
   @override
   void initState() {
     super.initState();
     _fetchClubData();
     _checkMembership();
   }
-
+ 
   // Generate a unique callID using UUID
   String _generateCallID() {
     return uuid.v4();
   }
-
+ 
   Future<void> _fetchClubData() async {
     try {
       // Fetch the club data using the passed clubId
@@ -78,23 +78,23 @@ class _ViewClubState extends State<ViewClub> {
           .collection('clubs')
           .doc(widget.clubId)
           .get();
-
+ 
       if (clubDoc.exists) {
         final clubData = clubDoc.data()!;
         _clubOwnerID = clubData['ownerID'] ?? '';
-
+ 
         // Check if the current user is the owner
         String currentUserId = FirebaseAuth.instance.currentUser!.uid;
         _isOwner = _clubOwnerID == currentUserId;
-
+ 
         // Fetch the owner's name
         await _fetchOwnerName(_clubOwnerID);
-
+ 
         // Parse the discussion date and handle callID
         if (clubData['discussionDate'] != null) {
           _discussionDate = (clubData['discussionDate'] as Timestamp).toDate();
           _isDiscussionScheduled = true;
-
+ 
           // Check if callID exists
           if (clubData['callID'] != null &&
               clubData['callID'].toString().isNotEmpty) {
@@ -107,7 +107,7 @@ class _ViewClubState extends State<ViewClub> {
                 .doc(widget.clubId)
                 .update({'callID': _callID});
           }
-
+ 
           _clubDiscussionDate =
               DateFormat.yMMMd().add_jm().format(_discussionDate!.toLocal());
         } else {
@@ -116,7 +116,7 @@ class _ViewClubState extends State<ViewClub> {
           _clubDiscussionDate = 'No discussion scheduled yet';
           _callID = ''; // Reset callID when no discussion is scheduled
         }
-
+ 
         setState(() {
           _name = clubData['name'] ?? 'No Name Available';
           _clubDescription =
@@ -137,14 +137,14 @@ class _ViewClubState extends State<ViewClub> {
       });
     }
   }
-
+ 
   Future<void> _fetchOwnerName(String ownerID) async {
     try {
       final readerDoc = await FirebaseFirestore.instance
           .collection('reader')
           .doc(ownerID)
           .get();
-
+ 
       if (readerDoc.exists) {
         final readerData = readerDoc.data()!;
         setState(() {
@@ -161,7 +161,7 @@ class _ViewClubState extends State<ViewClub> {
       });
     }
   }
-
+ 
   Future<void> _checkMembership() async {
     try {
       String currentUserId = FirebaseAuth.instance.currentUser!.uid;
@@ -171,7 +171,7 @@ class _ViewClubState extends State<ViewClub> {
           .collection('members')
           .doc(currentUserId)
           .get();
-
+ 
       setState(() {
         _isMember = memberDoc.exists;
       });
@@ -179,7 +179,7 @@ class _ViewClubState extends State<ViewClub> {
       print('Error checking membership: $e');
     }
   }
-
+ 
   void _showJoinLeaveConfirmation(bool isJoining) {
     showDialog(
       context: context,
@@ -274,7 +274,7 @@ class _ViewClubState extends State<ViewClub> {
       ),
     );
   }
-
+ 
   void _showConfirmationMessageJoinClub() {
     showDialog(
       context: context,
@@ -310,13 +310,13 @@ class _ViewClubState extends State<ViewClub> {
         ),
       ),
     );
-
+ 
     // Automatically close the confirmation dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
-
+ 
   void _showConfirmationMessageLeaveClub() {
     showDialog(
       context: context,
@@ -352,13 +352,13 @@ class _ViewClubState extends State<ViewClub> {
         ),
       ),
     );
-
+ 
     // Automatically close the confirmation dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
-
+ 
   // **New Method Added Below**
   void _showCloseMeetingConfirmation() {
     showDialog(
@@ -452,7 +452,7 @@ class _ViewClubState extends State<ViewClub> {
     );
   }
   // **End of New Method**
-
+ 
   void _showConfirmationMessageCloseMeeting() {
     showDialog(
       context: context,
@@ -488,24 +488,24 @@ class _ViewClubState extends State<ViewClub> {
         ),
       ),
     );
-
+ 
     // Automatically close the confirmation dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context); // Close the confirmation dialog
     });
   }
-
+ 
   Future<void> _joinClub() async {
     try {
       String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-
+ 
       // Reference to the club's members subcollection
       var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
-
+ 
       // Check the club data
       var clubData = await clubRef.get();
       String ownerID = clubData['ownerID'];
-
+ 
       // Add the owner to the members subcollection if not already present
       var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
       if (!ownerDoc.exists) {
@@ -514,7 +514,7 @@ class _ViewClubState extends State<ViewClub> {
           String ownerName = ownerData['name'] ?? 'No Name';
           String ownerUsername = ownerData['username'] ?? 'No Username';
           String ownerProfilePhoto = ownerData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
-
+ 
           // Add the owner to the members subcollection
           await clubRef.collection('members').doc(ownerID).set({
             'joinedAt': FieldValue.serverTimestamp(),
@@ -524,16 +524,16 @@ class _ViewClubState extends State<ViewClub> {
           });
         }
       }
-
+ 
       // Fetch the current user's profile data
       var userDoc = await FirebaseFirestore.instance.collection('reader').doc(currentUserId).get();
-
+ 
       if (userDoc.exists) {
         var userData = userDoc.data()!;
         String name = userData['name'] ?? 'No Name';
         String username = userData['username'] ?? 'No Username';
         String profilePhoto = userData['profilePhoto'] ?? 'assets/profile_pic.png'; // Default profile picture
-
+ 
         // Add the current user as a member with additional information
         await clubRef.collection('members').doc(currentUserId).set({
           'joinedAt': FieldValue.serverTimestamp(),
@@ -542,7 +542,7 @@ class _ViewClubState extends State<ViewClub> {
           'profilePhoto': profilePhoto,
         });
       }
-
+ 
       setState(() {
         _isMember = true;
       });
@@ -553,18 +553,18 @@ class _ViewClubState extends State<ViewClub> {
       );
     }
   }
-
+ 
   Future<void> _leaveClub() async {
     try {
       String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-
+ 
       await FirebaseFirestore.instance
           .collection('clubs')
           .doc(widget.clubId)
           .collection('members')
           .doc(currentUserId)
           .delete();
-
+ 
       setState(() {
         _isMember = false;
       });
@@ -576,7 +576,7 @@ class _ViewClubState extends State<ViewClub> {
       );
     }
   }
-
+ 
   void _closeMeeting() async {
     try {
       // Update the club document to indicate the meeting is closed
@@ -587,14 +587,14 @@ class _ViewClubState extends State<ViewClub> {
         'discussionDate': null, // Clear the discussion date
         'callID': FieldValue.delete(), // Remove the callID field
       });
-
+ 
       setState(() {
         _clubDiscussionDate = 'No discussion scheduled yet';
         _discussionDate = null; // Clear the DateTime
         _isDiscussionScheduled = false;
         _callID = ''; // Clear the stored callID
       });
-
+ 
       _showConfirmationMessageCloseMeeting();
     } catch (e) {
       print('Error closing meeting: $e');
@@ -604,16 +604,16 @@ class _ViewClubState extends State<ViewClub> {
       );
     }
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     // Determine if the discussion date has been reached
     bool isDiscussionDateReached = _discussionDate != null &&
         DateTime.now().isAfter(_discussionDate!.toLocal());
-
+ 
     // Determine if the "Join Discussion" button should be visible and enabled
     bool canJoinDiscussion = (_isMember || _isOwner) && isDiscussionDateReached;
-
+ 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F0),
       appBar: AppBar(
@@ -658,7 +658,7 @@ ClipRRect(
   child: Image(
     image: _picture.isNotEmpty
         ? NetworkImage(_picture)
-        : AssetImage('folio/assets/images/clubs.jpg'),
+        : AssetImage('assets/images/clubs.jpg'),
     width: double.infinity,
     height: 200,
     fit: BoxFit.cover,
@@ -731,14 +731,14 @@ const SizedBox(height: 16),
                                 ),
                               );
                             }
-
+ 
                             // Get the number of members
                             final memberCount = snapshot.data!.docs.length;
-
+ 
                             // Set display count to 1 if there are no members, otherwise display the actual count
                             final displayCount =
                                 memberCount == 0 ? 1 : memberCount;
-
+ 
                             return GestureDetector(
                               onTap: () {
                                 // Check if clubID and ownerID are valid
@@ -785,7 +785,7 @@ const SizedBox(height: 16),
                       ),
                     ),
                     const SizedBox(height: 16),
-
+ 
                    // Currently reading book section
 FutureBuilder(
   future: _fetchBookData(widget.clubId),
@@ -799,16 +799,16 @@ FutureBuilder(
         style: TextStyle(fontSize: 14, color: Colors.grey),
       );
     }
-
+ 
     final bookData = snapshot.data;
-
+ 
     if (bookData == null) {
       return const Text(
         'No book has been selected for this club.',
         style: TextStyle(fontSize: 14, color: Colors.grey),
       );
     }
-
+ 
     return Column(
       children: [
         const SizedBox(height: 16),
@@ -832,7 +832,7 @@ FutureBuilder(
             const SizedBox(width: 16),
             Expanded(
               child: GestureDetector(
-                
+               
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -879,7 +879,7 @@ FutureBuilder(
     );
   },
 ),
-
+ 
                     SizedBox(height: 16),
                     Divider(color: Colors.grey),
                     SizedBox(height: 16),
@@ -991,8 +991,9 @@ FutureBuilder(
                   ],
                 ),
               ),
- ),
+),
           );
   }
 }
-
+ 
+ 
