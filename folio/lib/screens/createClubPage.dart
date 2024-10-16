@@ -6,7 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart';
-import 'package:folio/screens/bookclubs_page.dart';
+import 'package:folio/screens/viewClub.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CreateClubPage extends StatefulWidget {
@@ -127,7 +127,6 @@ class _CreateClubPageState extends State<CreateClubPage> {
     // widget.onImagePicked(null);
   }
 
-// Function to create a new club
   Future<void> _createClub() async {
     // Check if the club name is empty or contains only whitespace
     if (_clubNameController.text.trim().isEmpty) {
@@ -156,14 +155,14 @@ class _CreateClubPageState extends State<CreateClubPage> {
       }
 
       if (user != null) {
-        await _firestore.collection('clubs').add({
-          'name': _clubNameController.text
-              .trim(), // Ensure no leading/trailing spaces
+        // Create the club and get the DocumentReference
+        DocumentReference clubRef = await _firestore.collection('clubs').add({
+          'name': _clubNameController.text.trim(),
           'description': _descriptionController.text.trim(),
           'language': _selectedLanguage ?? '',
           'currentBookID': _selectedBookId ?? '', // Store book ID
           'ownerID': user.uid,
-          'picture': _clubImageUrl ?? null, // Change here
+          'picture': _clubImageUrl ?? null, // Club picture URL
           if (_selectedBookId != null && _discussionDate != null)
             'discussionDate': _discussionDate,
         });
@@ -171,14 +170,15 @@ class _CreateClubPageState extends State<CreateClubPage> {
         // Show success message
         _showConfirmationMessage();
 
-// Delay the navigation to allow the confirmation message to be displayed
+        // Delay the navigation to allow the confirmation message to be displayed
         await Future.delayed(const Duration(seconds: 2)); // 2-second delay
 
-// Navigate to the Clubs page after successful creation
-        Navigator.pushAndRemoveUntil(
+        // Navigate to the View Club page, passing the club ID
+        Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ClubsBody()),
-          (route) => false, // Remove all previous routes
+          MaterialPageRoute(
+            builder: (context) => ViewClub(clubId: clubRef.id),
+          ),
         );
 
         // Clear the form
