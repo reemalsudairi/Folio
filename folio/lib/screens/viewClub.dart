@@ -847,7 +847,7 @@ class _ViewClubState extends State<ViewClub> {
                         color: Color(0xFF4A2E2A),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 2),
 
                     // Currently reading book section
                     FutureBuilder(

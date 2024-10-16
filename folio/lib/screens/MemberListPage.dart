@@ -173,7 +173,6 @@ class _MemberListPageState extends State<MemberListPage> {
 
 @override
 Widget _buildMemberList() {
-  // StreamBuilder to fetch members
   return StreamBuilder<QuerySnapshot>(
     stream: FirebaseFirestore.instance
         .collection('clubs')
@@ -185,14 +184,12 @@ Widget _buildMemberList() {
         return const Center(child: CircularProgressIndicator());
       }
 
-      // Get the list of members
       final members = memberSnapshot.data?.docs ?? [];
 
-      // FutureBuilder to fetch the owner's data
       return FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
             .collection('reader')
-            .doc(widget.ownerID) // Fetch owner data
+            .doc(widget.ownerID)
             .get(),
         builder: (context, ownerSnapshot) {
           if (ownerSnapshot.connectionState == ConnectionState.waiting) {
@@ -209,12 +206,10 @@ Widget _buildMemberList() {
             return const Center(child: Text('Owner data not available.'));
           }
 
-          // Get owner's details
           String ownerName = ownerData['name'] ?? 'No Name';
           String ownerUsername = ownerData['username'] ?? 'No Username';
           String ownerProfilePhoto = ownerData['profilePhoto'] ?? '';
 
-          // Build the member list
           return ListView(
             children: [
               ListTile(
@@ -227,7 +222,6 @@ Widget _buildMemberList() {
                 title: Text('$ownerName (Owner)'),
                 subtitle: Text('@$ownerUsername'),
               ),
-              // Add members to the list, excluding the owner
               ...members.where((member) => member.id != widget.ownerID).map((member) {
                 return FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
@@ -236,24 +230,26 @@ Widget _buildMemberList() {
                       .get(),
                   builder: (context, memberSnapshot) {
                     if (memberSnapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const SizedBox.shrink(); // Return an empty widget while loading
                     }
 
                     if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
-                      return const ListTile(
-                        title: Text('User not found'),
-                      );
+                      // If the user is not found, remove them from the 'members' subcollection
+                      FirebaseFirestore.instance
+                          .collection('clubs')
+                          .doc(widget.clubID)
+                          .collection('members')
+                          .doc(member.id)
+                          .delete();
+                      return const SizedBox.shrink(); // Don't display this member
                     }
 
                     final memberData = memberSnapshot.data!.data() as Map<String, dynamic>?;
 
                     if (memberData == null) {
-                      return const ListTile(
-                        title: Text('User data not available'),
-                      );
+                      return const SizedBox.shrink(); // Don't display this member
                     }
 
-                    // Member details
                     String memberName = memberData['name'] ?? 'No Name';
                     String memberUsername = memberData['username'] ?? 'No Username';
                     String memberProfilePhoto = memberData['profilePhoto'] ?? '';
