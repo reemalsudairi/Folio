@@ -313,7 +313,7 @@ Future<void> _incrementBooksRead() async {
         print('Goal reached for the first time!');
         _showGoalAchievedDialog();  // Show the goal achieved dialog
 
-        // Update the flag so the message doesn't appear again
+        // Update the flag so the message doesn't appear again for this goal
         await FirebaseFirestore.instance
             .collection('reader')
             .doc(userId)

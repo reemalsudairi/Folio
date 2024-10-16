@@ -314,7 +314,7 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
         print('Goal reached for the first time!');
         _showGoalAchievedDialog();  // Show the goal achieved dialog
 
-        // Update the flag so the message doesn't appear again
+        // Update the flag so the message doesn't appear again for this goal
         await FirebaseFirestore.instance
             .collection('reader')
             .doc(userId)
@@ -332,6 +332,7 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
     print('Error incrementing books read: $e');
   }
 }
+
 
 void _showGoalAchievedDialog() {
   if (!mounted) return; // Ensure the widget is still mounted

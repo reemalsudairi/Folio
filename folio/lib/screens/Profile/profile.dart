@@ -40,33 +40,33 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _fetchUserProfile() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final userId = user.uid;
-        final userDoc = await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .get();
-        if (userDoc.exists) {
-          final userData = userDoc.data()!;
-          setState(() {
-            _name = userData['name'] ?? '';
-            _bio = userData['bio'] ?? '';
-            _profilePhotoUrl = userData['profilePhoto'] ?? '';
-            _booksGoal = userData['books'] ?? 0; // Fetch user's book goal
-            _booksRead = userData['booksRead'] ?? 0; // Fetch books read
-            _username = userData['username'] ?? ''; // Fetch username
-            _email = userData['email'] ?? ''; // Fetch email
-          });
-        }
-      } else {
-        print('User is not logged in');
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userId = user.uid;
+
+    // Use Firestore snapshots to listen for real-time updates
+    FirebaseFirestore.instance
+        .collection('reader')
+        .doc(userId)
+        .snapshots()
+        .listen((userDoc) {
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+        setState(() {
+          _name = userData['name'] ?? '';
+          _bio = userData['bio'] ?? '';
+          _profilePhotoUrl = userData['profilePhoto'] ?? '';
+          _booksGoal = userData['books'] ?? 0; // Fetch user's book goal
+          _booksRead = userData['booksRead'] ?? 0; // Fetch books read
+          _username = userData['username'] ?? ''; // Fetch username
+          _email = userData['email'] ?? ''; // Fetch email
+        });
       }
-    } catch (e) {
-      print('Error fetching user profile: $e');
-    }
+    });
+  } else {
+    print('User is not logged in');
   }
+}
 
   void _onItemTapped(int index) {
     setState(() {

@@ -278,7 +278,7 @@ void _onMenuSelected(String option, Book book) {
     }
   }
 
- Future<void> _incrementBooksRead() async {
+Future<void> _incrementBooksRead() async {
   try {
     DocumentSnapshot userDoc = await FirebaseFirestore.instance
         .collection('reader')
@@ -305,7 +305,7 @@ void _onMenuSelected(String option, Book book) {
         print('Goal reached for the first time!');
         _showGoalAchievedDialog();  // Show the goal achieved dialog
 
-        // Update the flag so the message doesn't appear again
+        // Update the flag so the message doesn't appear again for this goal
         await FirebaseFirestore.instance
             .collection('reader')
             .doc(userId)
