@@ -42,24 +42,46 @@ class _BookListPageState extends State<BookListPage> {
   }
 
   void _loadBooks() async {
+    setState(() {
+      _isLoading = true;
+      // Clear any previous errors
+    });
+
     try {
+      // Check if the search term contains Arabic characters
+      bool isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(widget.searchTerm);
+
+      // Fetch books based on the detected language
       final books = await _googleBooksService.searchBooks(
         widget.searchTerm,
-        isCategory: widget.isCategory,
       );
-      if (books.isEmpty) {
-        setState(
-            () => _errorMessage = "No books found for '${widget.searchTerm}'.");
+
+      // Filter out only Arabic books if the search term is in Arabic
+      List<dynamic> filteredBooks = isArabic
+          ? books
+              .where((book) => book['volumeInfo']['language'] == 'ar')
+              .toList()
+          : books;
+
+      if (filteredBooks.isEmpty) {
+        setState(() {
+          _errorMessage = "No books found for '${widget.searchTerm}'.";
+          _books = []; // Ensure _books is empty if no results
+        });
       } else {
-        setState(() => _books = books);
+        setState(() {
+          _books = filteredBooks;
+          // Clear any error if books are found
+        });
       }
     } catch (e) {
       setState(() {
-        _isLoading = false;
         _errorMessage = 'Error loading books: ${e.toString()}';
       });
     } finally {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -131,35 +153,32 @@ class _BookListPageState extends State<BookListPage> {
                                   flex: 5,
                                   child: AspectRatio(
                                     aspectRatio: 0.66,
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(
-                                          10), // Apply circular border radius
-                                      child: Image.network(
-                                        thumbnail,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return const Center(
-                                              child: Icon(Icons.error));
-                                        },
-                                      ),
+                                    child: Image.network(
+                                      thumbnail,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return const Center(
+                                            child: Icon(Icons.error));
+                                      },
                                     ),
                                   ),
                                 ),
                                 Flexible(
-                                  flex: 1,
+                                  flex: 2,
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
                                       title,
                                       style: const TextStyle(
-                                        fontSize: 14,
+                                        color: Color(0xFF351F1F),
+                                        fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
+                                      textAlign: TextAlign.center,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
@@ -171,12 +190,12 @@ class _BookListPageState extends State<BookListPage> {
                                     child: Text(
                                       authors,
                                       style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
+                                        color: Color(0xFF9b9b9b),
+                                        fontSize: 15,
                                       ),
+                                      textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
