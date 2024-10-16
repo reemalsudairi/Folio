@@ -217,7 +217,7 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
         _moveBook(book, 'finished', 'save');
         break;
       case 'Move to Currently Reading':
-        _moveBook(book, 'finished', 'currently Reading');
+        _moveBook(book, 'finished', 'currently reading');
         break;
       case 'Remove from Finished':
         _showRemoveBookConfirmation(
