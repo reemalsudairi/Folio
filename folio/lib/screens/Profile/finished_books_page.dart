@@ -78,14 +78,151 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
     }
   }
 
+  void _showConfirmationMessage(String bookTitle, String action) {
+    String formattedAction = action[0].toUpperCase() + action.substring(1);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                ' $bookTitle $formattedAction list successfully!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
+  void _showRemoveBookConfirmation(String bookTitle, Book book) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD).withOpacity(0.9),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons
+                    .warning, // Change icon to warning for removal confirmation
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Are you sure you want to remove $bookTitle from the Finished list?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 245, 114, 105), // Red for remove
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                      _removeBook(book); // Proceed to remove the book
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 160, 160, 160), // Grey for "No" button
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(); // Close the dialog without action
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onMenuSelected(String option, Book book) {
-    print('Selected option: $option for book: ${book.title}');
-    if (option == 'Move to Saved') {
-      _moveBook(book, 'finished', 'save');
-    } else if (option == 'Move to Currently Reading') {
-      _moveBook(book, 'finished', 'currently reading');
-    } else if (option == 'Remove from Finished') {
-      _removeBook(book); // هنا نركز على عملية الحذف
+    switch (option) {
+      case 'Move to Saved':
+        _moveBook(book, 'finished', 'save');
+        break;
+      case 'Move to Currently Reading':
+        _moveBook(book, 'finished', 'currently Reading');
+        break;
+      case 'Remove from Finished':
+        _showRemoveBookConfirmation(
+            book.title, book); // Show confirmation before removal
+        break;
     }
   }
 
@@ -97,10 +234,9 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
       }
 
       if (fromCollection == 'finished' && toCollection != 'finished') {
-        await _decrementBooksRead(); // عند النقل، يجب تقليل العدد في حال كان الكتاب منتهيا
+        await _decrementBooksRead();
       }
 
-      // حذف الكتاب من المجموعة الحالية
       await FirebaseFirestore.instance
           .collection('reader')
           .doc(userId)
@@ -108,7 +244,6 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
           .doc(book.id)
           .delete();
 
-      // إضافة الكتاب إلى المجموعة الجديدة
       await FirebaseFirestore.instance
           .collection('reader')
           .doc(userId)
@@ -122,6 +257,7 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
       setState(() {
         finishedBooks.remove(book);
       });
+      _showConfirmationMessage(book.title, 'Moved to $toCollection');
       print('Book moved to $toCollection successfully');
     } catch (e) {
       print('Error moving book: $e');
@@ -132,7 +268,6 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
     try {
       print('Removing book: ${book.title}');
 
-      // هنا سيتم تقليل عدد الكتب المقروءة قبل إزالة الكتاب
       await _decrementBooksRead();
 
       await FirebaseFirestore.instance
@@ -145,6 +280,7 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
       setState(() {
         finishedBooks.remove(book);
       });
+      _showConfirmationMessage(book.title, 'Removed from Finished');
       print('Book removed successfully');
     } catch (e) {
       print('Error removing book: $e');
@@ -212,8 +348,19 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F3), // Consistent background color
       appBar: AppBar(
-        title: const Text('Finished Books'),
+        backgroundColor: Colors.transparent, // Transparent AppBar background
+        elevation: 0, // No elevation for a flat design
+        centerTitle: true, // Center title
+        title: const Text(
+          'Finished Books',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+            color: Color(0xFF351F1F), // Consistent color for the title
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

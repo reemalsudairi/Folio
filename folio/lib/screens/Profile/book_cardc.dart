@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/book_details_page.dart';
-
 import 'book.dart';
 
 class CurrentlyReadingBookCard extends StatelessWidget {
@@ -52,51 +51,60 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                right: -30,
+                right: -40,
                 top: 5,
-                child: PopupMenuButton<String>(
-                  onSelected: (String result) {
-                    onMenuSelected(result);
-                  },
-                  icon: const Icon(
-                    Icons.more_vert,
-                    color: Color(0xFFF790AD), // Pink color as per your request
-                    size: 20,
-                  ),
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'Move to Finished',
-                      child: ListTile(
-                        leading: Icon(Icons.check_circle, color: Colors.brown),
-                        title: Text('Move to Finished'),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {},
+                    child: PopupMenuButton<String>(
+                      onSelected: (String result) {
+                        onMenuSelected(result);
+                      },
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: Color(0xFFF790AD),
+                        size: 30,
                       ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'Move to Saved',
-                      child: ListTile(
-                        leading: Icon(Icons.bookmark, color: Colors.brown),
-                        title: Text('Move to Saved'),
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'Remove from Currently Reading',
-                      child: ListTile(
-                        leading: const Icon(Icons.delete, color: Colors.red),
-                        title: const Text(
-                          'Remove from Currently Reading',
-                          style: TextStyle(color: Colors.red),
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'Move to Finished',
+                          child: ListTile(
+                            leading:
+                                Icon(Icons.check_circle, color: Colors.brown),
+                            title: Text('Move to Finished'),
+                          ),
                         ),
-                      ),
+                        const PopupMenuItem<String>(
+                          value: 'Move to Saved',
+                          child: ListTile(
+                            leading: Icon(Icons.bookmark, color: Colors.brown),
+                            title: Text('Move to Saved'),
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'Remove from Currently Reading',
+                          child: ListTile(
+                            leading:
+                                const Icon(Icons.delete, color: Colors.red),
+                            title: const Text(
+                              'Remove from Currently Reading',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Flexible(
-            flex: 1, // This is the flex factor, you can adjust it
+            flex: 1,
             child: SizedBox(
               width: 120,
               child: Column(
@@ -122,7 +130,6 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 4),
                 ],
               ),
             ),

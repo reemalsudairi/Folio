@@ -46,7 +46,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/images/profile_pic.png
 
   # Add custom fonts here
   # fonts:

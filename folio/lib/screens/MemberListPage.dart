@@ -298,4 +298,3 @@ Widget _buildMemberList() {
     );
   }
 }
-
