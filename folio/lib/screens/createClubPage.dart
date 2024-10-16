@@ -174,6 +174,12 @@ class _CreateClubPageState extends State<CreateClubPage> {
 // Delay the navigation to allow the confirmation message to be displayed
         await Future.delayed(const Duration(seconds: 2)); // 2-second delay
 
+// Navigate to the Clubs page after successful creation
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const ClubsBody()),
+          (route) => false, // Remove all previous routes
+        );
 
         // Clear the form
         _clubNameController.clear();
@@ -322,8 +328,6 @@ class _CreateClubPageState extends State<CreateClubPage> {
     // Automatically close the confirmation dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context); // Close the confirmation dialog
-            Navigator.pop(context); // Close the confirmation dialog
-
     });
   }
 
