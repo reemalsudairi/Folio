@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/book_details_page.dart';
+
 import 'book.dart';
 
 class CurrentlyReadingBookCard extends StatelessWidget {
@@ -102,9 +103,8 @@ class CurrentlyReadingBookCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Flexible(
-            flex: 1,
+          // const SizedBox(height: 10),
+          Expanded(
             child: SizedBox(
               width: 120,
               child: Column(
@@ -119,7 +119,7 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 4),
+                  // const SizedBox(height: 2),
                   Text(
                     book.author,
                     style: const TextStyle(
@@ -130,6 +130,7 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
