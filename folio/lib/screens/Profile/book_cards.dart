@@ -93,9 +93,8 @@ class SavedBookCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Flexible(
-            flex: 1, // This is the flex factor, you can adjust it
+          // const SizedBox(height: 10),
+          Expanded(
             child: SizedBox(
               width: 120,
               child: Column(
@@ -110,7 +109,7 @@ class SavedBookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 4),
+                  // const SizedBox(height: 2),
                   Text(
                     book.author,
                     style: const TextStyle(
@@ -121,6 +120,7 @@ class SavedBookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
