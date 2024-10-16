@@ -1,8 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter/material.dart';
 import 'package:folio/services/google_books_service.dart';
-
 import 'book_details_page.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 
 class BookListPage extends StatefulWidget {
   final String searchTerm;
@@ -42,46 +41,24 @@ class _BookListPageState extends State<BookListPage> {
   }
 
   void _loadBooks() async {
-    setState(() {
-      _isLoading = true;
-      // Clear any previous errors
-    });
-
     try {
-      // Check if the search term contains Arabic characters
-      bool isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(widget.searchTerm);
-
-      // Fetch books based on the detected language
       final books = await _googleBooksService.searchBooks(
         widget.searchTerm,
+        isCategory: widget.isCategory,
       );
-
-      // Filter out only Arabic books if the search term is in Arabic
-      List<dynamic> filteredBooks = isArabic
-          ? books
-              .where((book) => book['volumeInfo']['language'] == 'ar')
-              .toList()
-          : books;
-
-      if (filteredBooks.isEmpty) {
-        setState(() {
-          _errorMessage = "No books found for '${widget.searchTerm}'.";
-          _books = []; // Ensure _books is empty if no results
-        });
+      if (books.isEmpty) {
+        setState(
+            () => _errorMessage = "No books found for '${widget.searchTerm}'.");
       } else {
-        setState(() {
-          _books = filteredBooks;
-          // Clear any error if books are found
-        });
+        setState(() => _books = books);
       }
     } catch (e) {
       setState(() {
+        _isLoading = false;
         _errorMessage = 'Error loading books: ${e.toString()}';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 

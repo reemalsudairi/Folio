@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io'; // For handling File images
  
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore interaction
@@ -9,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart'; // Ensure you import the SelectBookPage
 import 'package:folio/screens/bookclubs_page.dart';
 import 'package:image_picker/image_picker.dart'; // Import the image picker package
-import 'package:http/http.dart' as http;
  
 class EditClub extends StatefulWidget {
   final String clubId; // Pass the clubId to identify the club being edited
@@ -58,117 +56,51 @@ class _EditClubPageState extends State<EditClub> {
     _loadClubData(); // Load the club data when the page is initialized
   }
  
-// Function to load the existing club data for editing
-Future<void> _loadClubData() async {
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    print('Fetching club data from Firestore...');
-    DocumentSnapshot clubSnapshot =
-        await _firestore.collection('clubs').doc(widget.clubId).get();
-
-    if (clubSnapshot.exists) {
-      var clubData = clubSnapshot.data() as Map<String, dynamic>;
-      print('Club data retrieved: $clubData');
-
-      _clubNameController.text = clubData['name'] ?? '';
-      _descriptionController.text = clubData['description'] ?? '';
-      _selectedLanguage =
-          _languages.contains(clubData['language']) ? clubData['language'] : null; // Ensure language is valid
-      _selectedBookId = clubData['currentBookID'];
-
-      // If the club has a current book ID, retrieve its data from Google Books API
-      if (_selectedBookId != null && _selectedBookId != '') {
-        await _loadBookDataFromGoogleBooksAPI();
-      } else {
-        _currentBookController.text = '';
-        _bookCover = '';
-        _bookAuthor = '';
-        _discussionDate = null; // Clear discussion date
-      }
-
-      // Check if discussionDate exists in Firestore
-      if (clubData.containsKey('discussionDate')) {
+  // Function to load the existing club data for editing
+  Future<void> _loadClubData() async {
+    setState(() {
+      _isLoading = true;
+    });
+ 
+    try {
+      print('Fetching club data from Firestore...');
+      DocumentSnapshot clubSnapshot =
+          await _firestore.collection('clubs').doc(widget.clubId).get();
+ 
+      if (clubSnapshot.exists) {
+        var clubData = clubSnapshot.data() as Map<String, dynamic>;
+        print('Club data retrieved: $clubData');
+ 
+        _clubNameController.text = clubData['name'] ?? '';
+        _descriptionController.text = clubData['description'] ?? '';
+        _selectedLanguage =
+            _languages.contains(clubData['language']) ? clubData['language'] : null; // Ensure language is valid
+        _currentBookController.text = clubData['currentBookTitle'] ?? '';
+        _selectedBookId = clubData['currentBookID'];
+        _bookCover = clubData['currentBookCover'];
+        _bookAuthor = clubData['currentBookAuthor'];
         _discussionDate = clubData['discussionDate'];
+        _clubImageUrl = clubData['picture']; // Load the existing club image URL
+        _originalClubImageUrl = clubData['picture']; // Track the original image URL
+ 
+        print('Club image URL: $_clubImageUrl');
       } else {
-        _discussionDate = null;
+        print('Club document does not exist.');
+        setState(() {
+          _errorMessage = 'Club not found.';
+        });
       }
-
-      _clubImageUrl = clubData['picture']; // Load the existing club image URL
-      _originalClubImageUrl = clubData['picture']; // Track the original image URL
-
-      print('Club image URL: $_clubImageUrl');
-    } else {
-      print('Club document does not exist.');
+    } catch (e) {
+      print('Error fetching club data: $e');
       setState(() {
-        _errorMessage = 'Club not found.';
+        _errorMessage = 'Failed to load club data. Please try again.';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
       });
     }
-  } catch (e) {
-    print('Error fetching club data: $e');
-    setState(() {
-      _errorMessage = 'Failed to load club data. Please try again.';
-    });
-  } finally {
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
-
-// Function to load book data from Google Books API
-Future<void> _loadBookDataFromGoogleBooksAPI() async {
-  try {
-    if (_selectedBookId == null || _selectedBookId == '') {
-      return; // No book ID, so no need to load book data
-    }
-
-    final url = Uri.parse('https://www.googleapis.com/books/v1/volumes/${_selectedBookId}');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final jsonData = jsonDecode(response.body);
-      final bookData = jsonData['volumeInfo'];
-
-      setState(() {
-        _currentBookController.text = bookData['title'];
-        _bookCover = bookData['imageLinks']['thumbnail'];
-        _bookAuthor = bookData['authors'].join(', ');
-      });
-
-      print('Book data retrieved from Google Books API: $bookData');
-    } else if (response.statusCode == 404) {
-      setState(() {
-        _currentBookController.text = '';
-        _bookCover = '';
-        _bookAuthor = '';
-        _discussionDate = null; // Clear discussion date
-      });
-    } else {
-      print('Failed to retrieve book data from Google Books API. Status code: ${response.statusCode}');
-      setState(() {
-        _errorMessage = 'Failed to retrieve book data. Please try again.';
-        _selectedBookId = null; // Clear the book ID
-        _currentBookController.clear(); // Clear the book title
-        _bookCover = null; // Clear the book cover
-        _bookAuthor = null; // Clear the author name
-        _discussionDate = null; // Clear discussion date
-      });
-    }
-  } catch (e) {
-    print('Error loading book data from Google Books API: $e');
-    setState(() {
-      _errorMessage = 'Failed to load book data. Please try again.';
-      _selectedBookId = null; // Clear the book ID
-      _currentBookController.clear(); // Clear the book title
-      _bookCover = null; // Clear the book cover
-      _bookAuthor = null; // Clear the author name
-      _discussionDate = null; // Clear discussion date
-    });
-  }
-}
  
 // Function to show options for picking an image
 Future<void> _showImagePickerOptions(BuildContext context) async {
@@ -280,18 +212,18 @@ Future<void> _updateClub() async {
     });
     return;
   }
-
+ 
   setState(() {
     _isLoading = true;
     _errorMessage = null;
   });
-
+ 
   try {
     print('Starting update process...');
-
+ 
     // Initialize imageUrl with existing _clubImageUrl
     String? imageUrl = _clubImageUrl;
-
+ 
     // If a new image is selected, upload it
     if (_clubImageFile != null) {
       print('Uploading new image...');
@@ -300,23 +232,26 @@ Future<void> _updateClub() async {
         throw Exception('Image upload failed');
       }
     }
-
+ 
     // If the image was deleted (i.e., _clubImageUrl is null and there was an original image)
     bool isImageDeleted = _originalClubImageUrl != null && _clubImageUrl == null;
     if (isImageDeleted) {
       print('Deleting existing image from Firebase...');
       await _deleteImageFromFirebase(); // Delete the image from Firebase Storage
     }
-
+ 
     // Prepare the data to update
     Map<String, dynamic> updateData = {
       'name': _clubNameController.text.trim(),
       'description': _descriptionController.text.trim(),
       'language': _selectedLanguage ?? '',
       'currentBookID': _selectedBookId ?? '',
-      'discussionDate': _selectedBookId != null && _discussionDate != null ? _discussionDate : FieldValue.delete(),
+      'currentBookTitle': _currentBookController.text.trim(),
+      'currentBookCover': _bookCover ?? '',
+      'currentBookAuthor': _bookAuthor ?? '',
+      'discussionDate': _discussionDate,
     };
-
+ 
     if (imageUrl != null && imageUrl.isNotEmpty) {
       updateData['picture'] = imageUrl;
       print('Adding picture URL to updateData.');
@@ -324,11 +259,11 @@ Future<void> _updateClub() async {
       updateData['picture'] = FieldValue.delete(); // Remove the picture field
       print('Removing picture URL from updateData.');
     }
-
+ 
     print('Updating Firestore document...');
     await _firestore.collection('clubs').doc(widget.clubId).update(updateData);
     print('Firestore update successful.');
-
+ 
     // Show success message
     _showUpdateSuccessMessage();
   } catch (e) {
@@ -410,52 +345,52 @@ Future<void> _deleteImageFromFirebase() async {
     });
   }
  
-// Function to select a date and time for the next discussion
-Future<void> _pickDiscussionDate() async {
-  DateTime now = DateTime.now();
-
-  DateTime? selectedDate = await showDatePicker(
-    context: context,
-    initialDate: now,
-    firstDate: now, // Prevent selecting a past date
-    lastDate: DateTime(2100),
-  );
-
-  if (selectedDate == null) {
-    print('Date picker canceled.');
-    return; // User canceled the date picker
+  // Function to select a date and time for the next discussion
+  Future<void> _pickDiscussionDate() async {
+    DateTime now = DateTime.now();
+ 
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now, // Prevent selecting a past date
+      lastDate: DateTime(2100),
+    );
+ 
+    if (selectedDate == null) {
+      print('Date picker canceled.');
+      return; // User canceled the date picker
+    }
+ 
+    TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+ 
+    if (selectedTime == null) {
+      print('Time picker canceled.');
+      return; // User canceled the time picker
+    }
+ 
+    DateTime fullDateTime = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+ 
+    if (fullDateTime.isBefore(DateTime.now())) {
+      print('Selected date is in the past.');
+      setState(() {
+        _errorMessage = 'You cannot select a past time.';
+      });
+    } else {
+      setState(() {
+        _discussionDate = Timestamp.fromDate(fullDateTime);
+        print('Selected discussion date: $_discussionDate');
+      });
+    }
   }
-
-  TimeOfDay? selectedTime = await showTimePicker(
-    context: context,
-    initialTime: TimeOfDay.now(),
-  );
-
-  if (selectedTime == null) {
-    print('Time picker canceled.');
-    return; // User canceled the time picker
-  }
-
-  DateTime fullDateTime = DateTime(
-    selectedDate.year,
-    selectedDate.month,
-    selectedDate.day,
-    selectedTime.hour,
-    selectedTime.minute,
-  );
-
-  if (fullDateTime.isBefore(DateTime.now())) {
-    print('Selected date is in the past.');
-    setState(() {
-      _errorMessage = 'You cannot select a past time.';
-    });
-  } else {
-    setState(() {
-      _discussionDate = Timestamp.fromDate(fullDateTime);
-      print('Selected discussion date: $_discussionDate');
-    });
-  }
-}
  
   // Format Firestore timestamp to readable date
   String _formatTimestamp(Timestamp timestamp) {
@@ -726,52 +661,50 @@ TextFormField(
                                     overflow: TextOverflow.ellipsis, // Truncate if too long
                                   ),
                                 ),
-// Search icon
-GestureDetector(
-  onTap: () async {
-    print('Navigating to SelectBookPage...');
-    // Navigate to SelectBookPage
-    final selectedBook = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SelectBookPage(),
-      ),
-    );
-
-    // Check if a book was selected
-    if (selectedBook != null) {
-      setState(() {
-        _selectedBookId = selectedBook['id']; // Store book ID
-        _currentBookController.text = selectedBook['title']; // Set title
-        _bookCover = selectedBook['coverImage']; // Store book cover
-        _bookAuthor = selectedBook['author']; // Store author name
-        _discussionDate = null; // Clear discussion date
-      });
-      print('Book selected: $selectedBook');
-    } else {
-      print('No book selected.');
-    }
-  },
-  child: const Icon(
-    Icons.search,
-    color: Color(0xFFF790AD), // Customize icon color
-  ),
-),
+                                // Search icon
+                                GestureDetector(
+                                  onTap: () async {
+                                    print('Navigating to SelectBookPage...');
+                                    // Navigate to SelectBookPage
+                                    final selectedBook = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SelectBookPage(),
+                                      ),
+                                    );
+ 
+                                    // Check if a book was selected
+                                    if (selectedBook != null) {
+                                      setState(() {
+                                        _selectedBookId = selectedBook['id']; // Store book ID
+                                        _currentBookController.text = selectedBook['title']; // Set title
+                                        _bookCover = selectedBook['coverImage']; // Store book cover
+                                        _bookAuthor = selectedBook['author']; // Store author name
+                                      });
+                                      print('Book selected: $selectedBook');
+                                    } else {
+                                      print('No book selected.');
+                                    }
+                                  },
+                                  child: const Icon(
+                                    Icons.search,
+                                    color: Color(0xFFF790AD), // Customize icon color
+                                  ),
+                                ),
                                 if (_currentBookController.text.isNotEmpty)
-// X icon
-IconButton(
-  icon: const Icon(Icons.close, color: Colors.red), // X icon
-  onPressed: () {
-    setState(() {
-      _currentBookController.clear(); // Clear the book title
-      _bookCover = null; // Clear the book cover
-      _bookAuthor = null; // Clear the author name
-      _selectedBookId = null; // Clear the book ID
-      _discussionDate = null; // Clear discussion date
-    });
-    print('Book selection cleared.');
-  },
-),
+                                  IconButton(
+                                    icon: const Icon(Icons.close,
+                                        color: Colors.red), // X icon
+                                    onPressed: () {
+                                      setState(() {
+                                        _currentBookController.clear(); // Clear the book title
+                                        _bookCover = null; // Clear the book cover
+                                        _bookAuthor = null; // Clear the author name
+                                        _selectedBookId = null; // Clear the book ID
+                                      });
+                                      print('Book selection cleared.');
+                                    },
+                                  ),
                               ],
                             ),
                           ),
@@ -779,54 +712,57 @@ IconButton(
                       ],
                     ),
  
-// Display the selected book cover and author
-// Display the selected book cover and author
-if (_bookCover != null) ...[
-  const SizedBox(height: 16), // Space between fields
-  Center(
-    child: Image.network(
-      _bookCover!,
-      height: 100,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(); // Return an empty container if the image fails to load
-      },
-    ),
-  ),
-],
+                    // Display the selected book cover and author
+                    if (_bookCover != null) ...[
+                      const SizedBox(height: 16), // Space between fields
+                      Image.network(
+                        _bookCover!,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.error), // Error icon if the image fails to load
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _bookAuthor != null ? 'Author: $_bookAuthor' : '',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
  
                     const SizedBox(height: 20),
  
-// Next Discussion Section
-Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    const Text(
-      'Next Discussion (Optional):',
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-    TextButton(
-      onPressed: _selectedBookId != null ? _pickDiscussionDate : null,
-      child: Text(
-        _discussionDate != null
-            ? _formatTimestamp(_discussionDate!)
-            : _selectedBookId != null
-                ? 'Pick a date & time'
-                : 'Select a book first',
-        style: TextStyle(
-          fontSize: 14,
-          color: _selectedBookId != null
-              ? const Color(0xFFF790AD)
-              : Colors.grey, // Disable color if no book is selected
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    ),
-  ],
-),
+                    // Next Discussion Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Next Discussion (Optional):',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _pickDiscussionDate,
+                          child: Text(
+                            _discussionDate != null
+                                ? _formatTimestamp(_discussionDate!)
+                                : 'Pick a date & time',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFFF790AD),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 20),
  
 // Update Club Button with loading spinner
