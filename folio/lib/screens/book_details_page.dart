@@ -367,7 +367,7 @@ Stream<int> fetchMemberCount(String clubId) {
               .collection(list)
               .doc(widget.bookId)
               .delete();
-          if (list == 'finished') {
+          if (list == 'Finished') {
             await _decrementBooksRead();
           }
         }
