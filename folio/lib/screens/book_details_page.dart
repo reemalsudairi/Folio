@@ -36,6 +36,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     super.initState();
     _fetchUserIdAndLoadDetails(); 
         fetchBookClubs(widget.bookId); 
+          _loadBookDetails(); // Fetch the book details
   }
 
   // Fetch the user ID from Firebase Authentication
@@ -63,39 +64,51 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
   }
 
-  void _loadBookDetails() async {
-    try {
-      final details = await _googleBooksService.getBookDetails(widget.bookId);
-      final List<String> allLists = ['save', 'currently reading', 'finished'];
-      String currentList = 'Add to'; // Default state
+void _loadBookDetails() async {
+  setState(() {
+    _isLoading = true; // Start loading
+    _errorMessage = ''; // Clear any previous errors
+  });
 
-      for (var list in allLists) {
-        var doc = await _firestore
-            .collection('reader')
-            .doc(userId)
-            .collection(list)
-            .doc(widget.bookId)
-            .get();
+  print('Loading: $_isLoading (Before fetching data)');
 
-        if (doc.exists) {
-          currentList =
-              capitalize(list); // Use the newly created helper function
-          break;
-        }
+  try {
+
+    final details = await _googleBooksService.getBookDetails(widget.bookId); // Fetch book details
+    
+    final List<String> allLists = ['save', 'currently reading', 'finished'];
+    String currentList = 'Add to'; // Default button state
+
+    for (var list in allLists) {
+      var doc = await _firestore
+          .collection('reader')
+          .doc(userId)
+          .collection(list)
+          .doc(widget.bookId)
+          .get();
+
+      if (doc.exists) {
+        currentList = capitalize(list);
+        break;
       }
-
-      setState(() {
-        bookDetails = details;
-        selectedOption = currentList; // Set the current list
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Error loading book details: ${e.toString()}';
-      });
     }
+
+    setState(() {
+      bookDetails = details; // Update book details
+      selectedOption = currentList;
+      _isLoading = false; // Stop loading
+    });
+
+    print('Loading: $_isLoading (After fetching data)'); // Check loading state after
+  } catch (e) {
+    setState(() {
+      _isLoading = false; // Stop loading on error
+      _errorMessage = 'Error loading book details: ${e.toString()}';
+    });
+
+    print('Error: $_errorMessage'); // Log error
   }
+}
 
   String capitalize(String input) {
     if (input.isEmpty) return "";
@@ -468,9 +481,14 @@ Future<void> _decrementBooksRead() async {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading || !_isUserIdLoaded) {
-      return Center(child: CircularProgressIndicator());
-    }
+ 
+  // Show a loading spinner while loading is true or the user ID isn't loaded yet
+  if (_isLoading || !_isUserIdLoaded) {
+    return const Center(child: CircularProgressIndicator());
+  }
+  if (_isLoading || bookDetails == null) {
+  return Center(child: CircularProgressIndicator());
+  }
 
     if (_errorMessage.isNotEmpty) {
       return Center(child: Text(_errorMessage));
@@ -489,9 +507,12 @@ Future<void> _decrementBooksRead() async {
         ),
         centerTitle: true,
       ),
-      body: Padding(
+      body: _isLoading
+    ? const Center(child: CircularProgressIndicator()) // Show loading indicator if still loading
+    : Padding(
         padding: const EdgeInsets.all(12.0),
         child: SingleChildScrollView(
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -532,6 +553,7 @@ Future<void> _decrementBooksRead() async {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
+              
 
               // Add to Library button with dropdown and checkmark
               Row(
