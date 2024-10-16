@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/services/google_books_service.dart';
 import 'package:html/parser.dart'; // For parsing HTML
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:folio/screens/viewClub.dart';
 
 class BookDetailsPage extends StatefulWidget {
   final String bookId;
@@ -27,11 +29,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   String selectedOption = 'Add to'; // Default button text
   int _selectedIndex = 0; // To track selected tab
+    List<Club> bookClubs = []; // Initialize the bookClubs list
 
   @override
   void initState() {
     super.initState();
-    _fetchUserIdAndLoadDetails(); // Fetch user ID from Firebase Auth
+    _fetchUserIdAndLoadDetails(); 
+        fetchBookClubs(widget.bookId); 
   }
 
   // Fetch the user ID from Firebase Authentication
@@ -62,8 +66,27 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   void _loadBookDetails() async {
     try {
       final details = await _googleBooksService.getBookDetails(widget.bookId);
+      final List<String> allLists = ['save', 'currently reading', 'finished'];
+      String currentList = 'Add to'; // Default state
+
+      for (var list in allLists) {
+        var doc = await _firestore
+            .collection('reader')
+            .doc(userId)
+            .collection(list)
+            .doc(widget.bookId)
+            .get();
+
+        if (doc.exists) {
+          currentList =
+              capitalize(list); // Use the newly created helper function
+          break;
+        }
+      }
+
       setState(() {
         bookDetails = details;
+        selectedOption = currentList; // Set the current list
         _isLoading = false;
       });
     } catch (e) {
@@ -74,6 +97,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
   }
 
+  String capitalize(String input) {
+    if (input.isEmpty) return "";
+    return input[0].toUpperCase() + input.substring(1);
+  }
+
   // Method to remove HTML tags from a string
   String removeHtmlTags(String htmlText) {
     final document = parse(htmlText);
@@ -81,6 +109,180 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     parsedText = parsedText.replaceAll('⭐', ''); // Remove star symbols
     return parsedText;
   }
+Future<void> fetchBookClubs(String bookId) async {
+  try {
+    QuerySnapshot clubsSnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .where('currentBookID', isEqualTo: bookId)
+        .get();
+
+    List<Club> tempClubs = [];
+    for (var doc in clubsSnapshot.docs) {
+      int memberCount = await fetchMemberCount(doc.id); // Fetch the member count
+      tempClubs.add(Club.fromMap(doc.data() as Map<String, dynamic>, doc.id, memberCount)); // Update club member count
+
+
+    }
+
+    setState(() {
+      bookClubs = tempClubs;
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('Error fetching clubs: $e');
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
+Future<int> fetchMemberCount(String clubId) async {
+  try {
+    QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
+        .collection('clubs')
+        .doc(clubId)
+        .collection('members')
+        .get();
+
+    return membersSnapshot.size; // Return the correct count
+  } catch (e) {
+    print('Error fetching member count for club $clubId: $e');
+    return 0;
+  }
+}
+
+
+
+  // Method to build the club grid view
+  Widget buildClubGridView(List<Club> bookClubs) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (bookClubs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'No clubs are currently discussing this book.',
+          style: TextStyle(fontSize: 18, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    } else {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+        ),
+        itemCount: bookClubs.length,
+        itemBuilder: (context, index) {
+          final club = bookClubs[index];
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ViewClub(clubId: club.id),
+                ),
+              );
+            },
+            child: buildClubCard(club),
+          );
+        },
+      );
+    }
+  }
+
+  Widget buildClubCard(Club club) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewClub(clubId: club.id), // Navigate to club details
+        ),
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          club.picture.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 140, // Adjusted height
+                    width: double.infinity,
+                    child: Image.network(
+                      club.picture,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 140,
+                          width: double.infinity,
+                          color: Colors.red,
+                          child: const Icon(Icons.error, color: Colors.white),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                    ),
+                  ),
+                )
+              : Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.withOpacity(0.2),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/clubs.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+          const SizedBox(height: 8), // Add some space between the image and text
+
+          // Club name
+          Flexible(
+            child: Text(
+              club.name,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+              maxLines: 1, // Limit to one line
+              overflow: TextOverflow.ellipsis, // Show ellipsis if name is too long
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Member count (smaller font size)
+          Flexible(
+            child: Text(
+                  '${club.memberCount} members', // Correctly displaying the member count
+              style: const TextStyle(fontSize: 14, color: Colors.grey), // Smaller text size
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
   void _onMenuSelected(String value) {
     if (value != selectedOption) {
@@ -91,77 +293,112 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       });
     }
   }
-Future<void> _moveBookBetweenLists(String currentList, String newList) async {
-  // Ensure userId is set
-  if (!_isUserIdLoaded) {
-    print('Error: User ID is not loaded yet!');
-    return;
-  }
 
-  final currentUserId = userId ?? widget.userId;
-
-  // ignore: unnecessary_null_comparison
-  if (currentUserId == null || currentUserId.isEmpty) {
-    print('Error: User ID is empty!');
-    return;
-  }
-
-  if (widget.bookId.isEmpty) {
-    print('Error: Book ID is empty!');
-    return;
-  }
-
-  try {
-    print('Moving book from $currentList to $newList');
-
-    // Remove the book from all lists except the new one
-    final List<String> allLists = ['save', 'currently reading', 'finished'];
-
-    for (var list in allLists) {
-      if (list != newList.toLowerCase()) {
-        print('Removing book from $list');
-        await _firestore
-            .collection('reader')
-            .doc(currentUserId)
-            .collection(list)
-            .doc(widget.bookId)
-            .delete();
-
-        // If the book was in "finished", decrement the yearly goal
-        if (list == 'Finished') {
-          print('Attempting to decrement booksRead...');
-          await _decrementBooksRead();
-        }
-      }
+  Future<void> _moveBookBetweenLists(String currentList, String newList) async {
+    if (!_isUserIdLoaded) {
+      print('Error: User ID is not loaded yet!');
+      return;
     }
 
-// Add the book to the new list
-await _firestore
-    .collection('reader')
-    .doc(currentUserId)
-    .collection(newList.toLowerCase())
-    .doc(widget.bookId)
-    .set({
-  'bookID': widget.bookId,
-  'timestamp': FieldValue.serverTimestamp(),
-});
+    final currentUserId = userId ?? widget.userId;
 
-print('newList value is: $newList'); // Debugging log
+    if (currentUserId == null || currentUserId.isEmpty) {
+      print('Error: User ID is empty!');
+      return;
+    }
 
-// If the book is moved to "finished", increment the yearly goal
-if (newList == 'Finished') {
-  print('Entering _incrementBooksRead block...');  // Debugging log
-  await _incrementBooksRead();
-} else {
-  print('Not entering _incrementBooksRead, newList is not "finished"'); // Debugging log
-}
+    if (widget.bookId.isEmpty) {
+      print('Error: Book ID is empty!');
+      return;
+    }
 
+    try {
+      // Remove the book from all lists except the new one
+      final List<String> allLists = ['save', 'currently reading', 'finished'];
 
-    print('Successfully moved the book to $newList');
-  } catch (e) {
-    print('Error moving book: $e');
+      for (var list in allLists) {
+        if (list != newList.toLowerCase()) {
+          await _firestore
+              .collection('reader')
+              .doc(currentUserId)
+              .collection(list)
+              .doc(widget.bookId)
+              .delete();
+          if (list == 'finished') {
+            await _decrementBooksRead();
+          }
+        }
+      }
+      // Add the book to the new list and save the state
+      await _firestore
+          .collection('reader')
+          .doc(currentUserId)
+          .collection(newList.toLowerCase())
+          .doc(widget.bookId)
+          .set({
+        'bookID': widget.bookId,
+        'timestamp': FieldValue.serverTimestamp(),
+        'listName': newList // Save the list name as part of the book's data
+      });
+      // If the book is moved to "finished", increment the yearly goal
+      if (newList == 'Finished') {
+
+        await _incrementBooksRead();
+      }
+
+      _showConfirmationMessage(newList);
+    } catch (e) {
+      print('Error moving book: $e');
+    }
   }
-}
+
+  void _showConfirmationMessage(String listName) {
+    String formattedListName = listName[0].toUpperCase() +
+        listName.substring(1); // Capitalize the first letter
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Added to $formattedListName list successfully!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Automatically close the confirmation dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (Navigator.canPop(context)) {
+        // Check if the navigator can pop
+        Navigator.pop(context); // Close the confirmation dialog
+      }
+    });
+  }
+
 
 // Increment books read when a book is moved to "Finished"
 Future<void> _incrementBooksRead() async {
@@ -193,33 +430,32 @@ Future<void> _incrementBooksRead() async {
   }
 }
 
-// Decrement books read when a book is removed from "Finished"
 Future<void> _decrementBooksRead() async {
-  try {
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('reader')
-        .doc(userId)
-        .get();
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('reader')
+          .doc(userId)
+          .get();
 
-    if (userDoc.exists && userDoc.data() != null) {
-      Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
-      int booksRead = data?['booksRead'] ?? 0;
+      if (userDoc.exists && userDoc.data() != null) {
+        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+        int booksRead = data?['booksRead'] ?? 0;
 
-      if (booksRead > 0) {
-        await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(userId)
-            .update({'booksRead': booksRead - 1});
+        if (booksRead > 0) {
+          await FirebaseFirestore.instance
+              .collection('reader')
+              .doc(userId)
+              .update({'booksRead': booksRead - 1});
 
-        print('Books read decremented');
-      } else {
-        print('Cannot decrement, booksRead is already zero');
+          print('Books read decremented');
+        } else {
+          print('Cannot decrement, booksRead is already zero');
+        }
       }
+    } catch (e) {
+      print('Error decrementing books read: $e');
     }
-  } catch (e) {
-    print('Error decrementing books read: $e');
   }
-}
 
 
 
@@ -260,21 +496,22 @@ Future<void> _decrementBooksRead() async {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Book cover image
-             ClipRRect(
-  borderRadius: BorderRadius.circular(10),
-  child: Image.network(
-    bookDetails?['volumeInfo']['imageLinks']?['thumbnail'] ?? 'https://via.placeholder.com/150',
-    height: 250,
-    fit: BoxFit.cover,
-    errorBuilder: (context, error, stackTrace) {
-      return Container(
-        height: 250,
-        color: Colors.grey[300],
-        child: const Icon(Icons.broken_image, size: 40),
-      );
-    },
-  ),
-),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  bookDetails?['volumeInfo']['imageLinks']?['thumbnail'] ??
+                      'https://via.placeholder.com/150',
+                  height: 250,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 250,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.broken_image, size: 40),
+                    );
+                  },
+                ),
+              ),
 
               const SizedBox(height: 20),
               // Title
@@ -320,7 +557,7 @@ Future<void> _decrementBooksRead() async {
                             child: Text(
                               selectedOption == 'Add to'
                                   ? 'Add to'
-                                  : 'Added to $selectedOption',
+                                  : '$selectedOption',
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -573,14 +810,26 @@ Future<void> _decrementBooksRead() async {
                   ],
                 ),
               if (_selectedIndex == 1)
-                Center(
-                  child: Text(
-                    'No clubs discussing this book currently.',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown[800],
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+  child: Text(
+    'Clubs discussing this book',
+    style: const TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: Color(0xFF351F1F),
+    ),
+  ),
+),
+
+                      const SizedBox(height: 16),
+                      // Call to build the club grid view
+                      buildClubGridView(bookClubs),
+                    ],
                   ),
                 ),
               if (_selectedIndex == 2)
