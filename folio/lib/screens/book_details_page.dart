@@ -551,8 +551,8 @@ void _showGoalAchievedDialog() {
     }
   });
 }
-
-Future<void> _decrementBooksRead() async {
+ // Decrement books read when a book is removed from "Finished"
+  Future<void> _decrementBooksRead() async {
     try {
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('reader')
@@ -578,8 +578,6 @@ Future<void> _decrementBooksRead() async {
       print('Error decrementing books read: $e');
     }
   }
-
-
 
   // Handle tab switching
   void _onItemTapped(int index) {
