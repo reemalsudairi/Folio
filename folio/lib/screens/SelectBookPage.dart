@@ -63,12 +63,34 @@ class _SelectBookPageState extends State<SelectBookPage> {
       });
 
       try {
-        final books = await _googleBooksService
-            .searchBooks(searchTerm); // Search books by title
-        if (books.isEmpty) {
-          setState(() => _errorMessage = "No books found for '$searchTerm'.");
+        // Check if the search term is in Arabic
+        bool isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(searchTerm);
+
+        // Search books with the appropriate language restriction
+        final books = await _googleBooksService.searchBooks(
+          searchTerm,
+          // Assuming we are not searching by category here
+        );
+
+        if (isArabic) {
+          // Filter books to only keep Arabic ones
+          final arabicBooks = books.where((book) {
+            return book['volumeInfo']['language'] == 'ar';
+          }).toList();
+
+          if (arabicBooks.isEmpty) {
+            setState(() =>
+                _errorMessage = "No Arabic books found for '$searchTerm'.");
+          } else {
+            setState(() => _books = arabicBooks);
+          }
         } else {
-          setState(() => _books = books);
+          // If not Arabic, show all results
+          if (books.isEmpty) {
+            setState(() => _errorMessage = "No books found for '$searchTerm'.");
+          } else {
+            setState(() => _books = books);
+          }
         }
       } catch (e) {
         setState(() {
