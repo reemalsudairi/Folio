@@ -13,8 +13,9 @@ import 'package:uuid/uuid.dart'; // Import UUID package
 
 class ViewClub extends StatefulWidget {
   final String clubId;
+  final bool fromCreate;
 
-  ViewClub({Key? key, required this.clubId}) : super(key: key);
+  ViewClub({Key? key, required this.clubId, this.fromCreate = false}) : super(key: key);
 
   @override
   _ViewClubState createState() => _ViewClubState();
@@ -655,7 +656,13 @@ class _ViewClubState extends State<ViewClub> {
   leading: IconButton(
     icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
     onPressed: () {
-      Navigator.pop(context);
+     if (widget.fromCreate) {
+        // Pop twice to go back to the previous page of the previous page (All Clubs)
+        Navigator.pop(context); // Pop the View Club page
+        Navigator.pop(context); // Pop the Create Club page
+      } else {
+        Navigator.pop(context); // Normal back behavior
+      }
     },
   ),
   title: const Text(
@@ -703,17 +710,58 @@ class _ViewClubState extends State<ViewClub> {
                         fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    // Club name
-                    Text(
-                      _name,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4A2E2A),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                   const SizedBox(height: 10),
+// Club name and Join Club button
+Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    // Club name
+    Text(
+      _name,
+      style: const TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A2E2A),
+      ),
+    ),
+    // Join Club button
+    if (!_isOwner)
+      _isMember
+          ? ElevatedButton(
+              onPressed: () {
+                _showJoinLeaveConfirmation(false);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 245, 114, 105), // Button color for leaving
+              ),
+              child: Text(
+                "Leave Club",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : ElevatedButton(
+              onPressed: () {
+                _showJoinLeaveConfirmation(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 131, 201, 133), // Button color for joining
+              ),
+              child: Text(
+                "Join Club",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+  ],
+),
+const SizedBox(height: 8),
                     // Club description
                     Text(
                       _clubDescription,
@@ -1058,47 +1106,8 @@ class _ViewClubState extends State<ViewClub> {
                           ),
                       ],
                     ),
-                    SizedBox(height: 5),
-                    Divider(color: Colors.grey),
-                    SizedBox(height: 5),
-                    // Only show the Join/Leave button for non-owners
-                    if (!_isOwner)
-                      _isMember
-                          ? ElevatedButton(
-                              onPressed: () {
-                                _showJoinLeaveConfirmation(false);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(255, 245, 114,
-                                    105), // Button color for leaving
-                              ),
-                              child: Text(
-                                "Leave Club",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : ElevatedButton(
-                              onPressed: () {
-                                _showJoinLeaveConfirmation(true);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(255, 131, 201,
-                                    133), // Button color for joining
-                              ),
-                              child: Text(
-                                "Join Club",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                    const SizedBox(height: 25),
+                    SizedBox(height: 5)
+
                   ],
                 ),
               ),

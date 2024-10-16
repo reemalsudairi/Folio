@@ -122,49 +122,79 @@ void _loadBookDetails() async {
     parsedText = parsedText.replaceAll('⭐', ''); // Remove star symbols
     return parsedText;
   }
-Future<void> fetchBookClubs(String bookId) async {
+void fetchBookClubs(String bookId) {
   try {
-    QuerySnapshot clubsSnapshot = await FirebaseFirestore.instance
+    // Listen for changes in the 'clubs' collection where 'currentBookID' matches.
+    FirebaseFirestore.instance
         .collection('clubs')
         .where('currentBookID', isEqualTo: bookId)
-        .get();
+        .snapshots()
+        .listen((clubsSnapshot) {
+      List<Club> tempClubs = [];
 
-    List<Club> tempClubs = [];
-    for (var doc in clubsSnapshot.docs) {
-      int memberCount = await fetchMemberCount(doc.id); // Fetch the member count
-      tempClubs.add(Club.fromMap(doc.data() as Map<String, dynamic>, doc.id, memberCount)); // Update club member count
+      for (var doc in clubsSnapshot.docs) {
+        // Listen to real-time member count updates for each club.
+        fetchMemberCount(doc.id).listen((memberCount) {
+          // Create a new Club instance with the updated member count.
+          Club club = Club.fromMap(
+            doc.data() as Map<String, dynamic>,
+            doc.id,
+            memberCount,
+          );
 
+          // Update the club in the list or add if not present.
+          int existingIndex = tempClubs.indexWhere((c) => c.id == doc.id);
+          if (existingIndex >= 0) {
+            // Replace the existing club with the updated one.
+            tempClubs[existingIndex] = club;
+          } else {
+            // Add the new club.
+            tempClubs.add(club);
+          }
 
-    }
-
-    setState(() {
-      bookClubs = tempClubs;
-      _isLoading = false;
+          // Update the state with the latest book clubs list.
+          setState(() {
+            bookClubs = tempClubs;
+            _isLoading = false; // Data fetching is complete.
+          });
+        });
+      }
+    }, onError: (e) {
+      print('Error fetching clubs: $e');
+      setState(() {
+        _isLoading = false; // Set loading to false in case of error.
+      });
     });
   } catch (e) {
-    print('Error fetching clubs: $e');
+    print('Error setting up book clubs listener: $e');
     setState(() {
-      _isLoading = false;
+      _isLoading = false; // Set loading to false in case of error.
     });
   }
 }
-Future<int> fetchMemberCount(String clubId) async {
-  try {
-    QuerySnapshot membersSnapshot = await FirebaseFirestore.instance
-        .collection('clubs')
-        .doc(clubId)
-        .collection('members')
-        .get();
 
-    return membersSnapshot.size+1; // Return the correct count
-  } catch (e) {
-    print('Error fetching member count for club $clubId: $e');
-    return 1;
-  }
+Stream<int> fetchMemberCount(String clubId) {
+ try {
+   // Listen for real-time updates from the members subcollection
+   return FirebaseFirestore.instance
+       .collection('clubs')
+       .doc(clubId)
+       .collection('members')
+       .snapshots()
+       .map((membersSnapshot) {
+         // If the members collection is empty, return 1 to indicate only the owner.
+         if (membersSnapshot.size == 0) {
+           return 1;
+         }
+         // Otherwise, return the size of the members collection.
+         return membersSnapshot.size;
+       });
+ } catch (e) {
+   print('Error fetching member count for club $clubId: $e');
+   // Return a stream with a single value of 1 in case of an error.
+   return Stream.value(1);
+ }
 }
-
-
-
   // Method to build the club grid view
   Widget buildClubGridView(List<Club> bookClubs) {
     if (_isLoading) {
@@ -439,7 +469,7 @@ Future<void> _incrementBooksRead() async {
         print('Goal reached for the first time!');
         _showGoalAchievedDialog();  // Show the goal achieved dialog
 
-        // Update the flag so the message doesn't appear again
+        // Update the flag so the message doesn't appear again for this goal
         await FirebaseFirestore.instance
             .collection('reader')
             .doc(userId)
@@ -457,6 +487,7 @@ Future<void> _incrementBooksRead() async {
     print('Error incrementing books read: $e');
   }
 }
+
 
 void _showGoalAchievedDialog() {
   if (!mounted) return; // Ensure the widget is still mounted

@@ -177,7 +177,7 @@ class _CreateClubPageState extends State<CreateClubPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ViewClub(clubId: clubRef.id),
+            builder: (context) => ViewClub(clubId: clubRef.id, fromCreate: true,),
           ),
         );
 

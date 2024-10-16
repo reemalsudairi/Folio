@@ -199,6 +199,7 @@ Future<void> _saveProfile() async {
             : int.parse(_booksController.text),
         'profilePhoto': profilePhotoUrl,
         'email': widget.email,
+        'goalAchievedOnce': false, // Reset the flag when updating the goal
       };
 
       // Show a confirmation dialog before saving the profile
