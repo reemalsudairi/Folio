@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/homePage.dart';
 import 'package:folio/screens/splash.dart';
 
 void main() async {
@@ -15,8 +17,21 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  User? user;
+
+    @override
+  void initState() {
+    super.initState();
+    user = FirebaseAuth.instance.currentUser;
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +41,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF790AD)),
         useMaterial3: true,
       ),
-      home: const Splash(), // Set SignUp as the home page
+      home: user != null ? HomePage(userId: user!.uid) : Splash() , // Set SignUp as the home page
     );
   }
 }
