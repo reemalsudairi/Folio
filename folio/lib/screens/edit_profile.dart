@@ -233,27 +233,89 @@ Future<void> _saveProfile() async {
 }
 
 // Method to handle the confirmation dialog
-  Future<bool> _showConfirmationDialog() {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Confirm Changes'),
-          content: const Text('Do you want to save the changes?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // Cancel
-              child: const Text('Cancel'),
+Future<bool> _showConfirmationDialog() {
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: false, // Disable dismissal by clicking outside
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle, // Icon for confirmation
+              color: Colors.white,
+              size: 40,
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true), // Confirm
-              child: const Text('Confirm'),
+            const SizedBox(height: 10),
+            Text(
+              'Do you want to save the changes?',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 131, 201, 133), // Green for confirm
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40), // Set button width and height
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(true); // Confirm
+                  },
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12), // Space between buttons
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40), // Set button width and height
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(false); // Cancel
+                  },
+                  child: const Text(
+                    'No',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
-        );
-      },
-    ).then((value) => value ?? false);
-  }
+        ),
+      ),
+    ),
+  ).then((value) => value ?? false);
+}
 
   Future<String?> _uploadProfilePhoto(String userId) async {
     if (_imageFile != null) {
@@ -550,7 +612,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
 
   Future<void> _showImagePickerOptions(BuildContext context) async {
     bool isDefaultImage = _currentImage is AssetImage &&
-        (_currentImage as AssetImage).assetName ==
+        (_currentImage as AssetImage).assetName == 
             'assets/images/profile_pic.png';
 
     showModalBottomSheet(
