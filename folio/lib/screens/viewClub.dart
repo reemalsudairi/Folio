@@ -710,17 +710,58 @@ class _ViewClubState extends State<ViewClub> {
                         fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    // Club name
-                    Text(
-                      _name,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4A2E2A),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                   const SizedBox(height: 10),
+// Club name and Join Club button
+Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    // Club name
+    Text(
+      _name,
+      style: const TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A2E2A),
+      ),
+    ),
+    // Join Club button
+    if (!_isOwner)
+      _isMember
+          ? ElevatedButton(
+              onPressed: () {
+                _showJoinLeaveConfirmation(false);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 245, 114, 105), // Button color for leaving
+              ),
+              child: Text(
+                "Leave Club",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : ElevatedButton(
+              onPressed: () {
+                _showJoinLeaveConfirmation(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 131, 201, 133), // Button color for joining
+              ),
+              child: Text(
+                "Join Club",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+  ],
+),
+const SizedBox(height: 8),
                     // Club description
                     Text(
                       _clubDescription,
@@ -1065,47 +1106,8 @@ class _ViewClubState extends State<ViewClub> {
                           ),
                       ],
                     ),
-                    SizedBox(height: 5),
-                    Divider(color: Colors.grey),
-                    SizedBox(height: 5),
-                    // Only show the Join/Leave button for non-owners
-                    if (!_isOwner)
-                      _isMember
-                          ? ElevatedButton(
-                              onPressed: () {
-                                _showJoinLeaveConfirmation(false);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(255, 245, 114,
-                                    105), // Button color for leaving
-                              ),
-                              child: Text(
-                                "Leave Club",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : ElevatedButton(
-                              onPressed: () {
-                                _showJoinLeaveConfirmation(true);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(255, 131, 201,
-                                    133), // Button color for joining
-                              ),
-                              child: Text(
-                                "Join Club",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                    const SizedBox(height: 25),
+                    SizedBox(height: 5)
+
                   ],
                 ),
               ),
