@@ -17,26 +17,26 @@ class SavedBookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Navigate to book details page when the book is tapped
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookDetailsPage(
-              bookId: book.id,
-              userId: userId,
-            ),
-          ),
-        );
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ClipRRect(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: () {
+                // Navigate to book details page when the book is tapped
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookDetailsPage(
+                      bookId: book.id,
+                      userId: userId,
+                    ),
+                  ),
+                );
+              },
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Image.network(
                   book.thumbnailUrl,
@@ -51,95 +51,104 @@ class SavedBookCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                right: -40,
-                top: 5,
-                child: PopupMenuButton<String>(
-                  onSelected: (String result) {
-                    onMenuSelected(result);
-                  },
-                  icon: const Icon(
-                    Icons.more_vert,
-                    color: Color(0xFFF790AD), // Same pink color as BookCard C
-                    size: 30,
+            ),
+            Positioned(
+              right: 10, // Adjusted position to place the dots inside the cover
+              top: 10,
+              child: GestureDetector(
+                onTap: () {
+                  // Open the popup menu when the dots are tapped
+                  showMenu<String>(
+                    context: context,
+                    position: RelativeRect.fromLTRB(100.0, 100.0, 0.0, 0.0),
+                    items: <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'Move to Currently Reading',
+                        child: ListTile(
+                          leading: Icon(Icons.menu_book, color: Color(0xFF351F1F)),
+                          title: Text(
+                            'Move to Currently Reading',
+                            style: TextStyle(color: Color(0xFF351F1F)),
+                          ),
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Move to Finished',
+                        child: ListTile(
+                          leading: Icon(Icons.check_circle, color: Color(0xFF351F1F)),
+                          title: Text(
+                            'Move to Finished',
+                            style: TextStyle(color: Color(0xFF351F1F)),
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Remove from Saved',
+                        child: ListTile(
+                          leading: const Icon(Icons.delete, color: Colors.red),
+                          title: const Text(
+                            'Remove from Saved',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ).then((String? result) {
+                    if (result != null) {
+                      onMenuSelected(result);
+                    }
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white, // White background for the circle
                   ),
-                  color: const Color.fromARGB(
-                      255, 255, 255, 255), // White background
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'Move to Currently Reading',
-                      child: ListTile(
-                        leading: Icon(Icons.menu_book,
-                            color: Color(0xFF351F1F)), // Custom color
-                        title: Text(
-                          'Move to Currently Reading',
-                          style: TextStyle(
-                              color: Color(0xFF351F1F)), // Custom text color
-                        ),
-                      ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0), // Padding around the icon
+                    child: const Icon(
+                      Icons.more_vert,
+                      color: Color(0xFFF790AD), // Same pink color as before
+                      size: 30,
                     ),
-                    const PopupMenuItem<String>(
-                      value: 'Move to Finished',
-                      child: ListTile(
-                        leading: Icon(Icons.check_circle,
-                            color: Color(0xFF351F1F)), // Custom color
-                        title: Text(
-                          'Move to Finished',
-                          style: TextStyle(
-                              color: Color(0xFF351F1F)), // Custom text color
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'Remove from Saved',
-                      child: ListTile(
-                        leading: const Icon(Icons.delete, color: Colors.red),
-                        title: const Text(
-                          'Remove from Saved',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ],
-          ),
-          // const SizedBox(height: 10),
-          Expanded(
-            child: SizedBox(
-              width: 120,
-              child: Column(
-                children: [
-                  Text(
-                    book.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8), // Added spacing for better layout
+        Expanded(
+          child: SizedBox(
+            width: 120,
+            child: Column(
+              children: [
+                Text(
+                  book.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  // const SizedBox(height: 2),
-                  Text(
-                    book.author,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  book.author,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
                   ),
-                  const SizedBox(height: 8),
-                ],
-              ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

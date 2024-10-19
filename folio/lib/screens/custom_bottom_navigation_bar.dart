@@ -11,14 +11,14 @@ class CustomBottomNavigationBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {  
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       onTap: onTap,
       selectedItemColor: const Color(0xFFF790AD), // Pink color for selected item
       unselectedItemColor: const Color(0xFFB3B3B3), // Grey color for unselected item
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home_outlined, size: 35), // Home icon
@@ -26,11 +26,11 @@ class CustomBottomNavigationBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.explore_outlined, size: 35), // Search icon
-          label: 'Search',
+          label: 'Books',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.book_outlined, size: 35), // Library icon
-          label: 'Library',
+          label: 'Clubs',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outlined, size: 35), // Profile icon

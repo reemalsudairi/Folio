@@ -232,8 +232,8 @@ class _HomePageState extends State<HomePage> {
         currentIndex: _selectedIndex,
         selectedItemColor: const Color(0xFFF790AD),
         unselectedItemColor: const Color(0xFFB3B3B3),
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
@@ -242,11 +242,11 @@ class _HomePageState extends State<HomePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.explore_outlined, size: 35),
-            label: 'Search',
+            label: 'Books',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.diversity_3_outlined, size: 35),
-            label: 'Library',
+            label: 'Clubs',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outlined, size: 35),
