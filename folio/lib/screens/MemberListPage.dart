@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/OtherProfile/otherprofile.dart';
 
 class MemberListPage extends StatefulWidget {
   final String clubID;
@@ -195,7 +196,7 @@ Widget _buildMemberList() {
         stream: FirebaseFirestore.instance
             .collection('reader')
             .doc(widget.ownerID)
-            .snapshots(), // Use snapshots for real-time updates
+            .snapshots(),
         builder: (context, ownerSnapshot) {
           if (ownerSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -217,6 +218,7 @@ Widget _buildMemberList() {
 
           return ListView(
             children: [
+              // Display the owner's profile separately
               ListTile(
                 leading: CircleAvatar(
                   radius: 25,
@@ -226,26 +228,41 @@ Widget _buildMemberList() {
                 ),
                 title: Text('$ownerName (Owner)'),
                 subtitle: Text('@$ownerUsername'),
+                onTap: () {
+                  // Navigate to the OtherProfile page for the owner
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OtherProfile(
+                        memberId: widget.ownerID, // Pass the owner ID to OtherProfile
+                        
+                      ),
+                    ),
+                  );
+                },
               ),
+              const Divider(), // Add a divider between the owner and members
+
+              // Display the members (excluding the owner)
               ...members.where((member) => member.id != widget.ownerID).map((member) {
                 return FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('reader')
                       .doc(member.id)
-                      .get(), // Change to FutureBuilder for individual fetch
+                      .get(), // Fetch member data
                   builder: (context, memberSnapshot) {
                     if (memberSnapshot.connectionState == ConnectionState.waiting) {
-                      return const SizedBox.shrink(); // Return an empty widget while loading
+                      return const SizedBox.shrink(); // Don't display until data is ready
                     }
 
                     if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
-                      return const SizedBox.shrink(); // Don't display this member
+                      return const SizedBox.shrink(); // Skip if no data
                     }
 
                     final memberData = memberSnapshot.data!.data() as Map<String, dynamic>?;
 
                     if (memberData == null) {
-                      return const SizedBox.shrink(); // Don't display this member
+                      return const SizedBox.shrink(); // Skip if data is null
                     }
 
                     String memberName = memberData['name'] ?? 'No Name';
@@ -267,6 +284,18 @@ Widget _buildMemberList() {
                               onPressed: () => _showRemoveConfirmation(member.id, memberName),
                             )
                           : null,
+                      onTap: () {
+                        // Navigate to the OtherProfile page for the member
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => OtherProfile(
+                              memberId: member.id, // Pass the member ID to OtherProfile
+                              
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
@@ -278,6 +307,7 @@ Widget _buildMemberList() {
     },
   );
 }
+
 
 
 
