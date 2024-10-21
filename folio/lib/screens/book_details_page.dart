@@ -956,31 +956,39 @@ if (_selectedIndex == 2)
     left: 0,
     right: 0,
     child: Center(
-      child: FloatingActionButton.extended(
-        onPressed: () {
-           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WriteReviewPage(
-                                    bookId: widget.bookId,
-                                    userId:
-                                        userId!), // Make sure userId is passed.
-                              ),
-                            );
-        },
-        label: Text(
-          'Write a review',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // Set text color to white
+
+child: FloatingActionButton.extended(
+  onPressed: () async {
+    // Check if the user has already reviewed the book
+    bool hasReviewed = await _checkIfReviewed(widget.bookId, userId!);
+    
+    if (hasReviewed) {
+      _showReviewAlreadyExistsDialog();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WriteReviewPage(
+            bookId: widget.bookId,
+            userId: userId!, // Ensure userId is passed.
           ),
         ),
-        backgroundColor: Color(0xFFF790AD),
-        icon: Icon(Icons.edit, color: Colors.white), // Set icon color to white
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30), // Make button more rounded
-        ),
-      ),
+      );
+    }
+  },
+  label: Text(
+    'Write a review',
+    style: TextStyle(
+      fontWeight: FontWeight.bold,
+      color: Colors.white, // Set text color to white
+    ),
+  ),
+  backgroundColor: Color(0xFFF790AD),
+  icon: Icon(Icons.edit, color: Colors.white), // Set icon color to white
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(30), // Make button more rounded
+  ),
+),
     ),
   ),
             ],
@@ -1022,4 +1030,71 @@ if (_selectedIndex == 2)
 
     return position + (wordWidths[index] / 2);
   }
+
+  // Function to check if the user has reviewed the book
+Future<bool> _checkIfReviewed(String bookId, String userId) async {
+  // Access Firestore to check for existing review
+  var snapshot = await FirebaseFirestore.instance
+      .collection('reviews')
+      .where('bookID', isEqualTo: bookId)
+      .where('reader_id', isEqualTo: userId)
+      .get();
+
+  return snapshot.docs.isNotEmpty; // Returns true if a review exists
+}
+
+// Show a dialog if the user has already reviewed the book
+void _showReviewAlreadyExistsDialog() {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Disable dismissal by clicking outside
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning, // Warning icon for review exists
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'You have already reviewed this book. You need to delete your old review to review it again.',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey, // Grey background for "Exit"
+              ),
+              child: const Text(
+                'Exit',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 }
