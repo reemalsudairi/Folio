@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/bookclubs_page.dart';
+import 'package:folio/screens/writeReview.dart';
 import 'package:folio/services/google_books_service.dart';
 import 'package:html/parser.dart'; // For parsing HTML
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -949,17 +950,39 @@ SizedBox(
                     ],
                   ),
                 ),
-              if (_selectedIndex == 2)
-                Center(
-                  child: Text(
-                    'No reviews available.',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown[800],
-                    ),
-                  ),
-                ),
+if (_selectedIndex == 2)
+  Positioned(
+    bottom: 16, // Adjust this value to control the distance from the bottom
+    left: 0,
+    right: 0,
+    child: Center(
+      child: FloatingActionButton.extended(
+        onPressed: () {
+           Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WriteReviewPage(
+                                    bookId: widget.bookId,
+                                    userId:
+                                        userId!), // Make sure userId is passed.
+                              ),
+                            );
+        },
+        label: Text(
+          'Write a review',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // Set text color to white
+          ),
+        ),
+        backgroundColor: Color(0xFFF790AD),
+        icon: Icon(Icons.edit, color: Colors.white), // Set icon color to white
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30), // Make button more rounded
+        ),
+      ),
+    ),
+  ),
             ],
           ),
         ),
