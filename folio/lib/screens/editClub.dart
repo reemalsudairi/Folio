@@ -443,6 +443,84 @@ Future<void> _pickDiscussionDate() async {
   }
   // Helper function to ensure two digits
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
+
+// Show confirmation dialog for back button
+  Future<bool?> _showExitConfirmationDialog() async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.warning, // Warning icon
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'You will lose any unsaved changes. Are you sure you want to go back?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(true); // Close the dialog and return true
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 245, 114, 105), // Pink background for "Yes"
+                    ),
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize:  14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(false); // Close the dialog and return false
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey, // Grey background for "No"
+                    ),
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -459,6 +537,16 @@ Future<void> _pickDiscussionDate() async {
         centerTitle: true,
         backgroundColor: const Color(0xFFF8F8F3),
         elevation: 0,
+        leading: IconButton(
+  icon: Icon(Icons.arrow_back, color: Colors.black),
+  onPressed: () {
+    _showExitConfirmationDialog().then((confirm) {
+      if (confirm == true) {
+        Navigator.pop(context); // Go back if confirmed
+      }
+    });
+  },
+),
         actions: [
           TextButton(
             onPressed: _showDeleteConfirmationDialog,

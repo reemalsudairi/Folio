@@ -637,128 +637,158 @@ class _ViewClubState extends State<ViewClub> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Determine if the discussion date has been reached
-    bool isDiscussionDateReached = _discussionDate != null &&
-        DateTime.now().isAfter(_discussionDate!.toLocal());
+@override
+Widget build(BuildContext context) {
+  // Determine if the discussion date has been reached
+  bool isDiscussionDateReached = _discussionDate != null &&
+      DateTime.now().isAfter(_discussionDate!.toLocal());
 
-    // Determine if the "Join Discussion" button should be visible and enabled
-    bool canJoinDiscussion = (_isMember || _isOwner) &&
-        _isDiscussionScheduled &&
-        isDiscussionDateReached;
+  // Determine if the "Join Discussion" button should be visible and enabled
+  bool canJoinDiscussion = (_isMember || _isOwner) &&
+      _isDiscussionScheduled &&
+      isDiscussionDateReached;
 
-    return Scaffold(
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8F5F0),
+    appBar: AppBar(
       backgroundColor: const Color(0xFFF8F5F0),
-      appBar: AppBar(
-  backgroundColor: const Color(0xFFF8F5F0),
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
-    onPressed: () {
-      if (widget.fromCreate) {
-        Navigator.pop(context);
-        Navigator.pop(context);
-      } else {
-Navigator.pop(context);
-      }
-    },
-  ),
-  title: const Text(
-    'Club Details',
-    style: TextStyle(
-      color: Color(0xFF4A2E2A),
-      fontSize: 25,
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-  centerTitle: true, // This centers the title
-  actions: [
-    if (_isOwner)
-      IconButton(
-        icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EditClub(clubId: widget.clubId),
-            ),
-          );
+          if (widget.fromCreate) {
+            Navigator.pop(context);
+            Navigator.pop(context);
+          } else {
+            Navigator.pop(context);
+          }
         },
       ),
-    const SizedBox(width: 8), // Add some padding to the right
-  ],
-),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Club picture
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: Image(
-                        image: _picture.isNotEmpty
-                            ? NetworkImage(_picture)
-                            : AssetImage('assets/images/clubs.jpg'),
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Club name
-                   // Club name and Join/Leave button
-Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    // Club name
-    Expanded(
-      child: Text(
-        _name,
-        style: const TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
+      title: const Text(
+        'Club Details',
+        style: TextStyle(
           color: Color(0xFF4A2E2A),
+          fontSize: 25,
+          fontWeight: FontWeight.bold,
         ),
       ),
+      centerTitle: true,
+      actions: [
+        if (_isOwner)
+          IconButton(
+            icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditClub(clubId: widget.clubId),
+                ),
+              ).then((_) {
+                // Refresh the club data after returning from EditClub
+                setState(() {
+                  _isLoading = true; // Set loading state before fetching
+                });
+              });
+            },
+          ),
+        const SizedBox(width: 8),
+      ],
     ),
-    // Join/Leave button
-    if (!_isOwner)
-      _isMember
-          ? ElevatedButton(
-              onPressed: () {
-                _showJoinLeaveConfirmation(false);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 245, 114, 105), // Button color for leaving
-              ),
-              child: Text(
-                "Leave Club",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+    body: StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('clubs')
+          .doc(widget.clubId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error fetching club data.'));
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Center(child: Text('Club does not exist.'));
+        }
+
+        final clubData = snapshot.data!.data() as Map<String, dynamic>;
+
+        // Update your state variables from clubData
+        _name = clubData['name'] ?? 'No Name Available';
+        _clubDescription = clubData['description'] ?? 'No Description Available';
+        _picture = clubData['picture'] ?? '';
+        _language = clubData['language'] ?? 'Unknown Language';
+        _clubOwnerID = clubData['ownerID'] ?? '';
+        
+        // Continue with your existing logic to check ownership, membership, etc.
+        // ...
+
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Club picture
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image(
+                    image: _picture.isNotEmpty
+                        ? NetworkImage(_picture)
+                        : AssetImage('assets/images/clubs.jpg'),
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-            )
-          : ElevatedButton(
-              onPressed: () {
-                _showJoinLeaveConfirmation(true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 131, 201, 133), // Button color for joining
-              ),
-              child: Text(
-                "Join Club",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                const SizedBox(height: 10),
+                // Club name and Join/Leave button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Club name
+                    Expanded(
+                      child: Text(
+                        _name,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4A2E2A),
+                        ),
+                      ),
+                    ),
+                    // Join/Leave button
+                    if (!_isOwner)
+                      _isMember
+                          ? ElevatedButton(
+                              onPressed: () {
+                                _showJoinLeaveConfirmation(false);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color.fromARGB(255, 245, 114, 105),
+                              ),
+                              child: Text(
+                                "Leave Club",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          : ElevatedButton(
+                              onPressed: () {
+                                _showJoinLeaveConfirmation(true);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color.fromARGB(255, 131, 201, 133),
+                              ),
+                              child: Text(
+                                "Join Club",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
               ),
             ),
   ],
@@ -1116,7 +1146,10 @@ Row(
                   ],
                 ),
               ),
-            ),
+            
     );
-  }
+      
+      }));
+
+}
 }
