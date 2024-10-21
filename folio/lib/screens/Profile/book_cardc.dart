@@ -3,10 +3,12 @@ import 'package:folio/screens/book_details_page.dart';
 
 import 'book.dart';
 
+
 class CurrentlyReadingBookCard extends StatelessWidget {
   final Book book;
   final String userId;
   final Function(String option) onMenuSelected;
+
 
   const CurrentlyReadingBookCard({
     super.key,
@@ -14,6 +16,7 @@ class CurrentlyReadingBookCard extends StatelessWidget {
     required this.userId,
     required this.onMenuSelected,
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -53,63 +56,75 @@ class CurrentlyReadingBookCard extends StatelessWidget {
               ),
             ),
             Positioned(
-              right: 10, // Adjusted position to place the dots inside the cover
+              right: 10,
               top: 10,
-              child: GestureDetector(
-                onTap: () {
-                  // Open the popup menu when the dots are tapped
-                  showMenu<String>(
-                    context: context,
-                    position: RelativeRect.fromLTRB(100.0, 100.0, 0.0, 0.0),
-                    items: <PopupMenuEntry<String>>[
-                      const PopupMenuItem<String>(
-                        value: 'Move to Finished',
-                        child: ListTile(
-                          leading: Icon(Icons.check_circle, color: Color(0xFF351F1F)),
-                          title: Text(
-                            'Move to Finished',
-                            style: TextStyle(color: Color(0xFF351F1F)),
+              child: Builder(
+                builder: (context) => GestureDetector(
+                  onTap: () {
+                    // Get the position of the white circle relative to the screen
+                    final RenderBox box = context.findRenderObject() as RenderBox;
+                    final Offset position = box.localToGlobal(Offset.zero);
+
+
+                    showMenu<String>(
+                      color: Colors.white,
+                      context: context,
+                      position: RelativeRect.fromLTRB(
+                        position.dx,   // Use the x-position of the white circle
+                        position.dy + 40, // Adjust y-position to be slightly below the circle
+                        position.dx + 40, // Adjust width for the right side of the menu
+                        0.0,             // Bottom position can be 0, as it's not needed
+                      ),
+                      items: <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'Move to Finished',
+                          child: ListTile(
+                            leading: Icon(Icons.check_circle, color: Color(0xFF351F1F)),
+                            title: Text(
+                              'Move to Finished',
+                              style: TextStyle(color: Color(0xFF351F1F)),
+                            ),
                           ),
                         ),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'Move to Saved',
-                        child: ListTile(
-                          leading: Icon(Icons.bookmark, color: Color(0xFF351F1F)),
-                          title: Text(
-                            'Move to Saved',
-                            style: TextStyle(color: Color(0xFF351F1F)),
+                        const PopupMenuItem<String>(
+                          value: 'Move to Saved',
+                          child: ListTile(
+                            leading: Icon(Icons.bookmark, color: Color(0xFF351F1F)),
+                            title: Text(
+                              'Move to Saved',
+                              style: TextStyle(color: Color(0xFF351F1F)),
+                            ),
                           ),
                         ),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'Remove from Currently Reading',
-                        child: ListTile(
-                          leading: Icon(Icons.delete, color: Colors.red),
-                          title: Text(
-                            'Remove from Currently Reading',
-                            style: TextStyle(color: Colors.red),
+                        const PopupMenuItem<String>(
+                          value: 'Remove from Currently Reading',
+                          child: ListTile(
+                            leading: Icon(Icons.delete, color: Colors.red),
+                            title: Text(
+                              'Remove from Currently Reading',
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ),
                         ),
+                      ],
+                    ).then((String? result) {
+                      if (result != null) {
+                        onMenuSelected(result);
+                      }
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white, // White background for the circle
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0), // Padding around the icon
+                      child: const Icon(
+                        Icons.more_vert,
+                        color: Color(0xFFF790AD), // Same pink color as before
+                        size: 30,
                       ),
-                    ],
-                  ).then((String? result) {
-                    if (result != null) {
-                      onMenuSelected(result);
-                    }
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white, // White background for the circle
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0), // Padding around the icon
-                    child: const Icon(
-                      Icons.more_vert,
-                      color: Color(0xFFF790AD),
-                      size: 30,
                     ),
                   ),
                 ),
