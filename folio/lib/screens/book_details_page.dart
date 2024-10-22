@@ -1188,7 +1188,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       Text(
                         review.reviewText.isNotEmpty
                             ? review.reviewText
-                            : 'No review provided.', // Fallback text if review is empty
+                            : '', // Fallback text if review is empty
                         style: const TextStyle(
                             fontSize: 12), // Reduced review text size
                         textAlign: TextAlign.justify,
