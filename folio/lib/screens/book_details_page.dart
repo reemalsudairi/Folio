@@ -1064,11 +1064,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.only(top: 10), // Move the message down
+            padding: const EdgeInsets.only(top: 20), // Move the message down
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Space between the icon and the text
                 const Text(
                   'No reviews available.',
                   style: TextStyle(
@@ -1092,6 +1091,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           );
         } else {
           final reviews = snapshot.data!;
+          final String currentUserId =
+              FirebaseAuth.instance.currentUser?.uid ?? '';
 
           return ListView.builder(
             shrinkWrap: true,
@@ -1119,8 +1120,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           CircleAvatar(
                             backgroundImage: review
                                     .readerProfilePhoto.isNotEmpty
-                                ? NetworkImage(review.readerProfilePhoto)
-                                : const AssetImage(
+                                ? NetworkImage(review
+                                    .readerProfilePhoto) // Use NetworkImage for network photos
+                                : AssetImage(
                                     'assets/images/profile_pic.png'), // Use AssetImage for the default picture
                             radius: 18,
                           ),
@@ -1130,7 +1132,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  review.readerName,
+                                  review.readerId == currentUserId
+                                      ? 'You' // Change to "You" if it's the current user's review
+                                      : review.readerName,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14, // Reduced text size
@@ -1141,6 +1145,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                 Row(
                                   children: List.generate(5, (starIndex) {
                                     if (starIndex < review.rating.toInt()) {
+                                      // If the star index is less than the integer part of the rating, show filled star
                                       return const Icon(
                                         Icons.star,
                                         color: Color(0xFFF790AD), // Star color
@@ -1149,12 +1154,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                     } else if (starIndex ==
                                             review.rating.toInt() &&
                                         review.rating % 1 >= 0.5) {
+                                      // If the star index equals the integer part of the rating and there is a half star
                                       return const Icon(
                                         Icons.star_half,
                                         color: Color(0xFFF790AD), // Star color
                                         size: 14, // Star size
                                       );
                                     } else {
+                                      // Otherwise, show empty star
                                       return const Icon(
                                         Icons.star_border, // Empty star
                                         color: Color(0xFFF790AD), // Star color
@@ -1166,11 +1173,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               ],
                             ),
                           ),
-                          const Icon(
-                            Icons.flag, // Gray flag icon for reporting
-                            color: Colors.grey, // Set color to gray
-                            size: 20, // Adjust the size of the flag icon
-                          ),
+                          // Add the flag icon only if it's not the current user's review
+                          if (review.readerId != currentUserId)
+                            const Icon(
+                              Icons.flag, // Gray flag icon for reporting
+                              color: Colors.grey, // Set color to gray
+                              size: 20, // Adjust the size of the flag icon
+                            ),
                         ],
                       ),
                       const SizedBox(
