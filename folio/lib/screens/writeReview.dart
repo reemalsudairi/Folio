@@ -93,6 +93,7 @@ void _showReviewPublishMessage() {
 // Store review in Firestore
 Future<void> submitReview() async {
   await FirebaseFirestore.instance.collection('reviews').add({
+    'createdAt': FieldValue.serverTimestamp(), // This will add the current server time
     'reader_id': widget.userId,
     'bookID': widget.bookId,
     'rating': rating,
