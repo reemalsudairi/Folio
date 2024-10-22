@@ -32,17 +32,17 @@ class ReviewsPage extends StatelessWidget {
           }
 
           return ListView(
-            children: snapshot.data!.docs.map((DocumentSnapshot document) {
-              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-              return ReviewTile(
-                reviewText: data['reviewText'],
-                rating: (data['rating'] is int) ? data['rating'] : (data['rating'] as double).round(),
-                bookID: data['bookID'],
-                reviewId: document.id,
-                readerId: readerId,
-              );
-            }).toList(),
-          );
+  children: snapshot.data!.docs.map((DocumentSnapshot document) {
+    Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+    return ReviewTile(
+      reviewText: data['reviewText'],
+      rating: (data['rating'] is int) ? (data['rating'] as int).toDouble() : (data['rating'] as double),
+      bookID: data['bookID'],
+      reviewId: document.id,
+      readerId: readerId,
+    );
+  }).toList(),
+);
         },
       ),
     );
@@ -205,6 +205,7 @@ class ReviewTile extends StatelessWidget {
     );
   }
 
+  
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<DocumentSnapshot>(
