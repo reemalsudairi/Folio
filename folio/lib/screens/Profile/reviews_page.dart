@@ -6,8 +6,9 @@ import 'dart:convert';
 
 class ReviewsPage extends StatelessWidget {
   final String readerId; // Current user's uid
+  final String currentUserId; // Current user's ID
 
-  ReviewsPage({required this.readerId});
+  ReviewsPage({required this.readerId, required this.currentUserId});
 
   @override
   Widget build(BuildContext context) {
@@ -32,17 +33,23 @@ class ReviewsPage extends StatelessWidget {
           }
 
           return ListView(
-  children: snapshot.data!.docs.map((DocumentSnapshot document) {
-    Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-    return ReviewTile(
-      reviewText: data['reviewText'],
-      rating: (data['rating'] is int) ? (data['rating'] as int).toDouble() : (data['rating'] as double),
-      bookID: data['bookID'],
-      reviewId: document.id,
-      readerId: readerId,
-    );
-  }).toList(),
-);
+            children: snapshot.data!.docs.map((DocumentSnapshot document) {
+              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+
+              return ReviewTile(
+                reviewText: data['reviewText'],
+                rating: data['rating'] is int
+                    ? (data['rating'] as int).toDouble()
+                    : (data['rating'] is double)
+                        ? (data['rating'] as double)
+                        : double.tryParse(data['rating']) ?? 0.0, // Handle string case
+                bookID: data['bookID'],
+                reviewId: document.id,
+                readerId: data['reader_id'], // This is the review's reader ID
+                isOwner: data['reader_id'] == currentUserId, // Pass the isOwner flag based on current user
+              );
+            }).toList(),
+          );
         },
       ),
     );
@@ -54,6 +61,7 @@ class ReviewTile extends StatelessWidget {
   final String bookID;
   final String reviewId;
   final String readerId;
+  final bool isOwner;
 
   ReviewTile({
     required this.reviewText,
@@ -61,6 +69,8 @@ class ReviewTile extends StatelessWidget {
     required this.bookID,
     required this.reviewId,
     required this.readerId,
+    required this.isOwner,
+
   });
 
   // Function to delete a review with confirmation dialog
@@ -205,19 +215,11 @@ class ReviewTile extends StatelessWidget {
     );
   }
 
-  
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('reader').doc(readerId).get(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text("Error fetching user data");
-        }
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
         if (!snapshot.hasData || !snapshot.data!.exists) {
           return Text("User data not found");
         }
@@ -301,10 +303,11 @@ class ReviewTile extends StatelessWidget {
                     },
                     child: BookCover(bookID: bookID),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.delete, color: const Color.fromARGB(255, 245, 114, 105)),
-                    onPressed: () => _deleteReview(context),
-                  ),
+                  if (isOwner) // Conditionally render the delete button
+                    IconButton(
+                      icon: Icon(Icons.delete, color: const Color.fromARGB(255, 245, 114, 105)),
+                      onPressed: () => _deleteReview(context),
+                    ),
                 ],
               ),
             ),

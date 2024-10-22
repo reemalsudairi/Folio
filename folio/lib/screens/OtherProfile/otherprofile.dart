@@ -26,13 +26,8 @@ class _OtherProfileState extends State<OtherProfile> {
   int _selectedIndex = 0; // Track selected index for navigation
   
 
-  static final List<Widget> _pages = <Widget>[
-    const LibraryPage(userId: ''), // Pass memberId if necessary
-    ClubsPage(),
-   ReviewsPage(
-    readerId: '', // Pass the correct userId
-  ),
-  ];
+  // Remove the static keyword and initialize _pages as an instance variable
+  List<Widget> _pages = [];
 
   @override
   void initState() {
@@ -62,6 +57,15 @@ class _OtherProfileState extends State<OtherProfile> {
           _booksGoal = userData['books'] ?? 0; 
           _booksRead = userData['booksRead'] ?? 0; 
           _username = userData['username'] ?? '';
+
+          // Initialize _pages after fetching user profile
+          _pages = [
+            const LibraryPage(userId: ''), // Pass memberId if necessary
+            ClubsPage(),
+            ReviewsPage(
+              readerId: widget.memberId, currentUserId: '', // Pass the correct userId here
+            ),
+          ];
         });
         print('User profile fetched: $_name, $_username');
       } else {
@@ -320,31 +324,41 @@ Widget _buildYearlyGoal() {
     }
   }
 
-  double _getWordMiddlePosition(int index, double screenWidth) {
-    switch (index) {
-      case 0:
-        return screenWidth * 0.20; // Adjust position for 'Library'
-      case 1:
-        return screenWidth * 0.50;  // Adjust position for 'Clubs'
-      case 2:
-        return screenWidth * 0.80; // Adjust position for 'Reviews'
-      default:
-        return 0;
-    }
+ double _calculateTextWidth(String text) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return textPainter.width;
   }
 
-  double _calculateTextWidth(String text) {
-    final textStyle = const TextStyle(
-      fontSize: 18,
-      fontWeight: FontWeight.bold,
-      color: Colors.brown,
-    );
-    final textSpan = TextSpan(text: text, style: textStyle);
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    return textPainter.width;
+  double _getWordMiddlePosition(int index, double screenWidth) {
+    // Widths of each word using the same text style
+    final wordWidths = [
+      _calculateTextWidth('Library'),
+      _calculateTextWidth('Clubs'),
+      _calculateTextWidth('Reviews'),
+    ];
+
+    // Calculate the total width occupied by the words
+    double totalWordsWidth = wordWidths.reduce((a, b) => a + b);
+    // Calculate the space left to distribute between the words (padding)
+    double spaceBetweenWords = (screenWidth - totalWordsWidth) / 3;
+
+    // Position based on index (for left margin)
+    double position = spaceBetweenWords / 2;
+    for (int i = 0; i < index; i++) {
+      position += wordWidths[i] + spaceBetweenWords;
+    }
+
+    // Return middle of the word
+    return position + (wordWidths[index] / 2);
   }
 }

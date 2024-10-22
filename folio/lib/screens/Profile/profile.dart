@@ -420,7 +420,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _pages = [
               LibraryPage(userId: _userId),
               ClubsPage(),
-              ReviewsPage(readerId: _userId), // Pass the correct userId
+              ReviewsPage(readerId: _userId, currentUserId: '',), // Pass the correct userId
             ];
           });
         }
