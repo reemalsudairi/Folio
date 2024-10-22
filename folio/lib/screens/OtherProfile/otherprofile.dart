@@ -29,7 +29,9 @@ class _OtherProfileState extends State<OtherProfile> {
   static final List<Widget> _pages = <Widget>[
     const LibraryPage(userId: ''), // Pass memberId if necessary
     ClubsPage(),
-    const ReviewsPage(),
+   ReviewsPage(
+    readerId: '', // Pass the correct userId
+  ),
   ];
 
   @override
