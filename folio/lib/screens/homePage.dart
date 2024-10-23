@@ -9,6 +9,7 @@ import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/screens/categories_page.dart';
 import 'package:folio/screens/extendedclubs.dart';
+import 'package:folio/screens/searchMemebr.dart';
 import 'package:folio/screens/settings.dart';
 import 'package:folio/screens/viewClub.dart';
 import 'package:http/http.dart' as http;
@@ -310,22 +311,22 @@ class HomePageContent extends StatelessWidget {
                 },
               ),
             ),
-            IgnorePointer(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.person_search_rounded,
-                  color: Color.fromARGB(255, 35, 23, 23),
-                  size: 30,
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SettingsPage()),
-                  );
-                },
-              ),
-            )
+           IconButton(
+  icon: const Icon(
+    Icons.person_search_rounded,
+    color: Color.fromARGB(255, 35, 23, 23),
+    size: 30,
+  ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchMembersPage(),
+      ),
+    );
+  },
+)
+
           ],
         ),
       ),
