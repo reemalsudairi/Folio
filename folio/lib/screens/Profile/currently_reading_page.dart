@@ -46,7 +46,8 @@ class _CurrentlyReadingPageState extends State<CurrentlyReadingPage> {
           .doc(userId)
           .collection('currently reading');
 
-      QuerySnapshot querySnapshot = await booksRef.get();
+      QuerySnapshot querySnapshot = await booksRef.orderBy('timestamp', descending: true) // Sorting line added here
+        .get();
 
       List<Book> books = [];
       for (var doc in querySnapshot.docs) {
@@ -414,7 +415,7 @@ Widget build(BuildContext context) {
       elevation: 0, // Remove shadow
       centerTitle: true,
       title: const Text(
-        'Currently Reading',
+        'Currently Reading Books',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 26,

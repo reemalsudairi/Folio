@@ -18,7 +18,7 @@ class LibraryPage extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         children: [
           _buildGridItem(
-              context, Icons.menu_book_sharp, 'Currently reading', 'currently'),
+              context, Icons.menu_book_sharp, 'Currently Reading', 'currently'),
           _buildGridItem(context, Icons.bookmark_border, 'Saved', 'saved'),
           _buildGridItem(
               context, Icons.check_circle_outline, 'Finished', 'finished'),

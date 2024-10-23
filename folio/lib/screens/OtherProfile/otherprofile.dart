@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/OtherProfile/otherEditProfile.dart'; // Import for OtherEditProfile
+import 'package:folio/screens/OtherProfile/otherslibrary.dart';
 import 'package:folio/screens/Profile/clubs_page.dart';
-import 'package:folio/screens/Profile/library_page.dart';
 import 'package:folio/screens/Profile/reviews_page.dart';
 
 class OtherProfile extends StatefulWidget {
@@ -59,13 +59,18 @@ class _OtherProfileState extends State<OtherProfile> {
           _username = userData['username'] ?? '';
 
           // Initialize _pages after fetching user profile
-          _pages = [
-            const LibraryPage(userId: ''), // Pass memberId if necessary
-            ClubsPage(),
-            ReviewsPage(
-              readerId: widget.memberId, currentUserId: '', // Pass the correct userId here
-            ),
-          ];
+       _pages = [
+  OtherLibraryPage(
+    memberId: widget.memberId,
+    username: _username,
+  ),
+  ClubsPage(),
+  ReviewsPage(
+    readerId: widget.memberId,
+    currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '', // Pass the correct userId
+  ),
+];
+
         });
         print('User profile fetched: $_name, $_username');
       } else {
@@ -255,8 +260,7 @@ class _OtherProfileState extends State<OtherProfile> {
     );
   }
 
-  // Yearly Goal section with booksRead and booksGoal
-Widget _buildYearlyGoal() {
+  Widget _buildYearlyGoal() {
   return Container(
     padding: const EdgeInsets.all(16),
     margin: const EdgeInsets.symmetric(horizontal: 30),
@@ -303,12 +307,11 @@ Widget _buildYearlyGoal() {
           minHeight: 13,
           borderRadius: const BorderRadius.all(Radius.circular(20)),
         ),
-
-        
       ],
     ),
   );
 }
+
 
 
   String _getSelectedText() {

@@ -46,7 +46,8 @@ class _FinishedBooksPageState extends State<FinishedBooksPage> {
           .doc(userId)
           .collection('finished'); // Ensure collection name is 'finished'
 
-      QuerySnapshot querySnapshot = await booksRef.get();
+      QuerySnapshot querySnapshot = await booksRef.orderBy('timestamp', descending: true) // Sorting line added here
+        .get();
 
       List<Book> books = [];
       for (var doc in querySnapshot.docs) {

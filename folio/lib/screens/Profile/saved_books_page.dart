@@ -46,7 +46,8 @@ class _SavedBooksPageState extends State<SavedBooksPage> {
           .doc(userId)
           .collection('save'); // Ensure collection name is 'save'
 
-      QuerySnapshot querySnapshot = await booksRef.get();
+      QuerySnapshot querySnapshot = await booksRef.orderBy('timestamp', descending: true) // Sorting line added here
+        .get();
 
       List<Book> books = [];
       for (var doc in querySnapshot.docs) {
