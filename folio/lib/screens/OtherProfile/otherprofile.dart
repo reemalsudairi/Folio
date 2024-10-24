@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/OtherProfile/memebrClubs.dart';
 import 'package:folio/screens/OtherProfile/otherEditProfile.dart'; // Import for OtherEditProfile
 import 'package:folio/screens/OtherProfile/otherslibrary.dart';
 import 'package:folio/screens/Profile/clubs_page.dart';
@@ -64,7 +65,7 @@ class _OtherProfileState extends State<OtherProfile> {
     memberId: widget.memberId,
     username: _username,
   ),
-  ClubsPage(),
+  Memebrclubs(userId: 'userID'),
   ReviewsPage(
     readerId: widget.memberId,
     currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '', // Pass the correct userId
