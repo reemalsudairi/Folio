@@ -86,7 +86,7 @@ class _OtherProfileFinishedBooksPageState
         elevation: 0, // Remove shadow
         centerTitle: true,
         title: Text(
-          '${widget.username} Finished Books',
+          '@${widget.username} Finished Books',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,

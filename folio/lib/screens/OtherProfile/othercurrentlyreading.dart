@@ -86,7 +86,7 @@ class _OtherProfileCurrentlyReadingPageState
         elevation: 0, // Remove shadow
         centerTitle: true,
         title: Text(
-          '${widget.username} Currently Reading Books',
+          '@${widget.username} Currently Reading Books',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
