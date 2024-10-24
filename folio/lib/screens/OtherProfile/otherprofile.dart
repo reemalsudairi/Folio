@@ -104,8 +104,17 @@ class _OtherProfileState extends State<OtherProfile> {
             Navigator.pop(context);
           },
         ),
-        title: const Text('Other Profile'),
-        backgroundColor: const Color(0xFFF8F8F3),
+       title: Text(
+  '@$_username',
+  style: const TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 20,
+    color: Color(0xFF351F1F), // Set the title color
+  ),
+),
+  centerTitle: true, // This will center the title
+backgroundColor: const Color(0xFFF8F8F3), // This should be set in the parent widget, not in TextStyle
+
         actions: [
           if (currentUserId == widget.memberId) // Ensure this condition is valid
             IconButton(
