@@ -262,7 +262,7 @@ class _MemebrclubsState extends State<Memebrclubs> {
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'My Clubs',
+                        'owned Clubs',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -274,7 +274,7 @@ class _MemebrclubsState extends State<Memebrclubs> {
                   myClubs.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text('You have no clubs.'),
+                          child: Text(' no owned clubs.'),
                         )
                       : GridView.builder(
                           physics: NeverScrollableScrollPhysics(),
@@ -311,7 +311,7 @@ class _MemebrclubsState extends State<Memebrclubs> {
                   joinedClubs.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text('You have not joined any clubs.'),
+                          child: Text(' have not joined any clubs.'),
                         )
                       : GridView.builder(
                           physics: NeverScrollableScrollPhysics(),

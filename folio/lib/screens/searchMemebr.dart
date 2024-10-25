@@ -10,11 +10,13 @@ class SearchMembersPage extends StatefulWidget {
 class _SearchMembersPageState extends State<SearchMembersPage> {
   TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
+  bool _hasSearched = false; // Tracks if a search has been performed
+
 
   // Function to perform search based on the search query
   void _searchMembers() async {
-    final query = _searchController.text.trim();
-
+     final query = _searchController.text.trim().toLowerCase();
+_hasSearched = true; 
     if (query.isNotEmpty) {
       try {
         final snapshot = await FirebaseFirestore.instance
@@ -49,8 +51,13 @@ class _SearchMembersPageState extends State<SearchMembersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search Members'),
+        title: Text('Search for Readers',style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+            color: Color(0xFF351F1F),
+          ),),
         backgroundColor: Color(0xFFF8F8F3),
+        centerTitle: true,
       ),
        backgroundColor: Color(0xFFF8F8F3),
       body: Padding(
@@ -63,7 +70,7 @@ class _SearchMembersPageState extends State<SearchMembersPage> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  labelText: 'Search for a member',
+                  labelText: 'Search for a Reader',
                   labelStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
                   filled: true,
                   fillColor: const Color.fromARGB(255, 255, 255, 255),
@@ -82,7 +89,7 @@ class _SearchMembersPageState extends State<SearchMembersPage> {
             ),
             SizedBox(height: 16.0),
             Expanded(
-              child: _searchResults.isEmpty
+              child:_hasSearched & _searchResults.isEmpty
                   ? Center(child: Text('No results found'))
                   : ListView.builder(
                      itemCount: _searchResults.length,
@@ -160,4 +167,5 @@ class _SearchMembersPageState extends State<SearchMembersPage> {
     super.dispose();
   }
 }
+
 
