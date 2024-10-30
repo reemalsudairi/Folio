@@ -65,7 +65,7 @@ class _OtherProfileState extends State<OtherProfile> {
     memberId: widget.memberId,
     username: _username,
   ),
-  Memebrclubs(userId: 'userID'),
+  Memebrclubs(userId:widget.memberId),
   ReviewsPage(
     readerId: widget.memberId,
     currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '', // Pass the correct userId
