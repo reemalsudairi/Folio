@@ -123,13 +123,20 @@ Future<void> submitReview() async {
 leading: IconButton(
   icon: Icon(Icons.arrow_back, color: Colors.black),
   onPressed: () {
-    _showExitConfirmationDialog().then((confirm) {
-      if (confirm == true) {
-        Navigator.pop(context); // Go back if confirmed
-      }
-    });
+    // Check if the user has entered any text or selected a rating
+    if (reviewController.text.isNotEmpty || rating > 0) {
+      // Show exit confirmation dialog if there is content
+      _showExitConfirmationDialog().then((confirm) {
+        if (confirm == true) {
+          Navigator.pop(context); // Go back if confirmed
+        }
+      });
+    } else {
+      Navigator.pop(context); // Just go back if no input is provided
+    }
   },
 ),
+
 
   // Setting the toolbar height to ensure title is centered properly
   toolbarHeight: 70, // You can adjust this height as needed
