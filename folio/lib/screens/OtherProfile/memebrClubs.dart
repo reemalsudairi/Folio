@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/viewClub.dart';
+import 'package:folio/screens/Profile/clubs_page.dart';
 
 class Club {
   final String id;
@@ -51,91 +52,90 @@ class _MemebrclubsState extends State<Memebrclubs> {
   }
 
   void fetchClubs(String userId) {
-  if (userId.isEmpty) {
-    print('User ID is not provided.');
-    return;
-  }
-
-  // Fetch user's owned clubs (My Clubs)
-  FirebaseFirestore.instance
-      .collection('clubs')
-      .where('ownerID', isEqualTo: userId)
-      .snapshots()
-      .listen((QuerySnapshot myClubsSnapshot) {
-    List<Club> tempMyClubs = [];
-    for (var doc in myClubsSnapshot.docs) {
-      fetchMemberCount(doc.id).listen((memberCount) {
-        Club club = Club.fromMap(
-          doc.data() as Map<String, dynamic>,
-          doc.id,
-          memberCount,
-        );
-
-        int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
-        if (existingIndex >= 0) {
-          tempMyClubs[existingIndex] = club;
-        } else {
-          tempMyClubs.add(club);
-        }
-
-        setState(() {
-          myClubs = tempMyClubs;
-        });
-      });
+    if (userId.isEmpty) {
+      print('User ID is not provided.');
+      return;
     }
-  });
 
-  // Fetch joined clubs with real-time updates
-  FirebaseFirestore.instance.collection('clubs').snapshots().listen(
-    (QuerySnapshot joinedClubsSnapshot) {
-      List<Club> tempJoinedClubs = [];
+    // Fetch user's owned clubs (My Clubs)
+    FirebaseFirestore.instance
+        .collection('clubs')
+        .where('ownerID', isEqualTo: userId)
+        .snapshots()
+        .listen((QuerySnapshot myClubsSnapshot) {
+      List<Club> tempMyClubs = [];
+      for (var doc in myClubsSnapshot.docs) {
+        fetchMemberCount(doc.id).listen((memberCount) {
+          Club club = Club.fromMap(
+            doc.data() as Map<String, dynamic>,
+            doc.id,
+            memberCount,
+          );
 
-      for (var doc in joinedClubsSnapshot.docs) {
-        var clubData = doc.data() as Map<String, dynamic>?;
+          int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
+          if (existingIndex >= 0) {
+            tempMyClubs[existingIndex] = club;
+          } else {
+            tempMyClubs.add(club);
+          }
 
-        if (clubData != null && clubData.containsKey('ownerID')) {
-          FirebaseFirestore.instance
-              .collection('clubs')
-              .doc(doc.id)
-              .collection('members')
-              .doc(userId)
-              .snapshots()
-              .listen((DocumentSnapshot memberSnapshot) {
-            if (memberSnapshot.exists && clubData['ownerID'] != userId) {
-              fetchMemberCount(doc.id).listen((memberCount) {
-                Club club = Club.fromMap(
-                  clubData,
-                  doc.id,
-                  memberCount,
-                );
-
-                int existingIndex =
-                    tempJoinedClubs.indexWhere((c) => c.id == doc.id);
-                if (existingIndex >= 0) {
-                  tempJoinedClubs[existingIndex] = club;
-                } else {
-                  tempJoinedClubs.add(club);
-                }
-
-                setState(() {
-                  joinedClubs = tempJoinedClubs;
-                  isLoading = false;
-                });
-              });
-            }
+          setState(() {
+            myClubs = tempMyClubs;
           });
-        }
+        });
       }
-    },
-    onError: (e) {
-      print('Error fetching joined clubs: $e');
-      setState(() {
-        isLoading = false;
-      });
-    },
-  );
-}
+    });
 
+    // Fetch joined clubs with real-time updates
+    FirebaseFirestore.instance.collection('clubs').snapshots().listen(
+      (QuerySnapshot joinedClubsSnapshot) {
+        List<Club> tempJoinedClubs = [];
+
+        for (var doc in joinedClubsSnapshot.docs) {
+          var clubData = doc.data() as Map<String, dynamic>?;
+
+          if (clubData != null && clubData.containsKey('ownerID')) {
+            FirebaseFirestore.instance
+                .collection('clubs')
+                .doc(doc.id)
+                .collection('members')
+                .doc(userId)
+                .snapshots()
+                .listen((DocumentSnapshot memberSnapshot) {
+              if (memberSnapshot.exists && clubData['ownerID'] != userId) {
+                fetchMemberCount(doc.id).listen((memberCount) {
+                  Club club = Club.fromMap(
+                    clubData,
+                    doc.id,
+                    memberCount,
+                  );
+
+                  int existingIndex =
+                      tempJoinedClubs.indexWhere((c) => c.id == doc.id);
+                  if (existingIndex >= 0) {
+                    tempJoinedClubs[existingIndex] = club;
+                  } else {
+                    tempJoinedClubs.add(club);
+                  }
+
+                  setState(() {
+                    joinedClubs = tempJoinedClubs;
+                    isLoading = false;
+                  });
+                });
+              }
+            });
+          }
+        }
+      },
+      onError: (e) {
+        print('Error fetching joined clubs: $e');
+        setState(() {
+          isLoading = false;
+        });
+      },
+    );
+  }
 
   Stream<int> fetchMemberCount(String clubId) {
     try {
@@ -145,8 +145,8 @@ class _MemebrclubsState extends State<Memebrclubs> {
           .collection('members')
           .snapshots()
           .map((membersSnapshot) {
-            return membersSnapshot.size == 0 ? 1 : membersSnapshot.size;
-          });
+        return membersSnapshot.size == 0 ? 1 : membersSnapshot.size;
+      });
     } catch (e) {
       print('Error fetching member count for club $clubId: $e');
       return Stream.value(1);
@@ -242,86 +242,95 @@ class _MemebrclubsState extends State<Memebrclubs> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF8F8F3),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  // My Clubs Section
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'owned Clubs',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF351F1F),
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUserId == widget.userId) {
+      // If viewing own profile, navigate to clubs_page.dart
+      return ClubsPage(); // Navigate directly to ClubsPage without userId
+    } else {
+      // If viewing someone else's profile, use the MemberClubs page content
+      return Scaffold(
+        backgroundColor: Color(0xFFF8F8F3),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // My Clubs Section
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'owned Clubs',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF351F1F),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  myClubs.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(' no owned clubs.'),
-                        )
-                      : GridView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.75,
+                    myClubs.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(' no owned clubs.'),
+                          )
+                        : GridView.builder(
+                            physics: NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.75,
+                            ),
+                            itemCount: myClubs.length,
+                            itemBuilder: (context, index) {
+                              return buildClubCard(myClubs[index]);
+                            },
                           ),
-                          itemCount: myClubs.length,
-                          itemBuilder: (context, index) {
-                            return buildClubCard(myClubs[index]);
-                          },
-                        ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Divider(thickness: 2, height: 20, color: Colors.grey),
-                  ),
-                  // Joined Clubs Section
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Joined Clubs',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF351F1F),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child:
+                          Divider(thickness: 2, height: 20, color: Colors.grey),
+                    ),
+                    // Joined Clubs Section
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Joined Clubs',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF351F1F),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  joinedClubs.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(' have not joined any clubs.'),
-                        )
-                      : GridView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.75,
+                    joinedClubs.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(' have not joined any clubs.'),
+                          )
+                        : GridView.builder(
+                            physics: NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.75,
+                            ),
+                            itemCount: joinedClubs.length,
+                            itemBuilder: (context, index) {
+                              return buildClubCard(joinedClubs[index]);
+                            },
                           ),
-                          itemCount: joinedClubs.length,
-                          itemBuilder: (context, index) {
-                            return buildClubCard(joinedClubs[index]);
-                          },
-                        ),
-                ],
+                  ],
+                ),
               ),
-            ),
-    );
+      );
+    }
   }
 }
