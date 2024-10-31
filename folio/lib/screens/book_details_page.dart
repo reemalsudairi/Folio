@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter/material.dart';
+import 'package:folio/screens/OtherProfile/otherprofile.dart';
 import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/screens/viewClub.dart';
 import 'package:folio/screens/writeReview.dart';
@@ -140,7 +141,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           fetchMemberCount(doc.id).listen((memberCount) {
             // Create a new Club instance with the updated member count.
             Club club = Club.fromMap(
-              doc.data() as Map<String, dynamic>,
+              doc.data(),
               doc.id,
               memberCount,
             );
@@ -354,7 +355,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
     final currentUserId = userId ?? widget.userId;
 
-    if (currentUserId == null || currentUserId.isEmpty) {
+    if (currentUserId.isEmpty) {
       print('Error: User ID is empty!');
       return;
     }
@@ -748,7 +749,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                       child: Text(
                                         selectedOption == 'Add to'
                                             ? 'Add to'
-                                            : '$selectedOption',
+                                            : selectedOption,
                                         style: const TextStyle(
                                           fontSize: 16,
                                           color: Colors.white,
@@ -990,7 +991,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                             // Adjust this value to control the distance from the top
                             right:
                                 16, // Adjust this value to control the distance from the right
-                            child: Container(
+                            child: SizedBox(
                               width: 120, // Set the width for the button
                               height: 40, // Set the height for the button
                               child: FloatingActionButton.extended(
@@ -1117,14 +1118,28 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
-                            backgroundImage: review
-                                    .readerProfilePhoto.isNotEmpty
-                                ? NetworkImage(review
-                                    .readerProfilePhoto) // Use NetworkImage for network photos
-                                : AssetImage(
-                                    'assets/images/profile_pic.png'), // Use AssetImage for the default picture
-                            radius: 18,
+                          GestureDetector(
+                            onTap: () {
+                              // Navigate to the OtherProfile page for the owner
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => OtherProfile(
+                                    memberId: review
+                                        .readerId, // Pass the owner ID to OtherProfile
+                                  ),
+                                ),
+                              );
+                            },
+                            child: CircleAvatar(
+                              backgroundImage: review
+                                      .readerProfilePhoto.isNotEmpty
+                                  ? NetworkImage(review
+                                      .readerProfilePhoto) // Use NetworkImage for network photos
+                                  : AssetImage(
+                                      'assets/images/profile_pic.png'), // Use AssetImage for the default picture
+                              radius: 18,
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -1145,7 +1160,6 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                 Row(
                                   children: List.generate(5, (starIndex) {
                                     if (starIndex < review.rating.toInt()) {
-                                      // If the star index is less than the integer part of the rating, show filled star
                                       return const Icon(
                                         Icons.star,
                                         color: Color(0xFFF790AD), // Star color
@@ -1154,14 +1168,12 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                                     } else if (starIndex ==
                                             review.rating.toInt() &&
                                         review.rating % 1 >= 0.5) {
-                                      // If the star index equals the integer part of the rating and there is a half star
                                       return const Icon(
                                         Icons.star_half,
                                         color: Color(0xFFF790AD), // Star color
                                         size: 14, // Star size
                                       );
                                     } else {
-                                      // Otherwise, show empty star
                                       return const Icon(
                                         Icons.star_border, // Empty star
                                         color: Color(0xFFF790AD), // Star color
@@ -1173,12 +1185,23 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               ],
                             ),
                           ),
-                          // Add the flag icon only if it's not the current user's review
+                          if (review.readerId == currentUserId)
+                            IconButton(
+                              icon: Icon(Icons.delete,
+                                  color:
+                                      const Color.fromARGB(255, 245, 114, 105)),
+                              onPressed: () =>
+                                  _confirmDeleteReview(context, review),
+                            ),
                           if (review.readerId != currentUserId)
-                            const Icon(
-                              Icons.flag, // Gray flag icon for reporting
-                              color: Colors.grey, // Set color to gray
-                              size: 20, // Adjust the size of the flag icon
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  right: 8.0), // Adjust the value as needed
+                              child: const Icon(
+                                Icons.flag, // Gray flag icon for reporting
+                                color: Colors.grey, // Set color to gray
+                                size: 23, // Adjust the size of the flag icon
+                              ),
                             ),
                         ],
                       ),
@@ -1202,6 +1225,172 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         }
       },
     );
+  }
+
+  void _confirmDeleteReview(BuildContext context, Review review) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD).withOpacity(0.9),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.exit_to_app,
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Are you sure you want to remove this review?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 245, 114, 105),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40),
+                    ),
+                    onPressed: () async {
+                      // Attempt to delete the review
+                      bool isDeleted = await _deleteReview(context, review);
+
+                      // Close the confirmation dialog
+                      Navigator.of(context).pop();
+
+                      if (isDeleted) {
+                        // Show success message after confirmation dialog is closed
+                        _showSuccessfulMessage(context);
+                      } else {
+                        // Handle failure to delete (optional)
+                      }
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize: const Size(100, 40),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(); // Close the dialog without action
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _deleteReview(BuildContext context, Review review) async {
+    try {
+      // Attempt to delete the review from Firestore
+      var snapshot = await FirebaseFirestore.instance
+          .collection('reviews')
+          .where('bookID', isEqualTo: review.bookId)
+          .where('reader_id', isEqualTo: review.readerId)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete(); // Delete each document that matches
+      }
+      setState(() {}); // Refresh the UI after deletion
+      return true; // Indicate success
+    } catch (e) {
+      print("Error deleting review: $e");
+      return false; // Indicate failure
+    }
+  }
+
+  void _showSuccessfulMessage(BuildContext context) {
+    // Show the dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.lightGreen.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 40,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Review Removed Successfully!',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      // This will run when the dialog is closed
+    });
+
+    // Automatically close the dialog after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      // Check if the dialog is still displayed
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(); // Close the dialog if it's open
+      }
+    });
   }
 
 // Sample Review class for clarity
@@ -1314,7 +1503,8 @@ class Review {
   final String readerProfilePhoto;
   final String reviewText;
   final double rating;
-  final DateTime createdAt; // Changed to DateTime
+  final DateTime createdAt;
+  final String bookId; // Add bookId field
 
   Review({
     required this.readerId,
@@ -1322,7 +1512,8 @@ class Review {
     required this.readerProfilePhoto,
     required this.reviewText,
     required this.rating,
-    required this.createdAt, // Ensure this is of type DateTime
+    required this.createdAt,
+    required this.bookId, // Initialize bookId
   });
 }
 
@@ -1339,7 +1530,7 @@ Future<List<Review>> fetchReviews(String bookId) async {
   Review? myReview;
 
   for (var doc in snapshot.docs) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data();
     String readerId = data['reader_id'] ?? ''; // Ensure the correct key is used
 
     // Fetch the reader's details from the readers collection
@@ -1358,18 +1549,14 @@ Future<List<Review>> fetchReviews(String bookId) async {
 
     Review review = Review(
       readerId: readerId,
-      readerName: readerName, // Set the reader name
-      readerProfilePhoto: userData?['profilePhoto'] ??
-          '', // Default to empty string if no profile photo
-      reviewText: data['reviewText'] ??
-          'No review provided', // Default text for no review
+      readerName: readerName,
+      readerProfilePhoto: userData?['profilePhoto'] ?? '',
+      reviewText: data['reviewText'] ?? 'No review provided',
       rating: (data['rating'] is double)
           ? data['rating']
-          : (data['rating'] is int)
-              ? (data['rating'] as int).toDouble()
-              : 0.0, // Ensure rating is double
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ??
-          DateTime.now(), // Convert Timestamp to DateTime
+          : (data['rating'] as int).toDouble(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      bookId: bookId, // Set bookId for each review
     );
 
     // Check if the review belongs to the current user
