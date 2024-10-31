@@ -234,8 +234,7 @@ Widget _buildMemberList() {
                     context,
                     MaterialPageRoute(
                       builder: (context) => OtherProfile(
-                        memberId: widget.ownerID, // Pass the owner ID to OtherProfile
-                        
+                        memberId: widget.ownerID,
                       ),
                     ),
                   );
@@ -256,7 +255,15 @@ Widget _buildMemberList() {
                     }
 
                     if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
-                      return const SizedBox.shrink(); // Skip if no data
+                      // Remove the member if their document in `reader` doesn't exist
+                      FirebaseFirestore.instance
+                          .collection('clubs')
+                          .doc(widget.clubID)
+                          .collection('members')
+                          .doc(member.id)
+                          .delete()
+                          .catchError((error) => print("Error removing non-existent member: $error"));
+                      return const SizedBox.shrink(); // Skip display for this member
                     }
 
                     final memberData = memberSnapshot.data!.data() as Map<String, dynamic>?;
@@ -290,8 +297,7 @@ Widget _buildMemberList() {
                           context,
                           MaterialPageRoute(
                             builder: (context) => OtherProfile(
-                              memberId: member.id, // Pass the member ID to OtherProfile
-                              
+                              memberId: member.id,
                             ),
                           ),
                         );
@@ -307,10 +313,6 @@ Widget _buildMemberList() {
     },
   );
 }
-
-
-
-
 
 
   @override
