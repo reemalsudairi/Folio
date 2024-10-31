@@ -1249,7 +1249,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Are you sure you want to remove this review?',
+                'Are you sure you want to delete this review?',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
