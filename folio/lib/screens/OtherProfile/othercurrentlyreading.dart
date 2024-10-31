@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:folio/screens/OtherProfile/otherbookcardc.dart'; // For the Book Card UI
 import 'package:folio/screens/Profile/book.dart'; // Book model
-import 'package:folio/screens/book_details_page.dart'; // Book details page
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -29,7 +28,7 @@ class _OtherProfileCurrentlyReadingPageState
   @override
   void initState() {
     super.initState();
-    _fetchCurrentlyReadingBooks();
+    _fetchCurrentlyReadingBooks(); // Initial load of data
   }
 
   // Fetch book details from Google Books API
@@ -44,36 +43,26 @@ class _OtherProfileCurrentlyReadingPageState
     }
   }
 
-  // Fetch Currently Reading Books
-  Future<void> _fetchCurrentlyReadingBooks() async {
-    final memberId = widget.memberId;
-
-    try {
-      CollectionReference currentlyRef = FirebaseFirestore.instance
-          .collection('reader')
-          .doc(memberId)
-          .collection('currently reading');
-      QuerySnapshot currentlySnapshot = await currentlyRef.orderBy('timestamp', descending: true) // Sorting line added here
-        .get();
-
+  // Fetch Currently Reading Books with real-time updates
+  void _fetchCurrentlyReadingBooks() {
+    FirebaseFirestore.instance
+        .collection('reader')
+        .doc(widget.memberId)
+        .collection('currently reading')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .listen((snapshot) async {
       List<Book> books = [];
-      for (var doc in currentlySnapshot.docs) {
-        var bookId = doc['bookID']; // Assuming Firestore stores bookID
-        Book book =
-            await fetchBookFromGoogleAPI(bookId); // Fetch from Google Books API
+      for (var doc in snapshot.docs) {
+        var bookId = doc['bookID'];
+        Book book = await fetchBookFromGoogleAPI(bookId); // Fetch each book from Google Books API
         books.add(book);
       }
-
       setState(() {
         currentlyReadingBooks = books;
         _isLoading = false;
       });
-    } catch (error) {
-      print('Error fetching currently reading books: $error');
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    });
   }
 
   @override
@@ -81,23 +70,22 @@ class _OtherProfileCurrentlyReadingPageState
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3), // Set the background color
       appBar: AppBar(
-        backgroundColor:
-            Colors.transparent, // Set the AppBar background to transparent
-        elevation: 0, // Remove shadow
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         centerTitle: true,
         title: Text(
           '@${widget.username} Currently Reading Books',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Color(0xFF351F1F), // Set the title color
+            fontSize: 19,
+            color: Color(0xFF351F1F),
           ),
         ),
       ),
       body: _isLoading
           ? const Center(
-              child:
-                  CircularProgressIndicator()) // Show loading indicator while fetching
+              child: CircularProgressIndicator(),
+            )
           : currentlyReadingBooks.isEmpty
               ? const Center(
                   child: Text(

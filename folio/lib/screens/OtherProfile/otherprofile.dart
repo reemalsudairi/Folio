@@ -184,9 +184,26 @@ backgroundColor: const Color(0xFFF8F8F3), // This should be set in the parent wi
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  _buildYearlyGoal(),
-                  const SizedBox(height: 30),
+                 const SizedBox(height: 20),
+StreamBuilder<DocumentSnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('reader')
+      .doc(widget.memberId)
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (!snapshot.hasData) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final userData = snapshot.data!.data() as Map<String, dynamic>;
+    _booksRead = userData['booksRead'] ?? 0;
+    _booksGoal = userData['books'] ?? 0;
+
+    return _buildYearlyGoal(); // Calls the same design without changes
+  },
+),
+const SizedBox(height: 30),
+
                   // New Navigation Bar
                   Column(
                     children: [
