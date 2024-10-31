@@ -28,6 +28,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   bool _isLoading = true;
   bool _isUserIdLoaded = false; // Flag to track whether user ID is loaded
   String _errorMessage = '';
+  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
 
   String selectedOption = 'Add to'; // Default button text
   int _selectedIndex = 0; // To track selected tab
@@ -1055,177 +1057,175 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     );
   }
 
-  Widget buildReviewsGridView(String bookId) {
-    return FutureBuilder<List<Review>>(
-      future: fetchReviews(bookId), // Fetch reviews from Firestore
-      builder: (BuildContext context, AsyncSnapshot<List<Review>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 20), // Move the message down
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'No reviews available.',
-                  style: TextStyle(
-                    fontSize: 18, // Increased font size for better readability
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 1, 0,
-                        0), // Grey color to indicate it's informational
-                  ),
+ Widget buildReviewsGridView(String bookId) {
+  return StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('reviews')
+        .where('bookID', isEqualTo: bookId)
+        .snapshots(), // Stream for real-time updates
+    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'No reviews available.',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 1, 0, 0),
                 ),
-                const SizedBox(height: 8), // Add some space between the texts
-                const Text(
-                  'Be the first to leave a review and share your thoughts!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey, // Subdued color for secondary message
-                  ),
-                  textAlign: TextAlign.center, // Center align the grey text
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Be the first to leave a review and share your thoughts!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
                 ),
-              ],
-            ),
-          );
-        } else {
-          final reviews = snapshot.data!;
-          final String currentUserId =
-              FirebaseAuth.instance.currentUser?.uid ?? '';
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      } else {
+        final reviews = snapshot.data!.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          String readerId = data['reader_id'] ?? '';
+          String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-          return ListView.builder(
-            shrinkWrap: true,
-            physics:
-                const NeverScrollableScrollPhysics(), // Prevent scrolling if inside a scrollable view
-            itemCount: reviews.length,
-            itemBuilder: (context, index) {
-              final review = reviews[index];
-              return Card(
-                color: Colors.white, // Set the card background color to white
-                margin: const EdgeInsets.symmetric(
-                    vertical: 8, horizontal: 16), // Add horizontal margin
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(12), // Adjust card corners
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(
-                      8.0), // Reduced padding for smaller card size
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              // Navigate to the OtherProfile page for the owner
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => OtherProfile(
-                                    memberId: review
-                                        .readerId, // Pass the owner ID to OtherProfile
-                                  ),
-                                ),
-                              );
-                            },
-                            child: CircleAvatar(
-                              backgroundImage: review
-                                      .readerProfilePhoto.isNotEmpty
-                                  ? NetworkImage(review
-                                      .readerProfilePhoto) // Use NetworkImage for network photos
-                                  : AssetImage(
-                                      'assets/images/profile_pic.png'), // Use AssetImage for the default picture
-                              radius: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  review.readerId == currentUserId
-                                      ? 'You' // Change to "You" if it's the current user's review
-                                      : review.readerName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14, // Reduced text size
-                                  ),
-                                ),
-                                const SizedBox(
-                                    height: 5), // Space between name and stars
-                                Row(
-                                  children: List.generate(5, (starIndex) {
-                                    if (starIndex < review.rating.toInt()) {
-                                      return const Icon(
-                                        Icons.star,
-                                        color: Color(0xFFF790AD), // Star color
-                                        size: 14, // Star size
-                                      );
-                                    } else if (starIndex ==
-                                            review.rating.toInt() &&
-                                        review.rating % 1 >= 0.5) {
-                                      return const Icon(
-                                        Icons.star_half,
-                                        color: Color(0xFFF790AD), // Star color
-                                        size: 14, // Star size
-                                      );
-                                    } else {
-                                      return const Icon(
-                                        Icons.star_border, // Empty star
-                                        color: Color(0xFFF790AD), // Star color
-                                        size: 14, // Star size
-                                      );
-                                    }
-                                  }),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (review.readerId == currentUserId)
-                            IconButton(
-                              icon: Icon(Icons.delete,
-                                  color:
-                                      const Color.fromARGB(255, 245, 114, 105)),
-                              onPressed: () =>
-                                  _confirmDeleteReview(context, review),
-                            ),
-                          if (review.readerId != currentUserId)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  right: 8.0), // Adjust the value as needed
-                              child: const Icon(
-                                Icons.flag, // Gray flag icon for reporting
-                                color: Colors.grey, // Set color to gray
-                                size: 23, // Adjust the size of the flag icon
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(
-                          height:
-                              8), // Adjusted space between the stars and the review text
-                      Text(
-                        review.reviewText.isNotEmpty
-                            ? review.reviewText
-                            : '', // Fallback text if review is empty
-                        style: const TextStyle(
-                            fontSize: 12), // Reduced review text size
-                        textAlign: TextAlign.justify,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+          return Review(
+            readerId: readerId,
+            readerName: readerId == currentUserId ? 'You' : data['readerName'] ?? 'Anonymous',
+            readerProfilePhoto: data['readerProfilePhoto'] ?? '',
+            reviewText: data['reviewText'] ?? '',
+            rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
+            createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+            bookId: bookId,
           );
-        }
-      },
-    );
-  }
+        }).toList();
+
+        // Sort the reviews by createdAt (newest first)
+        reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: reviews.length,
+          itemBuilder: (context, index) {
+            final review = reviews[index];
+            return Card(
+              color: Colors.white,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OtherProfile(
+                                  memberId: review.readerId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: CircleAvatar(
+                            backgroundImage: review.readerProfilePhoto.isNotEmpty
+                                ? NetworkImage(review.readerProfilePhoto)
+                                : AssetImage('assets/images/profile_pic.png')
+                                    as ImageProvider,
+                            radius: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                review.readerId == currentUserId ? 'You' : review.readerName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: List.generate(5, (starIndex) {
+                                  if (starIndex < review.rating.toInt()) {
+                                    return const Icon(
+                                      Icons.star,
+                                      color: Color(0xFFF790AD),
+                                      size: 14,
+                                    );
+                                  } else if (starIndex == review.rating.toInt() &&
+                                      review.rating % 1 >= 0.5) {
+                                    return const Icon(
+                                      Icons.star_half,
+                                      color: Color(0xFFF790AD),
+                                      size: 14,
+                                    );
+                                  } else {
+                                    return const Icon(
+                                      Icons.star_border,
+                                      color: Color(0xFFF790AD),
+                                      size: 14,
+                                    );
+                                  }
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (review.readerId == currentUserId)
+                          IconButton(
+                            icon: Icon(Icons.delete,
+                                color: const Color.fromARGB(255, 245, 114, 105)),
+                            onPressed: () => _confirmDeleteReview(context, review),
+                          ),
+                        if (review.readerId != currentUserId)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: const Icon(
+                              Icons.flag,
+                              color: Colors.grey,
+                              size: 23,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      review.reviewText.isNotEmpty ? review.reviewText : '',
+                      style: const TextStyle(fontSize: 12),
+                      textAlign: TextAlign.justify,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
+    },
+  );
+}
+
 
   void _confirmDeleteReview(BuildContext context, Review review) {
     showDialog(
