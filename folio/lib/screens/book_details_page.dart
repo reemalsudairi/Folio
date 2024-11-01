@@ -1366,7 +1366,19 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
+        // Create a unique key to identify the dialog
+        final GlobalKey dialogKey = GlobalKey();
+
+        // Automatically close the dialog after 3 seconds
+        Future.delayed(const Duration(seconds: 3), () {
+          if (dialogKey.currentContext != null) {
+            Navigator.of(dialogKey.currentContext!)
+                .pop(); // Close the dialog if it's open
+          }
+        });
+
         return Dialog(
+          key: dialogKey,
           backgroundColor: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -1384,7 +1396,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Review Removed Successfully!',
+                  'Review deleted Successfully!',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -1397,17 +1409,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           ),
         );
       },
-    ).then((_) {
-      // This will run when the dialog is closed
-    });
-
-    // Automatically close the dialog after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      // Check if the dialog is still displayed
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop(); // Close the dialog if it's open
-      }
-    });
+    );
   }
 
 // Sample Review class for clarity
