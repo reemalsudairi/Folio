@@ -1146,14 +1146,31 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  review.readerId == currentUserId
-                                      ? 'You' // Change to "You" if it's the current user's review
-                                      : review.readerName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14, // Reduced text size
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      review.readerId == currentUserId
+                                          ? 'You'
+                                          : review.readerName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14, // Reduced text size
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                        width:
+                                            5), // Space between name and time ago
+                                    Text(
+                                      review
+                                          .timeAgo, // Display the time ago string
+                                      style: const TextStyle(
+                                        fontSize:
+                                            12, // Smaller font size for time ago
+                                        color: Colors
+                                            .grey, // Gray color for time ago text
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(
                                     height: 5), // Space between name and stars
@@ -1504,7 +1521,8 @@ class Review {
   final String reviewText;
   final double rating;
   final DateTime createdAt;
-  final String bookId; // Add bookId field
+  final String bookId;
+  final String timeAgo; // Add this line
 
   Review({
     required this.readerId,
@@ -1513,7 +1531,8 @@ class Review {
     required this.reviewText,
     required this.rating,
     required this.createdAt,
-    required this.bookId, // Initialize bookId
+    required this.bookId,
+    required this.timeAgo, // Update this line
   });
 }
 
@@ -1547,6 +1566,9 @@ Future<List<Review>> fetchReviews(String bookId) async {
         : (userData?['name'] ??
             'Anonymous'); // Default to 'Anonymous' if no name is available
 
+    DateTime createdAt =
+        (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
     Review review = Review(
       readerId: readerId,
       readerName: readerName,
@@ -1555,8 +1577,9 @@ Future<List<Review>> fetchReviews(String bookId) async {
       rating: (data['rating'] is double)
           ? data['rating']
           : (data['rating'] as int).toDouble(),
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: createdAt, // Set createdAt for each review
       bookId: bookId, // Set bookId for each review
+      timeAgo: timeAgo(createdAt), // Calculate time ago
     );
 
     // Check if the review belongs to the current user
@@ -1576,4 +1599,25 @@ Future<List<Review>> fetchReviews(String bookId) async {
   }
 
   return reviews;
+}
+
+String timeAgo(DateTime date) {
+  final now = DateTime.now();
+  final difference = now.difference(date);
+
+  if (difference.inSeconds < 1) {
+    return 'just now'; // Case for the time difference being less than 1 second
+  } else if (difference.inSeconds < 60) {
+    return '${difference.inSeconds} second${difference.inSeconds > 1 ? 's' : ''} ago'; // Display seconds
+  } else if (difference.inMinutes < 60) {
+    return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+  } else if (difference.inHours < 24) {
+    return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+  } else if (difference.inDays < 7) {
+    return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+  } else if (difference.inDays < 365) {
+    return '${(difference.inDays / 7).floor()} week${(difference.inDays / 7).floor() > 1 ? 's' : ''} ago';
+  } else {
+    return '${(difference.inDays / 365).floor()} year${(difference.inDays / 365).floor() > 1 ? 's' : ''} ago';
+  }
 }
