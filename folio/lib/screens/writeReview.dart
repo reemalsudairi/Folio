@@ -144,6 +144,7 @@ leading: IconButton(
 
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
           children: [
@@ -286,6 +287,7 @@ TextField(
             ),
           ],
         ),
+      ),
       ),
     );
   }
