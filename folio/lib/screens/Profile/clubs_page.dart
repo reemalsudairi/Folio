@@ -47,15 +47,14 @@ class _ClubsPageState extends State<ClubsPage> {
     super.initState();
     fetchClubs();
   }
-
-  void fetchClubs() {
+void fetchClubs() {
   if (userId.isEmpty) {
     print('User is not logged in.');
     return;
   }
 
   try {
-    // Listen to real-time updates for clubs where the current user is the owner (My Clubs)
+    // Real-time listener for clubs owned by the current user (My Clubs)
     FirebaseFirestore.instance
         .collection('clubs')
         .where('ownerID', isEqualTo: userId)
@@ -64,7 +63,6 @@ class _ClubsPageState extends State<ClubsPage> {
       List<Club> tempMyClubs = [];
 
       for (var doc in myClubsSnapshot.docs) {
-        // Listen for real-time member count updates.
         fetchMemberCount(doc.id).listen((memberCount) {
           Club club = Club.fromMap(
             doc.data() as Map<String, dynamic>,
@@ -72,17 +70,13 @@ class _ClubsPageState extends State<ClubsPage> {
             memberCount,
           );
 
-          // Update the club in the list or add it if not present.
           int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
           if (existingIndex >= 0) {
-            // Replace the existing club with the updated one.
             tempMyClubs[existingIndex] = club;
           } else {
-            // Add the new club.
             tempMyClubs.add(club);
           }
 
-          // Update the state with the latest myClubs list.
           setState(() {
             myClubs = tempMyClubs;
           });
@@ -90,7 +84,7 @@ class _ClubsPageState extends State<ClubsPage> {
       }
     });
 
-    // Listen to real-time updates for joined clubs.
+    // Real-time listener for clubs the user has joined but does not own
     FirebaseFirestore.instance.collection('clubs').snapshots().listen(
       (QuerySnapshot joinedClubsSnapshot) {
         List<Club> tempJoinedClubs = [];
@@ -98,9 +92,8 @@ class _ClubsPageState extends State<ClubsPage> {
         for (var doc in joinedClubsSnapshot.docs) {
           var clubData = doc.data() as Map<String, dynamic>?;
 
-          // Safely check if the document's data is not null and contains 'ownerID'
           if (clubData != null && clubData.containsKey('ownerID')) {
-            // Fetch the members subcollection to check if the user is a member.
+            // Listen to membership status in the club
             FirebaseFirestore.instance
                 .collection('clubs')
                 .doc(doc.id)
@@ -108,7 +101,6 @@ class _ClubsPageState extends State<ClubsPage> {
                 .doc(userId)
                 .snapshots()
                 .listen((DocumentSnapshot memberSnapshot) {
-              // Check if the user is in the members subcollection and not the owner.
               if (memberSnapshot.exists && clubData['ownerID'] != userId) {
                 fetchMemberCount(doc.id).listen((memberCount) {
                   Club club = Club.fromMap(
@@ -117,22 +109,25 @@ class _ClubsPageState extends State<ClubsPage> {
                     memberCount,
                   );
 
-                  // Update the club in the list or add it if not present.
                   int existingIndex =
                       tempJoinedClubs.indexWhere((c) => c.id == doc.id);
                   if (existingIndex >= 0) {
-                    // Replace the existing club with the updated one.
                     tempJoinedClubs[existingIndex] = club;
                   } else {
-                    // Add the new club.
                     tempJoinedClubs.add(club);
                   }
 
-                  // Update the state with the latest joinedClubs list.
                   setState(() {
                     joinedClubs = tempJoinedClubs;
-                    isLoading = false; // Data fetching complete.
+                    isLoading = false;
                   });
+                });
+              } else {
+                // If the user is no longer a member, remove the club from the list
+                tempJoinedClubs.removeWhere((c) => c.id == doc.id);
+                setState(() {
+                  joinedClubs = tempJoinedClubs;
+                  isLoading = false;
                 });
               }
             });
@@ -142,18 +137,17 @@ class _ClubsPageState extends State<ClubsPage> {
       onError: (e) {
         print('Error fetching joined clubs: $e');
         setState(() {
-          isLoading = false; // In case of error, stop loading.
+          isLoading = false;
         });
       },
     );
   } catch (e) {
     print('Error setting up club listeners: $e');
     setState(() {
-      isLoading = false; // In case of error, stop loading.
+      isLoading = false;
     });
   }
 }
-
 
   Stream<int> fetchMemberCount(String clubId) {
  try {
