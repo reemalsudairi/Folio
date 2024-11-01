@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/MemberListPage.dart';
+import 'package:folio/screens/OtherProfile/otherprofile.dart';
+import 'package:folio/screens/Profile/profile.dart';
 import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/editClub.dart';
 import 'package:folio/view/callPage.dart';
@@ -64,6 +66,8 @@ class _ViewClubState extends State<ViewClub> {
   String _callID = ''; // Newly added state variable
   String _clubOwnerProfilePhoto = '';
   String _language = '';
+  final User? currentUser = FirebaseAuth.instance.currentUser;
+
 
   @override
   void initState() {
@@ -718,6 +722,8 @@ Widget build(BuildContext context) {
         _picture = clubData['picture'] ?? '';
         _language = clubData['language'] ?? 'Unknown Language';
         _clubOwnerID = clubData['ownerID'] ?? '';
+        bool isCurrentUser = currentUser?.uid == _clubOwnerID;
+
         
         // Continue with your existing logic to check ownership, membership, etc.
         // ...
@@ -805,31 +811,70 @@ Widget build(BuildContext context) {
                     // Club owner and members
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundImage: (_clubOwnerProfilePhoto.isNotEmpty)
-                              ? NetworkImage(_clubOwnerProfilePhoto)
-                              : const AssetImage(
-                                      'assets/images/profile_pic.png')
-                                  as ImageProvider,
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Created by',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            Text(
-                              _clubOwnerName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+ GestureDetector(
+      onTap: () {
+        // Check if the current user is the club owner
+        if (isCurrentUser) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfilePage(onEdit: () {  }),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OtherProfile(memberId: _clubOwnerID),
+            ),
+          );
+        }
+      },
+      child: CircleAvatar(
+        radius: 20,
+        backgroundImage: (_clubOwnerProfilePhoto.isNotEmpty)
+            ? NetworkImage(_clubOwnerProfilePhoto)
+            : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
+      ),
+    ),
+    const SizedBox(width: 8),
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Created by',
+          style: TextStyle(fontSize: 12),
+        ),
+        GestureDetector(
+          onTap: () {
+            // Check if the current user is the club owner
+            if (isCurrentUser) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(onEdit: () { }),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OtherProfile(memberId: _clubOwnerID),
+                ),
+              );
+            }
+          },
+          child: Text(
+            _clubOwnerName,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    ),
+
                         const Spacer(),
                         // Dynamic member count
                         FutureBuilder<QuerySnapshot>(
