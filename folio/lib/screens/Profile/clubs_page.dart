@@ -63,7 +63,15 @@ void fetchClubs() {
       List<Club> tempMyClubs = [];
 
       for (var doc in myClubsSnapshot.docs) {
-        fetchMemberCount(doc.id).listen((memberCount) {
+        // Listen for real-time member count updates for each owned club
+        FirebaseFirestore.instance
+            .collection('clubs')
+            .doc(doc.id)
+            .collection('members')
+            .snapshots()
+            .listen((membersSnapshot) {
+          int memberCount = membersSnapshot.size > 0 ? membersSnapshot.size : 1;
+
           Club club = Club.fromMap(
             doc.data() as Map<String, dynamic>,
             doc.id,
@@ -82,9 +90,17 @@ void fetchClubs() {
           });
         });
       }
+
+      // Remove clubs that were deleted from the database
+      final updatedClubIds = myClubsSnapshot.docs.map((doc) => doc.id).toSet();
+      tempMyClubs.removeWhere((club) => !updatedClubIds.contains(club.id));
+
+      setState(() {
+        myClubs = tempMyClubs;
+      });
     });
 
-    // Real-time listener for clubs the user has joined but does not own
+    // Real-time listener for clubs the user has joined but does not own (no changes needed)
     FirebaseFirestore.instance.collection('clubs').snapshots().listen(
       (QuerySnapshot joinedClubsSnapshot) {
         List<Club> tempJoinedClubs = [];
@@ -93,7 +109,6 @@ void fetchClubs() {
           var clubData = doc.data() as Map<String, dynamic>?;
 
           if (clubData != null && clubData.containsKey('ownerID')) {
-            // Listen to membership status in the club
             FirebaseFirestore.instance
                 .collection('clubs')
                 .doc(doc.id)
@@ -123,7 +138,6 @@ void fetchClubs() {
                   });
                 });
               } else {
-                // If the user is no longer a member, remove the club from the list
                 tempJoinedClubs.removeWhere((c) => c.id == doc.id);
                 setState(() {
                   joinedClubs = tempJoinedClubs;
@@ -148,6 +162,7 @@ void fetchClubs() {
     });
   }
 }
+
 
   Stream<int> fetchMemberCount(String clubId) {
  try {

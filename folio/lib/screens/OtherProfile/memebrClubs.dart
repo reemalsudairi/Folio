@@ -51,91 +51,122 @@ class _MemebrclubsState extends State<Memebrclubs> {
     fetchClubs(widget.userId); // Use the provided userId
   }
 
-  void fetchClubs(String userId) {
-    if (userId.isEmpty) {
-      print('User ID is not provided.');
-      return;
+ void fetchClubs(String userId) {
+  if (userId.isEmpty) {
+    print('User ID is not provided.');
+    return;
+  }
+
+  // Real-time listener for user's owned clubs (My Clubs)
+  FirebaseFirestore.instance
+      .collection('clubs')
+      .where('ownerID', isEqualTo: userId)
+      .snapshots()
+      .listen((QuerySnapshot myClubsSnapshot) {
+    List<Club> tempMyClubs = [];
+
+    for (var doc in myClubsSnapshot.docs) {
+      // Real-time listener for member count in each owned club
+      FirebaseFirestore.instance
+          .collection('clubs')
+          .doc(doc.id)
+          .collection('members')
+          .snapshots()
+          .listen((membersSnapshot) {
+        int memberCount = membersSnapshot.size > 0 ? membersSnapshot.size : 1;
+
+        Club club = Club.fromMap(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+          memberCount,
+        );
+
+        int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
+        if (existingIndex >= 0) {
+          tempMyClubs[existingIndex] = club;
+        } else {
+          tempMyClubs.add(club);
+        }
+
+        setState(() {
+          myClubs = tempMyClubs;
+        });
+      });
     }
 
-    // Fetch user's owned clubs (My Clubs)
-    FirebaseFirestore.instance
-        .collection('clubs')
-        .where('ownerID', isEqualTo: userId)
-        .snapshots()
-        .listen((QuerySnapshot myClubsSnapshot) {
-      List<Club> tempMyClubs = [];
-      for (var doc in myClubsSnapshot.docs) {
-        fetchMemberCount(doc.id).listen((memberCount) {
-          Club club = Club.fromMap(
-            doc.data() as Map<String, dynamic>,
-            doc.id,
-            memberCount,
-          );
+    // Remove any deleted clubs from the myClubs list
+    final updatedClubIds = myClubsSnapshot.docs.map((doc) => doc.id).toSet();
+    tempMyClubs.removeWhere((club) => !updatedClubIds.contains(club.id));
 
-          int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
-          if (existingIndex >= 0) {
-            tempMyClubs[existingIndex] = club;
-          } else {
-            tempMyClubs.add(club);
-          }
-
-          setState(() {
-            myClubs = tempMyClubs;
-          });
-        });
-      }
+    setState(() {
+      myClubs = tempMyClubs;
     });
+  });
 
-    // Fetch joined clubs with real-time updates
-    FirebaseFirestore.instance.collection('clubs').snapshots().listen(
-      (QuerySnapshot joinedClubsSnapshot) {
-        List<Club> tempJoinedClubs = [];
+  // Real-time listener for clubs the user has joined (Joined Clubs)
+  FirebaseFirestore.instance.collection('clubs').snapshots().listen(
+    (QuerySnapshot joinedClubsSnapshot) {
+      List<Club> tempJoinedClubs = [];
 
-        for (var doc in joinedClubsSnapshot.docs) {
-          var clubData = doc.data() as Map<String, dynamic>?;
+      for (var doc in joinedClubsSnapshot.docs) {
+        var clubData = doc.data() as Map<String, dynamic>?;
 
-          if (clubData != null && clubData.containsKey('ownerID')) {
-            FirebaseFirestore.instance
-                .collection('clubs')
-                .doc(doc.id)
-                .collection('members')
-                .doc(userId)
-                .snapshots()
-                .listen((DocumentSnapshot memberSnapshot) {
-              if (memberSnapshot.exists && clubData['ownerID'] != userId) {
-                fetchMemberCount(doc.id).listen((memberCount) {
-                  Club club = Club.fromMap(
-                    clubData,
-                    doc.id,
-                    memberCount,
-                  );
+        if (clubData != null && clubData.containsKey('ownerID')) {
+          FirebaseFirestore.instance
+              .collection('clubs')
+              .doc(doc.id)
+              .collection('members')
+              .doc(userId)
+              .snapshots()
+              .listen((DocumentSnapshot memberSnapshot) {
+            if (memberSnapshot.exists && clubData['ownerID'] != userId) {
+              FirebaseFirestore.instance
+                  .collection('clubs')
+                  .doc(doc.id)
+                  .collection('members')
+                  .snapshots()
+                  .listen((membersSnapshot) {
+                int memberCount = membersSnapshot.size > 0 ? membersSnapshot.size : 1;
 
-                  int existingIndex =
-                      tempJoinedClubs.indexWhere((c) => c.id == doc.id);
-                  if (existingIndex >= 0) {
-                    tempJoinedClubs[existingIndex] = club;
-                  } else {
-                    tempJoinedClubs.add(club);
-                  }
+                Club club = Club.fromMap(
+                  clubData,
+                  doc.id,
+                  memberCount,
+                );
 
-                  setState(() {
-                    joinedClubs = tempJoinedClubs;
-                    isLoading = false;
-                  });
+                int existingIndex = tempJoinedClubs.indexWhere((c) => c.id == doc.id);
+                if (existingIndex >= 0) {
+                  tempJoinedClubs[existingIndex] = club;
+                } else {
+                  tempJoinedClubs.add(club);
+                }
+
+                setState(() {
+                  joinedClubs = tempJoinedClubs;
+                  isLoading = false;
                 });
-              }
-            });
-          }
+              });
+            } else {
+              // If the user is no longer a member, remove the club from the list
+              tempJoinedClubs.removeWhere((c) => c.id == doc.id);
+              setState(() {
+                joinedClubs = tempJoinedClubs;
+                isLoading = false;
+              });
+            }
+          });
         }
-      },
-      onError: (e) {
-        print('Error fetching joined clubs: $e');
-        setState(() {
-          isLoading = false;
-        });
-      },
-    );
-  }
+      }
+    },
+    onError: (e) {
+      print('Error fetching joined clubs: $e');
+      setState(() {
+        isLoading = false;
+      });
+    },
+  );
+}
+
 
   Stream<int> fetchMemberCount(String clubId) {
     try {

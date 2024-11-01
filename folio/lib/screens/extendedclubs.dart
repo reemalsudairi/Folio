@@ -48,7 +48,7 @@ class _ClubsPageState extends State<ClubPage> {
     fetchClubs();
   }
 
-  void fetchClubs() {
+ void fetchClubs() {
   if (userId.isEmpty) {
     print('User is not logged in.');
     return;
@@ -64,7 +64,15 @@ class _ClubsPageState extends State<ClubPage> {
       List<Clubs> tempMyClubs = [];
 
       for (var doc in myClubsSnapshot.docs) {
-        fetchMemberCount(doc.id).listen((memberCount) {
+        // Real-time listener for member count in each owned club
+        FirebaseFirestore.instance
+            .collection('clubs')
+            .doc(doc.id)
+            .collection('members')
+            .snapshots()
+            .listen((membersSnapshot) {
+          int memberCount = membersSnapshot.size > 0 ? membersSnapshot.size : 1;
+
           Clubs club = Clubs.fromMap(
             doc.data() as Map<String, dynamic>,
             doc.id,
@@ -83,6 +91,14 @@ class _ClubsPageState extends State<ClubPage> {
           });
         });
       }
+
+      // Remove clubs that were deleted from Firestore
+      final updatedClubIds = myClubsSnapshot.docs.map((doc) => doc.id).toSet();
+      tempMyClubs.removeWhere((club) => !updatedClubIds.contains(club.id));
+
+      setState(() {
+        myClubs = tempMyClubs;
+      });
     });
 
     // Real-time listener for clubs the user has joined but does not own
@@ -94,7 +110,7 @@ class _ClubsPageState extends State<ClubPage> {
           var clubData = doc.data() as Map<String, dynamic>?;
 
           if (clubData != null && clubData.containsKey('ownerID')) {
-            // Listen to membership status in the club
+            // Real-time listener for user's membership status in the club
             FirebaseFirestore.instance
                 .collection('clubs')
                 .doc(doc.id)
@@ -103,15 +119,22 @@ class _ClubsPageState extends State<ClubPage> {
                 .snapshots()
                 .listen((DocumentSnapshot memberSnapshot) {
               if (memberSnapshot.exists && clubData['ownerID'] != userId) {
-                fetchMemberCount(doc.id).listen((memberCount) {
+                // Listen to real-time member count updates
+                FirebaseFirestore.instance
+                    .collection('clubs')
+                    .doc(doc.id)
+                    .collection('members')
+                    .snapshots()
+                    .listen((membersSnapshot) {
+                  int memberCount = membersSnapshot.size > 0 ? membersSnapshot.size : 1;
+
                   Clubs club = Clubs.fromMap(
                     clubData,
                     doc.id,
                     memberCount,
                   );
 
-                  int existingIndex =
-                      tempJoinedClubs.indexWhere((c) => c.id == doc.id);
+                  int existingIndex = tempJoinedClubs.indexWhere((c) => c.id == doc.id);
                   if (existingIndex >= 0) {
                     tempJoinedClubs[existingIndex] = club;
                   } else {
