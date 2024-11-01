@@ -599,33 +599,25 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Show a loading spinner while loading is true or the user ID isn't loaded yet
-    if (_isLoading || !_isUserIdLoaded) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_isLoading || bookDetails == null) {
-      return Center(child: CircularProgressIndicator());
-    }
-
-    if (_errorMessage.isNotEmpty) {
-      return Center(child: Text(_errorMessage));
-    }
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F3),
-      appBar: AppBar(
-        title: const Text(
-          'Book Details',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 26,
-            color: Color(0xFF351F1F),
-          ),
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8F8F3), // Consistent background color
+    appBar: AppBar(
+      title: const Text(
+        'Book Details',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 26,
+          color: Color(0xFF351F1F),
         ),
-        centerTitle: true,
       ),
-      body: _isLoading
+      centerTitle: true,
+    ),
+    body: _isLoading || !_isUserIdLoaded
+        ? const Center(
+            child: CircularProgressIndicator(), // Show loading spinner
+          )
+        : _errorMessage.isNotEmpty
           ? const Center(
               child:
                   CircularProgressIndicator()) // Show loading indicator if still loading
