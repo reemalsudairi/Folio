@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:folio/screens/createClubPage.dart';
 import 'package:folio/screens/viewClub.dart';
 
 class Clubs {
@@ -293,101 +294,126 @@ class _ClubsPageState extends State<ClubPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Book Clubs',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 26,
-            color: Color(0xFF351F1F),
-          ),
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(
+        'Book Clubs',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 26,
+          color: Color(0xFF351F1F),
         ),
-        backgroundColor: Color(0xFFF8F8F3),
-        centerTitle: true,
       ),
       backgroundColor: Color(0xFFF8F8F3),
-      body: isLoading // Check loading state
-          ? Center(child: CircularProgressIndicator()) // Show loading indicator
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  // My Clubs Section
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'My Clubs',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF351F1F),
-                        ),
+      centerTitle: true,
+    ),
+    backgroundColor: Color(0xFFF8F8F3),
+    body: isLoading // Check loading state
+        ? Center(child: CircularProgressIndicator()) // Show loading indicator
+        : SingleChildScrollView(
+            child: Column(
+              children: [
+                // My Clubs Section
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'My Clubs',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF351F1F),
                       ),
                     ),
                   ),
-                  myClubs.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text('You have no clubs.'),
-                        )
-                      : GridView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.75,
-                          ),
-                          itemCount: myClubs.length,
-                          itemBuilder: (context, index) {
-                            return buildClubCard(myClubs[index]);
-                          },
+                ),
+                myClubs.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text('You have no clubs.'),
+                      )
+                    : GridView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.75,
                         ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child:
-                        Divider(thickness: 2, height: 20, color: Colors.grey),
-                  ),
-                  // Joined Clubs Section
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Joined Clubs',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF351F1F),
-                        ),
+                        itemCount: myClubs.length,
+                        itemBuilder: (context, index) {
+                          return buildClubCard(myClubs[index]);
+                        },
+                      ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Divider(thickness: 2, height: 20, color: Colors.grey),
+                ),
+                // Joined Clubs Section
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Joined Clubs',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF351F1F),
                       ),
                     ),
                   ),
-                  joinedClubs.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text('You have not joined any clubs.'),
-                        )
-                      : GridView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.75,
-                          ),
-                          itemCount: joinedClubs.length,
-                          itemBuilder: (context, index) {
-                            return buildClubCard(joinedClubs[index]);
-                          },
+                ),
+                joinedClubs.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text('You have not joined any clubs.'),
+                      )
+                    : GridView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.75,
                         ),
-                ],
-              ),
+                        itemCount: joinedClubs.length,
+                        itemBuilder: (context, index) {
+                          return buildClubCard(joinedClubs[index]);
+                        },
+                      ),
+              ],
             ),
-    );
-  }
-}
+          ),
+    // Add the floating action button here
+    floatingActionButton: Container(
+  margin: const EdgeInsets.only(bottom: 20, right: 20), // Set margin of 20px down and right
+  child: ClipOval(
+    child: SizedBox(
+      width: 70, // Set the width to make it bigger
+      height: 70, // Set the height to make it bigger
+      child: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateClubPage(), // Navigate to the Create Club page
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFFF790AD), // Set the background color to pink
+        child: const Icon(
+          Icons.add, // Use the add icon
+          color: Colors.white, // Set the icon color to white for contrast
+          size: 50, // Optional: Increase the icon size
+        ),
+      ),
+    ),
+  ),
+),
+    floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // Positioning
+  );
+}}
