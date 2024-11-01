@@ -603,6 +603,7 @@ Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: const Color(0xFFF8F8F3), // Consistent background color
     appBar: AppBar(
+       backgroundColor: const Color(0xFFF8F8F3),
       title: const Text(
         'Book Details',
         style: TextStyle(

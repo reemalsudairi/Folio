@@ -44,6 +44,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F3),
       appBar: AppBar(
+         backgroundColor: const Color(0xFFF8F8F3),
         title: const Text(
           'Explore',
           style: TextStyle(
