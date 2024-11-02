@@ -57,6 +57,7 @@ class EditProfile extends StatefulWidget {
   final String profilePhotoUrl;
   final int booksGoal;
   final String email; // Add email parameter
+    final String username; // Add username parameter here
 
   const EditProfile({
     super.key,
@@ -66,6 +67,7 @@ class EditProfile extends StatefulWidget {
     required this.profilePhotoUrl,
     required this.booksGoal,
     required this.email, // Accept email
+        required this.username, // Accept username
   });
 
   @override
@@ -425,6 +427,19 @@ Widget build(BuildContext context) {
                     optional: true, // Make this field optional
                   ),
                   const SizedBox(height: 40),
+const Text(
+  "Username",
+  style: TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: Color(0xFF4A4A4A),
+  ),
+),
+const SizedBox(height: 8),
+_buildUsernameField(widget.username), // Display username as a read-only field
+
+
+                  const SizedBox(height: 40),
                   const Text(
                     "Email",
                     style: TextStyle(
@@ -565,6 +580,26 @@ Widget _buildTextField({
   );
 }
 
+Widget _buildUsernameField(String username) {
+  return TextFormField(
+    initialValue: username,
+    readOnly: true,
+    decoration: InputDecoration(
+      hintText: "Username",
+      hintStyle: const TextStyle(
+        color: Color(0xFF9B9B9B),
+        fontSize: 20,
+      ),
+      filled: true,
+      fillColor: Colors.grey[300],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(40),
+        borderSide: BorderSide.none, // No border
+      ),
+    ),
+  );
+}
+
 
   // New method for the unchangeable email field
   Widget _buildEmailField(String email) {
@@ -587,6 +622,7 @@ Widget _buildTextField({
     );
   }
 }
+
 
 class ProfilePhotoWidget extends StatefulWidget {
   final ImageProvider<Object>? initialImage;

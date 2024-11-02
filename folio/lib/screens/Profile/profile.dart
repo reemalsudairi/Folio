@@ -449,6 +449,7 @@ class _ProfilePageState extends State<ProfilePage> {
           profilePhotoUrl: _profilePhotoUrl,
           booksGoal: _booksGoal,
           email: _email, // Pass the fetched email
+                username: _username, // Pass username here
         ),
       ),
     );
