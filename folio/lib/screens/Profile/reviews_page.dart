@@ -103,121 +103,146 @@ class ReviewTile extends StatelessWidget {
     }
   }
 
-  // Function to delete a review with confirmation dialog
-  void _deleteReview(BuildContext context) {
-    _showRemoveConfirmation(context);
-  }
+ 
 
-  // Function to show the confirmation dialog
-  void _showRemoveConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Disable dismissal by clicking outside
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF790AD).withOpacity(0.9),
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.exit_to_app,
+void _confirmDeleteReview(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD).withOpacity(0.9),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.exit_to_app,
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Are you sure you want to delete this review?',
+              style: const TextStyle(
                 color: Colors.white,
-                size: 40,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              const SizedBox(height: 10),
-              Text(
-                'Are you sure you want to remove this review?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 245, 114, 105),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40),
+                  ),
+                  onPressed: () async {
+                    // Attempt to delete the review
+                    bool isDeleted = await _deleteReview(context);
+
+                    // Close the confirmation dialog
+                    Navigator.of(context).pop();
+
+                    if (isDeleted) {
+                      // Show success message after confirmation dialog is closed
+                      _showSuccessfulMessage(context);
+                    } else {
+                      // Handle failure to delete (optional)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to delete review.')),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // Center the buttons
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 245, 114, 105),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      minimumSize: const Size(100, 40),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Close the dialog
-                      _removeReview(context); // Remove the review if confirmed
-                    },
-                    child: const Text(
-                      'Yes',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    minimumSize: const Size(100, 40),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context)
+                        .pop(); // Close the dialog without action
+                  },
+                  child: const Text(
+                    'No',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 12), // Space between buttons
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      minimumSize: const Size(100, 40),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context)
-                          .pop(); // Close the dialog without action
-                    },
-                    child: const Text(
-                      'No',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  // Function to remove the review
-  void _removeReview(BuildContext context) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('reviews')
-          .doc(reviewId)
-          .delete();
-      // Show confirmation message
-      _showConfirmationMessage(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete review: $e')),
-      );
+Future<bool> _deleteReview(BuildContext context) async {
+  try {
+    // Attempt to delete the review from Firestore
+    var snapshot = await FirebaseFirestore.instance
+        .collection('reviews')
+        .where('bookID', isEqualTo: bookID)
+        .where('reader_id', isEqualTo: readerId)
+        .get();
+
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete(); // Delete each document that matches
     }
+    //setState(() {}); // Refresh the UI after deletion
+    return true; // Indicate success
+  } catch (e) {
+    print("Error deleting review: $e");
+    return false; // Indicate failure
   }
+}
 
-  // Function to show the "Review Removed Successfully!" message
-  void _showConfirmationMessage(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Disable dismissal by clicking outside
-      builder: (context) => Dialog(
+void _showSuccessfulMessage(BuildContext context) {
+  // Show the dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext dialogContext) {
+      // Create a unique key to identify the dialog
+      final GlobalKey dialogKey = GlobalKey();
+
+      // Automatically close the dialog after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (dialogKey.currentContext != null) {
+          Navigator.of(dialogKey.currentContext!)
+              .pop(); // Close the dialog if it's open
+        }
+      });
+
+      return Dialog(
+        key: dialogKey,
         backgroundColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.all(20),
@@ -235,7 +260,7 @@ class ReviewTile extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Review Removed Successfully!',
+                'Review deleted Successfully!',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -246,9 +271,11 @@ class ReviewTile extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -390,7 +417,7 @@ class ReviewTile extends StatelessWidget {
                             icon: Icon(Icons.delete,
                                 color:
                                     const Color.fromARGB(255, 245, 114, 105)),
-                            onPressed: () => _deleteReview(context),
+                            onPressed: () => _confirmDeleteReview(context),
                           ),
                         GestureDetector(
                           onTap: () {
