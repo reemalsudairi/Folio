@@ -31,22 +31,23 @@ class OtherLibraryPage extends StatelessWidget {
             'currently',
             currentUserId == memberId,
           ),
-          _buildGridItem(
+        
+          // Show Saved section if this is the logged-in user's profile
+          if (currentUserId == memberId)
+            _buildGridItem(
+              context,
+              Icons.bookmark_border, 
+              'Saved \n\u00A0\u00A0 \u00A0 \u00A0Private🔒\u00A0\u00A0',
+              'saved',
+              true, // It's the user's own profile
+            ),
+              _buildGridItem(
             context,
             Icons.check_circle_outline,
             'Finished',
             'finished',
             currentUserId == memberId,
           ),
-          // Show Saved section if this is the logged-in user's profile
-          if (currentUserId == memberId)
-            _buildGridItem(
-              context,
-              Icons.bookmark_border, 
-              'Saved',
-              'saved',
-              true, // It's the user's own profile
-            ),
         ],
       ),
     );

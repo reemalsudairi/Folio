@@ -19,7 +19,8 @@ class LibraryPage extends StatelessWidget {
         children: [
           _buildGridItem(
               context, Icons.menu_book_sharp, 'Currently Reading', 'currently'),
-          _buildGridItem(context, Icons.bookmark_border, 'Saved', 'saved'),
+          _buildGridItem(context, Icons.bookmark_border,  'Saved \n\u00A0\u00A0 \u00A0 \u00A0Private🔒\u00A0\u00A0',
+'saved'),
           _buildGridItem(
               context, Icons.check_circle_outline, 'Finished', 'finished'),
         ],
