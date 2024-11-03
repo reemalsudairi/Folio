@@ -90,7 +90,7 @@ class _OtherProfileState extends State<OtherProfile> {
     });
   }
 
-  @override
+@override
 Widget build(BuildContext context) {
   final currentUserId = FirebaseAuth.instance.currentUser?.uid;
   print('Current User ID: $currentUserId');
@@ -142,12 +142,10 @@ Widget build(BuildContext context) {
                     profilePhotoUrl: _profilePhotoUrl,
                     booksGoal: _booksGoal,
                     email: _email,
-                      username: _username, // Pass username here
+                    username: _username,
                   ),
                 ),
-              ).then((_) {
-                // No need to manually refresh as the StreamBuilder handles updates
-              });
+              );
             },
           ),
       ],
@@ -159,10 +157,10 @@ Widget build(BuildContext context) {
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError || !snapshot.data!.exists) {
-          return Center(child: Text('Error loading profile'));
+          return const Center(child: Text('Error loading profile'));
         }
 
         final userData = snapshot.data!.data() as Map<String, dynamic>;
@@ -173,131 +171,117 @@ Widget build(BuildContext context) {
         final booksGoal = userData['books'] ?? 0;
         final booksRead = userData['booksRead'] ?? 0;
 
-        return Container(
-          color: const Color(0xFFF8F8F3),
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: profilePhotoUrl.isNotEmpty
-                    ? NetworkImage(profilePhotoUrl)
-                    : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
-              ),
-              const SizedBox(height: 15),
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown[800],
+        return SingleChildScrollView(
+          child: Container(
+            color: const Color(0xFFF8F8F3),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: profilePhotoUrl.isNotEmpty
+                      ? NetworkImage(profilePhotoUrl)
+                      : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
                 ),
-              ),
-              Text(
-                '@$username',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color.fromARGB(255, 88, 71, 71),
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 15),
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown[800],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: 250,
-                child: Text(
-                  bio,
-                  textAlign: TextAlign.center,
+                Text(
+                  '@$username',
                   style: const TextStyle(
                     fontSize: 16,
-                    color: Color.fromARGB(255, 31, 24, 24),
+                    color: Color.fromARGB(255, 88, 71, 71),
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              _buildYearlyGoal(booksRead, booksGoal), // Calls the same design
-              const SizedBox(height: 30),
-              // Navigation Bar and Other Content
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      TextButton(
-                        onPressed: () => _onItemTapped(0),
-                        child: Text(
-                          'Library',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: _selectedIndex == 0
-                                ? Colors.brown[800]
-                                : Colors.grey[600],
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => _onItemTapped(1),
-                        child: Text(
-                          'Clubs',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: _selectedIndex == 1
-                                ? Colors.brown[800]
-                                : Colors.grey[600],
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => _onItemTapped(2),
-                        child: Text(
-                          'Reviews',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: _selectedIndex == 2
-                                ? Colors.brown[800]
-                                : Colors.grey[600],
-                          ),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: 250,
+                  child: Text(
+                    bio,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color.fromARGB(255, 31, 24, 24),
+                    ),
                   ),
-                  Stack(
-                    fit: StackFit.passthrough,
-                    children: [
-                      Container(
-                        height: 2,
-                        color: Colors.grey[300],
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                      AnimatedPositioned(
-                        duration: const Duration(milliseconds: 300),
-                        left: _getWordMiddlePosition(
-                                    _selectedIndex,
-                                    MediaQuery.of(context).size.width) - 
-                                _calculateTextWidth(
-                                        _getSelectedText()) / 2,
-                        top: -1,
-                        child: Container(
-                          height: 4,
-                          width: _calculateTextWidth(_getSelectedText()),
-                          color: Colors.brown[800],
+                ),
+                const SizedBox(height: 20),
+                _buildYearlyGoal(booksRead, booksGoal),
+                const SizedBox(height: 30),
+                
+                // Navigation Bar
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        TextButton(
+                          onPressed: () => _onItemTapped(0),
+                          child: Text(
+                            'Library',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedIndex == 0
+                                  ? Colors.brown[800]
+                                  : Colors.grey[600],
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-             Expanded(
-  child: _pages.isNotEmpty
-      ? _pages[_selectedIndex]
-      : Center(child: CircularProgressIndicator()),
-),
-
-            ],
+                        TextButton(
+                          onPressed: () => _onItemTapped(1),
+                          child: Text(
+                            'Clubs',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedIndex == 1
+                                  ? Colors.brown[800]
+                                  : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _onItemTapped(2),
+                          child: Text(
+                            'Reviews',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedIndex == 2
+                                  ? Colors.brown[800]
+                                  : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      height: 2,
+                      color: Colors.grey[300],
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ],
+                ),
+                
+                // Pages Content
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.5, // Adjust the height
+                  child: _pages.isNotEmpty
+                      ? _pages[_selectedIndex]
+                      : Center(child: CircularProgressIndicator()),
+                ),
+              ],
+            ),
           ),
         );
       },
