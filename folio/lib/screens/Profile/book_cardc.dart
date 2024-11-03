@@ -3,12 +3,10 @@ import 'package:folio/screens/book_details_page.dart';
 
 import 'book.dart';
 
-
 class CurrentlyReadingBookCard extends StatelessWidget {
   final Book book;
   final String userId;
   final Function(String option) onMenuSelected;
-
 
   const CurrentlyReadingBookCard({
     super.key,
@@ -16,7 +14,6 @@ class CurrentlyReadingBookCard extends StatelessWidget {
     required this.userId,
     required this.onMenuSelected,
   });
-
 
   @override
   Widget build(BuildContext context) {
@@ -62,24 +59,27 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                 builder: (context) => GestureDetector(
                   onTap: () {
                     // Get the position of the white circle relative to the screen
-                    final RenderBox box = context.findRenderObject() as RenderBox;
+                    final RenderBox box =
+                        context.findRenderObject() as RenderBox;
                     final Offset position = box.localToGlobal(Offset.zero);
-
 
                     showMenu<String>(
                       color: Colors.white,
                       context: context,
                       position: RelativeRect.fromLTRB(
-                        position.dx,   // Use the x-position of the white circle
-                        position.dy + 40, // Adjust y-position to be slightly below the circle
-                        position.dx + 40, // Adjust width for the right side of the menu
-                        0.0,             // Bottom position can be 0, as it's not needed
+                        position.dx, // Use the x-position of the white circle
+                        position.dy +
+                            40, // Adjust y-position to be slightly below the circle
+                        position.dx +
+                            40, // Adjust width for the right side of the menu
+                        0.0, // Bottom position can be 0, as it's not needed
                       ),
                       items: <PopupMenuEntry<String>>[
                         const PopupMenuItem<String>(
                           value: 'Move to Finished',
                           child: ListTile(
-                            leading: Icon(Icons.check_circle, color: Color(0xFF351F1F)),
+                            leading: Icon(Icons.check_circle,
+                                color: Color(0xFF351F1F)),
                             title: Text(
                               'Move to Finished',
                               style: TextStyle(color: Color(0xFF351F1F)),
@@ -89,7 +89,8 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                         const PopupMenuItem<String>(
                           value: 'Move to Saved',
                           child: ListTile(
-                            leading: Icon(Icons.bookmark, color: Color(0xFF351F1F)),
+                            leading:
+                                Icon(Icons.bookmark, color: Color(0xFF351F1F)),
                             title: Text(
                               'Move to Saved',
                               style: TextStyle(color: Color(0xFF351F1F)),
@@ -119,7 +120,8 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                       color: Colors.white, // White background for the circle
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(4.0), // Padding around the icon
+                      padding:
+                          const EdgeInsets.all(4.0), // Padding around the icon
                       child: const Icon(
                         Icons.more_vert,
                         color: Color(0xFFF790AD), // Same pink color as before
@@ -158,7 +160,7 @@ class CurrentlyReadingBookCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                // const SizedBox(height: 8),
               ],
             ),
           ),
