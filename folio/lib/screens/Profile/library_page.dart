@@ -19,8 +19,53 @@ class LibraryPage extends StatelessWidget {
         children: [
           _buildGridItem(
               context, Icons.menu_book_sharp, 'Currently Reading', 'currently'),
-          _buildGridItem(context, Icons.bookmark_border,  'Saved \n\u00A0\u00A0 \u00A0 \u00A0Private🔒\u00A0\u00A0',
-'saved'),
+         GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+                builder: (context) => SavedBooksPage(userId: userId), // Pass the userId here
+      ),
+    );
+  },
+  child: Container(
+    margin: const EdgeInsets.all(20),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.2),
+          spreadRadius: 2,
+          blurRadius: 5,
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Image.asset(
+          'assets/images/Screenshot 2024-11-03 031252.png', // Path to your custom image
+          width: 40, // Adjust the width as needed
+          height: 40, // Adjust the height as needed
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Saved', // Add label with newline and lock emoji
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.brown[800],
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
           _buildGridItem(
               context, Icons.check_circle_outline, 'Finished', 'finished'),
         ],

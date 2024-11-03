@@ -32,15 +32,57 @@ class OtherLibraryPage extends StatelessWidget {
             currentUserId == memberId,
           ),
         
-          // Show Saved section if this is the logged-in user's profile
-          if (currentUserId == memberId)
-            _buildGridItem(
-              context,
-              Icons.bookmark_border, 
-              'Saved \n\u00A0\u00A0 \u00A0 \u00A0Private🔒\u00A0\u00A0',
-              'saved',
-              true, // It's the user's own profile
+        if (currentUserId == memberId)
+  if (currentUserId == memberId)
+  GestureDetector(
+    onTap: () {
+      // Use the 'saved' route and `true` for conditional navigation if needed
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SavedBooksPage(userId: memberId),
+        ),
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/Screenshot 2024-11-03 031252.png', // Path to your custom icon
+            width: 40, // Adjust width as needed
+            height: 40, // Adjust height as needed
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Saved', // Label with newline and lock icon
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown[800],
             ),
+          ),
+        ],
+      ),
+    ),
+  ),
+
+
               _buildGridItem(
             context,
             Icons.check_circle_outline,
