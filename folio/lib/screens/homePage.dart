@@ -608,8 +608,8 @@ Widget _buildQuiz(BuildContext context) {
            borderRadius: BorderRadius.circular(20),
         child: Image.asset(
           'assets/images/quiz.jpeg',
-          width: 300,
-          height: 280,
+          width: 350,
+          height: 320,
           fit: BoxFit.cover,
         ),
         ),
