@@ -425,6 +425,8 @@ class HomePageContent extends StatelessWidget {
                 const SizedBox(height: 30),
                 _buildCurrentlyReadingSection(context),
                 const SizedBox(height: 30),
+                _buildQuiz(context),
+                const SizedBox(height: 30),
                 _buildClubsSection(context, allClubs),
                 const SizedBox(height: 30),
                 // Create Club Button
@@ -595,6 +597,47 @@ class HomePageContent extends StatelessWidget {
       ],
     );
   }
+
+Widget _buildQuiz(BuildContext context) {
+  return Center(
+    child: Stack(
+      alignment: Alignment.center, // Center the button over the image
+      children: [
+        // Photo widget
+        ClipRRect(
+           borderRadius: BorderRadius.circular(20),
+        child: Image.asset(
+          'assets/images/quiz.jpeg',
+          width: 300,
+          height: 280,
+          fit: BoxFit.cover,
+        ),
+        ),
+        // Button widget
+        Positioned(
+          bottom: 20, // Adjust the position as needed
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFF790AD), // Pink color for the button
+              padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+            onPressed: () {
+              // Button action
+            },
+            child: Text(
+              'Take a quiz',
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildClubsSection(BuildContext context, List<Club> allClubs) {
     return Container(
