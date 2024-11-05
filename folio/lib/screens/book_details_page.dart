@@ -44,6 +44,307 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     _getAverageRating(); // Fetch the book details
   }
 
+
+  final List<String> reasons = [
+    'Inappropriate Language',
+    'Offensive Content',
+    'Spam or Advertising',
+    'Irrelevant to the Book',
+    'Harassment or Hate Speech',
+    'Duplicate Review'
+  ];
+
+void _showReportDialog() async {
+    // Check if the review has already been reported
+    bool hasReported = await _checkIfReported(widget.bookId, userId!);
+
+    if (hasReported) {
+      // Show a message if the review has already been reported
+      _showAlreadyReportedDialog();
+      return; // Exit the method early
+    }
+
+    List<bool> selectedReasons = List.generate(reasons.length, (index) => false);
+    bool showError = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'Report Review',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Please select the reason(s) for reporting this review:",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  Column(
+                    children: List.generate(reasons.length, (index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                reasons[index],
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedReasons[index] = !selectedReasons[index];
+                                  showError = false; // Clear error when a reason is selected
+                                });
+                              },
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: selectedReasons[index]
+                                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  if (showError)
+                    const Text(
+                      'Please select at least one reason.',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+ ),
+                ],
+              ),
+              actions: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            bool isAnySelected = selectedReasons.contains(true);
+                            if (isAnySelected) {
+                              _submitReport(selectedReasons);
+                              Navigator.of(context).pop();
+                            } else {
+                              setDialogState(() {
+                                showError = true; // Display error message if no reason is selected
+                              });
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF790AD),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text(
+                            'Submit',
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.grey[300],
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(fontSize: 18, color: Colors.black),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+Future<bool> _checkIfReported(String bookId, String userId) async {
+  var snapshot = await FirebaseFirestore.instance
+      .collection('reports')
+      .where('bookId', isEqualTo: bookId)
+      .where('userId', isEqualTo: userId)
+      .get();
+
+  return snapshot.docs.isNotEmpty; // Returns true if a report exists
+}
+
+void _showAlreadyReportedDialog() {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD), // Pink background
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning, // Warning icon
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'You have already reported this review.',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey, // Gray background for "Exit"
+              ),
+              child: const Text(
+                'Exit',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
+
+
+
+  Future<void> _submitReport(List<bool> selectedReasons) async {
+  List<String> reasonsToSubmit = [];
+  for (int i = 0; i < selectedReasons.length; i++) {
+    if (selectedReasons[i]) {
+      reasonsToSubmit.add(reasons[i]); // Use the class-level reasons variable
+    }
+  }
+
+  if (reasonsToSubmit.isNotEmpty) {
+    try {
+      await FirebaseFirestore.instance.collection('reports').add({
+        'bookId': widget.bookId,
+        'userId': widget.userId,
+        'reasons': reasonsToSubmit,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      _showSuccessfulMessage2(context); // Show success message after submission
+    } catch (e) {
+      print("Error submitting report: $e");
+      // Optionally show an error message to the user
+    }
+  } else {
+    // Optionally show a message if no reasons were selected
+    print("No reasons selected for the report.");
+  }
+}
+
+  // Method to show success message after report submission
+  void _showSuccessfulMessage2(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7), // Dark green background
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 50,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Report Submitted',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20, // Bold and larger font for the title
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 5), // Space between title and message
+              const Text(
+                'Thank you for your report. It will be reviewed by our team.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16, // Smaller font for the message
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+
+  // Automatically close the dialog after 3 seconds
+  Future.delayed(const Duration(seconds: 3), () {
+    Navigator.of(context).pop(); // Close the dialog
+  });
+}
   void _getAverageRating() {
     FirebaseFirestore.instance
         .collection('reviews')
@@ -1165,197 +1466,194 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
   Widget buildReviewsGridView(String bookId) {
-    return StreamBuilder<Tuple2<List<Review>, int>>(
-      stream: fetchReviews(bookId),
-      builder: (BuildContext context,
-          AsyncSnapshot<Tuple2<List<Review>, int>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.item1.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'No reviews available.',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 1, 0, 0),
-                  ),
+  return StreamBuilder<Tuple2<List<Review>, int>>(
+    stream: fetchReviews(bookId),
+    builder: (BuildContext context,
+        AsyncSnapshot<Tuple2<List<Review>, int>> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (!snapshot.hasData || snapshot.data!.item1.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'No reviews available.',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 1, 0, 0),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Be the first to leave a review and share your thoughts!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                  textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Be the first to leave a review and share your thoughts!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
                 ),
-              ],
-            ),
-          );
-        } else {
-          final reviews = snapshot.data!.item1; // List of reviews
-          final validRatingCount = snapshot.data!.item2;
-          final String currentUserId = FirebaseAuth.instance.currentUser?.uid ??
-              ''; // Count of valid ratings
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      } else {
+        final reviews = snapshot.data!.item1; // List of reviews
+        final validRatingCount = snapshot.data!.item2;
+        final String currentUserId = FirebaseAuth.instance.currentUser ?.uid ??
+            ''; // Count of valid ratings
 
-          // Use reviews and validRatingCount as needed
-          // For example, you can display the average rating or something else here.
-
-          return ListView.builder(
-            shrinkWrap: true,
-            physics:
-                const NeverScrollableScrollPhysics(), // Prevent scrolling if inside a scrollable view
-            itemCount: reviews.length,
-            itemBuilder: (context, index) {
-              final review = reviews[index];
-              return Card(
-                color: Colors.white, // Set the card background color to white
-                margin: const EdgeInsets.symmetric(
-                    vertical: 8, horizontal: 16), // Add horizontal margin
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(12), // Adjust card corners
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(
-                      8.0), // Reduced padding for smaller card size
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
+        return ListView.builder(
+          shrinkWrap: true,
+          physics:
+              const NeverScrollableScrollPhysics(), // Prevent scrolling if inside a scrollable view
+          itemCount: reviews.length,
+          itemBuilder: (context, index) {
+            final review = reviews[index];
+            return Card(
+              color: Colors.white, // Set the card background color to white
+              margin: const EdgeInsets.symmetric(
+                  vertical: 8, horizontal: 16), // Add horizontal margin
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(12), // Adjust card corners
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(
+                    8.0), // Reduced padding for smaller card size
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            // Navigate to the OtherProfile page for the owner
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OtherProfile(
+                                  memberId: review
+                                      .readerId, // Pass the owner ID to OtherProfile
+                                ),
+                              ),
+                            );
+                          },
+                          child: CircleAvatar(
+                            backgroundImage: review
+                                    .readerProfilePhoto.isNotEmpty
+                                ? NetworkImage(review
+                                    .readerProfilePhoto) // Use NetworkImage for network photos
+                                : AssetImage(
+                                    'assets/images/profile_pic.png'), // Use AssetImage for the default picture
+                            radius: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    review.readerId == currentUserId
+                                        ? 'You'
+                                        : review.readerName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14, // Reduced text size
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                      width:
+                                          5), // Space between name and time ago
+                                  Text(
+                                    review
+                                        .timeAgo, // Display the time ago string
+                                    style: const TextStyle(
+                                      fontSize:
+                                          12, // Smaller font size for time ago
+                                      color: Colors
+ .grey, // Gray color for time ago text
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                  height: 5), // Space between name and stars
+                              Row(
+                                children: List.generate(5, (starIndex) {
+                                  if (starIndex < review.rating.toInt()) {
+                                    return const Icon(
+                                      Icons.star,
+                                      color: Color(0xFFF790AD), // Star color
+                                      size: 14, // Star size
+                                    );
+                                  } else if (starIndex ==
+                                          review.rating.toInt() &&
+                                      review.rating % 1 >= 0.5) {
+                                    return const Icon(
+                                      Icons.star_half,
+                                      color: Color(0xFFF790AD), // Star color
+                                      size: 14, // Star size
+                                    );
+                                  } else {
+                                    return const Icon(
+                                      Icons.star_border, // Empty star
+                                      color: Color(0xFFF790AD), // Star color
+                                      size: 14, // Star size
+                                    );
+                                  }
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (review.readerId == currentUserId)
+                          IconButton(
+                            icon: Icon(Icons.delete,
+                                color: const Color.fromARGB(255, 245, 114, 105)),
+                            onPressed: () =>
+                                _confirmDeleteReview(context, review),
+                          ),
+                        if (review.readerId != currentUserId)
                           GestureDetector(
                             onTap: () {
-                              // Navigate to the OtherProfile page for the owner
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => OtherProfile(
-                                    memberId: review
-                                        .readerId, // Pass the owner ID to OtherProfile
-                                  ),
-                                ),
-                              );
+                              // Show the report dialog when the flag icon is tapped
+                              _showReportDialog();
                             },
-                            child: CircleAvatar(
-                              backgroundImage: review
-                                      .readerProfilePhoto.isNotEmpty
-                                  ? NetworkImage(review
-                                      .readerProfilePhoto) // Use NetworkImage for network photos
-                                  : AssetImage(
-                                      'assets/images/profile_pic.png'), // Use AssetImage for the default picture
-                              radius: 18,
+                            child: const Icon(
+                              Icons.flag, // Gray flag icon for reporting
+                              color: Colors.grey, // Set color to gray
+                              size: 23, // Adjust the size of the flag icon
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      review.readerId == currentUserId
-                                          ? 'You'
-                                          : review.readerName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14, // Reduced text size
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                        width:
-                                            5), // Space between name and time ago
-                                    Text(
-                                      review
-                                          .timeAgo, // Display the time ago string
-                                      style: const TextStyle(
-                                        fontSize:
-                                            12, // Smaller font size for time ago
-                                        color: Colors
-                                            .grey, // Gray color for time ago text
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(
-                                    height: 5), // Space between name and stars
-                                Row(
-                                  children: List.generate(5, (starIndex) {
-                                    if (starIndex < review.rating.toInt()) {
-                                      return const Icon(
-                                        Icons.star,
-                                        color: Color(0xFFF790AD), // Star color
-                                        size: 14, // Star size
-                                      );
-                                    } else if (starIndex ==
-                                            review.rating.toInt() &&
-                                        review.rating % 1 >= 0.5) {
-                                      return const Icon(
-                                        Icons.star_half,
-                                        color: Color(0xFFF790AD), // Star color
-                                        size: 14, // Star size
-                                      );
-                                    } else {
-                                      return const Icon(
-                                        Icons.star_border, // Empty star
-                                        color: Color(0xFFF790AD), // Star color
-                                        size: 14, // Star size
-                                      );
-                                    }
-                                  }),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (review.readerId == currentUserId)
-                            IconButton(
-                              icon: Icon(Icons.delete,
-                                  color:
-                                      const Color.fromARGB(255, 245, 114, 105)),
-                              onPressed: () =>
-                                  _confirmDeleteReview(context, review),
-                            ),
-                          if (review.readerId != currentUserId)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  right: 8.0), // Adjust the value as needed
-                              child: const Icon(
-                                Icons.flag, // Gray flag icon for reporting
-                                color: Colors.grey, // Set color to gray
-                                size: 23, // Adjust the size of the flag icon
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(
-                          height:
-                              8), // Adjusted space between the stars and the review text
-                      Text(
-                        review.reviewText.isNotEmpty
-                            ? review.reviewText
-                            : '', // Fallback text if review is empty
-                        style: const TextStyle(
-                            fontSize: 12), // Reduced review text size
-                        textAlign: TextAlign.justify,
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(
+                        height: 8), // Adjusted space between the stars and the review text
+                    Text(
+                      review.reviewText.isNotEmpty
+                          ? review.reviewText
+                          : '', // Fallback text if review is empty
+                      style: const TextStyle(
+                          fontSize: 12), // Reduced review text size
+                      textAlign: TextAlign.justify,
+                    ),
+                  ],
                 ),
-              );
-            },
-          );
-        }
-      },
-    );
-  }
+              ),
+            );
+          },
+        );
+      }
+    },
+  );
+}
 
   void _confirmDeleteReview(BuildContext context, Review review) {
     showDialog(
