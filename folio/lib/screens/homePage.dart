@@ -9,6 +9,7 @@ import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/screens/categories_page.dart';
 import 'package:folio/screens/extendedclubs.dart';
+import 'package:folio/screens/quiz1.dart';
 import 'package:folio/screens/searchMemebr.dart';
 import 'package:folio/screens/settings.dart';
 import 'package:folio/screens/viewClub.dart';
@@ -625,10 +626,15 @@ Widget _buildQuiz(BuildContext context) {
               ),
             ),
             onPressed: () {
-              // Button action
+                Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DynamicQuizPage(),
+                ),
+                );
             },
             child: Text(
-              'Take a quiz',
+              'Get book recommendations',
               style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ),
