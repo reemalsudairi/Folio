@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "866432989267",
+    "firebase_url": "https://folio-29339-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "folio-29339",
     "storage_bucket": "folio-29339.appspot.com"
   },
@@ -10,6 +11,44 @@
         "mobilesdk_app_id": "1:866432989267:android:57f897cf2489c0a5d56ea6",
         "android_client_info": {
           "package_name": "com.example.folio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD08AQh_ozf3QSFAZcg7eTWGtBMJw_kG_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:866432989267:android:45861807ac6fb874d56ea6",
+        "android_client_info": {
+          "package_name": "com.mycompany.folio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD08AQh_ozf3QSFAZcg7eTWGtBMJw_kG_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:866432989267:android:66f618993b114815d56ea6",
+        "android_client_info": {
+          "package_name": "com.signup_one.app"
         }
       },
       "oauth_client": [],
