@@ -80,7 +80,7 @@ class _HomePageState extends State<HomePage> {
           .doc(user.uid)
           .collection('currently reading');
 
-      booksRef.snapshots().listen((snapshot) async {
+      booksRef.orderBy('timestamp', descending: true).snapshots().listen((snapshot) async {
         List<Book> books = [];
         for (var doc in snapshot.docs) {
           var bookId = doc['bookID'];
