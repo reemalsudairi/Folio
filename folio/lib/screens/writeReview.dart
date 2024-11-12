@@ -93,7 +93,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
 
 // Store review in Firestore
   Future<void> submitReview() async {
-    await FirebaseFirestore.instance.collection('reviews').add({
+    DocumentReference reviewRef = await FirebaseFirestore.instance.collection('reviews').add({
       'createdAt':
           FieldValue.serverTimestamp(), // This will add the current server time
       'reader_id': widget.userId,
@@ -101,6 +101,7 @@ class _WriteReviewPageState extends State<WriteReviewPage> {
       'rating': rating,
       'reviewText': reviewController.text,
     });
+    await reviewRef.update({'reviewID': reviewRef.id});
 
     _showReviewPublishMessage(); // Show success message after submission
   }
