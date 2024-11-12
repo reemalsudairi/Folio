@@ -187,11 +187,7 @@ Widget _buildMemberList() {
 
       final members = memberSnapshot.data?.docs ?? [];
 
-      // Check if members exist
-      if (members.isEmpty) {
-        return const Center(child: Text('No members found.'));
-      }
-
+      // Display the owner regardless of member count
       return StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('reader')
@@ -207,7 +203,6 @@ Widget _buildMemberList() {
           }
 
           final ownerData = ownerSnapshot.data!.data() as Map<String, dynamic>?;
-
           if (ownerData == null) {
             return const Center(child: Text('Owner data not available.'));
           }
@@ -242,16 +237,16 @@ Widget _buildMemberList() {
               ),
               const Divider(), // Add a divider between the owner and members
 
-              // Display the members (excluding the owner)
+              // Display members if they exist, excluding the owner
               ...members.where((member) => member.id != widget.ownerID).map((member) {
                 return FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('reader')
                       .doc(member.id)
-                      .get(), // Fetch member data
+                      .get(),
                   builder: (context, memberSnapshot) {
                     if (memberSnapshot.connectionState == ConnectionState.waiting) {
-                      return const SizedBox.shrink(); // Don't display until data is ready
+                      return const SizedBox.shrink();
                     }
 
                     if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
@@ -263,20 +258,19 @@ Widget _buildMemberList() {
                           .doc(member.id)
                           .delete()
                           .catchError((error) => print("Error removing non-existent member: $error"));
-                      return const SizedBox.shrink(); // Skip display for this member
+                      return const SizedBox.shrink();
                     }
 
                     final memberData = memberSnapshot.data!.data() as Map<String, dynamic>?;
 
                     if (memberData == null) {
-                      return const SizedBox.shrink(); // Skip if data is null
+                      return const SizedBox.shrink();
                     }
 
                     String memberName = memberData['name'] ?? 'No Name';
                     String memberUsername = memberData['username'] ?? 'No Username';
                     String memberProfilePhoto = memberData['profilePhoto'] ?? '';
 
-                    
                     return ListTile(
                       leading: CircleAvatar(
                         radius: 25,
@@ -314,7 +308,6 @@ Widget _buildMemberList() {
     },
   );
 }
-
 
   @override
   Widget build(BuildContext context) {
