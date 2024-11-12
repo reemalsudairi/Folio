@@ -1,9 +1,9 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/book_details_page.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:intl/intl.dart';
 
 class ReviewsPage extends StatelessWidget {
   final String readerId; // Current user's uid
@@ -83,7 +83,24 @@ class ReviewTile extends StatelessWidget {
     required this.createdAt,
   });
 
-// Function to calculate time ago
+  final List<String> reasons = [
+    'Inappropriate Language',
+    'Offensive Content',
+    'Spam or Advertising',
+    'Irrelevant to the Book',
+    'Harassment or Hate Speech',
+    'Duplicate Review',
+    'Other',
+  ];
+
+   // Track selected reasons
+  final Map<String, bool> selectedReasons = {};
+
+  // Track if "Other" is selected
+  bool isOtherSelected = false; 
+  String otherReasonText = ''; // Store the text input for "Other"
+
+  // Function to calculate time ago
   String timeAgo(Timestamp timestamp) {
     final DateTime now = DateTime.now();
     final DateTime reviewTime = timestamp.toDate();
@@ -103,6 +120,100 @@ class ReviewTile extends StatelessWidget {
     }
   }
 
+void _showReportDialog(BuildContext context) {
+  // Variable to hold the input for "Other"
+  String otherReasonText = '';
+  
+  // Initializing selectedReasons map
+  final Map<String, bool> selectedReasons = {
+    for (var reason in reasons) reason: false, // Initialize all to false
+  };
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Report Review'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              // List of reasons with checkboxes
+              StatefulBuilder(
+                builder: (context, setState) {
+                  return Column(
+                    children: reasons.map((reason) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedReasons[reason] = !(selectedReasons[reason] ?? false);
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(reason),
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: selectedReasons[reason] ?? false ? Colors.pink : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.grey),
+                                ),
+                                child: selectedReasons[reason] ?? false
+                                    ? Icon(Icons.check, color: Colors.white, size: 20)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              // TextField for "Other" reason
+              if (selectedReasons['Other'] ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: TextField(
+                    onChanged: (value) {
+                      otherReasonText = value; // Update the text input
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Please specify',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+          ),
+          TextButton(
+            child: Text('Report'),
+            onPressed: () {
+              // Handle the reporting logic
+              print('Reported reasons: ${selectedReasons.entries.where((entry) => entry.value).map((entry) => entry.key).toList()}');
+              if (otherReasonText.isNotEmpty) {
+                print('Other reason: $otherReasonText'); // Log the custom reason
+              }
+              Navigator.of(context).pop(); // Close the dialog
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
  
 
 void _confirmDeleteReview(BuildContext context) {
@@ -277,171 +388,156 @@ void _showSuccessfulMessage(BuildContext context) {
 }
 
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<DocumentSnapshot>(
-      future:
-          FirebaseFirestore.instance.collection('reader').doc(readerId).get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        }
+ @override
+Widget build(BuildContext context) {
+  return FutureBuilder<DocumentSnapshot>(
+    future: FirebaseFirestore.instance.collection('reader').doc(readerId).get(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      }
 
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return Center(child: Text("User data not found"));
-        }
+      if (!snapshot.hasData || !snapshot.data!.exists) {
+        return Center(child: Text("User  data not found"));
+      }
 
-        Map<String, dynamic> userData =
-            snapshot.data!.data() as Map<String, dynamic>;
-        String username = userData['name'] ?? 'Anonymous';
-        String profilePic = userData['profilePhoto'] ?? '';
+      Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
+      String username = userData['name'] ?? 'Anonymous';
 
-        return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-            child: Card(
-              elevation: 2,
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Use FutureBuilder to fetch the profile picture
-                    FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance
-                          .collection('reader')
-                          .doc(readerId)
-                          .get(),
-                      builder: (context, memberSnapshot) {
-                        if (memberSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const SizedBox
-                              .shrink(); // Don't display until data is ready
-                        }
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        child: Card(
+          elevation: 2,
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Use FutureBuilder to fetch the profile picture
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('reader').doc(readerId).get(),
+                  builder: (context, memberSnapshot) {
+                    if (memberSnapshot.connectionState == ConnectionState.waiting) {
+                      return const SizedBox.shrink(); // Don't display until data is ready
+                    }
 
-                        if (!memberSnapshot.hasData ||
-                            !memberSnapshot.data!.exists) {
-                          return CircleAvatar(
-                            backgroundImage: const AssetImage(
-                                'assets/images/profile_pic.png'),
-                            radius: 18,
-                          ); // Fallback to default if no data found
-                        }
+                    if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
+                      return CircleAvatar(
+                        backgroundImage: const AssetImage('assets/images/profile_pic.png'),
+                        radius: 18,
+                      ); // Fallback to default if no data found
+                    }
 
-                        final memberData = memberSnapshot.data!.data()
-                            as Map<String, dynamic>?;
-                        if (memberData == null) {
-                          return CircleAvatar(
-                            backgroundImage: const AssetImage(
-                                'assets/images/profile_pic.png'),
-                            radius: 18,
-                          ); // Fallback to default if memberData is null
-                        }
+                    final memberData = memberSnapshot.data!.data() as Map<String, dynamic>?;
+                    if (memberData == null) {
+                      return CircleAvatar(
+                        backgroundImage: const AssetImage('assets/images/profile_pic.png'),
+                        radius: 18,
+                      ); // Fallback to default if memberData is null
+                    }
 
-                        String memberProfilePhoto =
-                            memberData['profilePhoto'] ?? '';
+                    String memberProfilePhoto = memberData['profilePhoto'] ?? '';
 
-                        return CircleAvatar(
-                          backgroundImage: (memberProfilePhoto.isNotEmpty &&
-                                  memberProfilePhoto.startsWith('http'))
-                              ? NetworkImage(memberProfilePhoto)
-                              : const AssetImage(
-                                      'assets/images/profile_pic.png')
-                                  as ImageProvider,
-                          radius: 18,
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    return CircleAvatar(
+                      backgroundImage: (memberProfilePhoto.isNotEmpty && memberProfilePhoto.startsWith('http'))
+                          ? NetworkImage(memberProfilePhoto)
+                          : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
+                      radius: 18,
+                    );
+                  },
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                username,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(
-                                  width: 5), // Space between name and time
-                              Text(
-                                timeAgo(createdAt), // Call the timeAgo method
-                                style:
-                                    TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Row(
-                            children: List.generate(5, (index) {
-                              if (rating >= index + 1) {
-                                return Icon(
-                                  Icons.star,
-                                  color: const Color(0xFFF790AD),
-                                  size: 18,
-                                );
-                              } else if (rating >= index + 0.5) {
-                                return Icon(
-                                  Icons.star_half,
-                                  color: const Color(0xFFF790AD),
-                                  size: 18,
-                                );
-                              } else {
-                                return Icon(
-                                  Icons.star_border,
-                                  color: const Color(0xFFF790AD),
-                                  size: 18,
-                                );
-                              }
-                            }),
-                          ),
-                          const SizedBox(height: 5),
                           Text(
-                            reviewText,
-                            style: const TextStyle(fontSize: 14),
+                            username,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 5), // Space between name and time
+                          Text(
+                            timeAgo(createdAt), // Call the timeAgo method
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      children: [
-                        if (isOwner)
-                          IconButton(
-                            icon: Icon(Icons.delete,
-                                color:
-                                    const Color.fromARGB(255, 245, 114, 105)),
-                            onPressed: () => _confirmDeleteReview(context),
-                          ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookDetailsPage(
-                                  bookId: bookID,
-                                  userId: readerId,
-                                ),
-                              ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: List.generate(5, (index) {
+                          if (rating >= index + 1) {
+                            return Icon(
+                              Icons.star,
+                              color: const Color(0xFFF790AD),
+                              size: 18,
                             );
-                          },
-                          child: BookCover(bookID: bookID),
-                        ),
-                      ],
+                          } else if (rating >= index + 0.5) {
+                            return Icon(
+                              Icons.star_half,
+                              color: const Color(0xFFF790AD),
+                              size: 18,
+                            );
+                          } else {
+                            return Icon(
+                              Icons.star_border,
+                              color: const Color(0xFFF790AD),
+                              size: 18,
+                            );
+                          }
+                        }),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        reviewText,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  children: [
+                    if (isOwner)
+                      IconButton(
+                        icon: Icon(Icons.delete, color: const Color.fromARGB(255, 245, 114, 105)),
+                        onPressed: () => _confirmDeleteReview(context),
+                      ),
+                    if (!isOwner)
+                      IconButton(
+                        icon: Icon(Icons.flag, color: const Color.fromARGB(255, 120, 120, 120)), // Flag icon
+                        onPressed: () => _showReportDialog(context), // Show report dialog
+                      ),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookDetailsPage(
+                              bookId: bookID,
+                              userId: readerId,
+                            ),
+                          ),
+                        );
+                      },
+                      child: BookCover(bookID: bookID),
                     ),
                   ],
                 ),
-              ),
-            ));
-      },
-    );
-  }
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+ );
+}
 }
 
 class BookCover extends StatefulWidget {
