@@ -55,7 +55,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     'Duplicate Review'
   ];
 
-void _showReportDialog() async {
+void _showReportDialog(String reviewId) async {
     // Check if the review has already been reported
     bool hasReported = await _checkIfReported(widget.bookId, userId!);
 
@@ -144,7 +144,7 @@ void _showReportDialog() async {
                           onPressed: () {
                             bool isAnySelected = selectedReasons.contains(true);
                             if (isAnySelected) {
-                              _submitReport(selectedReasons);
+                              _submitReport(selectedReasons, reviewId);
                               Navigator.of(context).pop();
                             } else {
                               setDialogState(() {
@@ -259,7 +259,7 @@ void _showAlreadyReportedDialog() {
 
 
 
-  Future<void> _submitReport(List<bool> selectedReasons) async {
+  Future<void> _submitReport(List<bool> selectedReasons, String reviewId) async {
   List<String> reasonsToSubmit = [];
   for (int i = 0; i < selectedReasons.length; i++) {
     if (selectedReasons[i]) {
@@ -272,6 +272,7 @@ void _showAlreadyReportedDialog() {
       await FirebaseFirestore.instance.collection('reports').add({
         'bookId': widget.bookId,
         'userId': widget.userId,
+        'reviewId': reviewId, // Add reviewId to the report
         'reasons': reasonsToSubmit,
         'timestamp': FieldValue.serverTimestamp(),
       });
@@ -1625,7 +1626,7 @@ void _showAlreadyReportedDialog() {
                           GestureDetector(
                             onTap: () {
                               // Show the report dialog when the flag icon is tapped
-                              _showReportDialog();
+                              _showReportDialog(review.id);
                             },
                             child: const Icon(
                               Icons.flag, // Gray flag icon for reporting
@@ -1929,6 +1930,7 @@ void _showAlreadyReportedDialog() {
 }
 
 class Review {
+  final String id; // Add this line for the review ID
   final String readerId;
   final String readerName;
   final String readerProfilePhoto;
@@ -1936,9 +1938,10 @@ class Review {
   final double rating;
   final DateTime createdAt;
   final String bookId;
-  final String timeAgo; // Add this line
+  final String timeAgo;
 
   Review({
+    required this.id, // Add this parameter to the constructor
     required this.readerId,
     required this.readerName,
     required this.readerProfilePhoto,
@@ -1946,14 +1949,13 @@ class Review {
     required this.rating,
     required this.createdAt,
     required this.bookId,
-    required this.timeAgo, // Update this line
+    required this.timeAgo,
   });
 }
 
 Stream<Tuple2<List<Review>, int>> fetchReviews(String bookId) async* {
-  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String currentUserId = FirebaseAuth.instance.currentUser ?.uid ?? '';
 
-  // Listen to the Firestore collection
   await for (var snapshot in FirebaseFirestore.instance
       .collection('reviews')
       .where('bookID', isEqualTo: bookId)
@@ -1966,7 +1968,6 @@ Stream<Tuple2<List<Review>, int>> fetchReviews(String bookId) async* {
       final data = doc.data();
       String readerId = data['reader_id'] ?? '';
 
-      // Fetch the reader's details from the readers collection
       DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
           .collection('reader')
           .doc(readerId)
@@ -1981,7 +1982,9 @@ Stream<Tuple2<List<Review>, int>> fetchReviews(String bookId) async* {
       DateTime createdAt =
           (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
+      // Create a Review object with the document ID
       Review review = Review(
+        id: doc.id, // Set the ID from Firestore
         readerId: readerId,
         readerName: readerName,
         readerProfilePhoto: userData?['profilePhoto'] ?? '',
@@ -1994,12 +1997,10 @@ Stream<Tuple2<List<Review>, int>> fetchReviews(String bookId) async* {
         timeAgo: timeAgo(createdAt),
       );
 
-      // Count valid ratings
       if (review.rating > 0) {
         validRatingCount++;
       }
 
-      // Check if the review belongs to the current user
       if (readerId == currentUserId) {
         myReview = review;
       } else {
@@ -2007,10 +2008,8 @@ Stream<Tuple2<List<Review>, int>> fetchReviews(String bookId) async* {
       }
     }
 
-    // Sort the reviews by createdAt (newest first)
     reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    // If the current user has provided a review, add it at the top
     if (myReview != null) {
       reviews.insert(0, myReview);
     }
