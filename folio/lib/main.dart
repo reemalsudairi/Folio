@@ -38,9 +38,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF790AD)),
         useMaterial3: true,
       ),
-      home: user != null
-          ? HomePage(userId: user!.uid)
-          : const Splash(), // If user is logged in, show HomePage, otherwise show Splash screen
+      home: const Splash() // If user is logged in, show HomePage, otherwise show Splash screen
     );
   }
 }

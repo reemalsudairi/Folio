@@ -11,7 +11,8 @@ import 'package:image_picker/image_picker.dart'; // Import the image picker pack
 import 'package:http/http.dart' as http;
 class EditClub extends StatefulWidget {
   final String clubId; // Pass the clubId to identify the club being edited
-  const EditClub({Key? key, required this.clubId}) : super(key: key);
+  final bool fromCreate;
+  const EditClub({Key? key, required this.clubId, this.fromCreate  = false}) : super(key: key);
   @override
   _EditClubPageState createState() => _EditClubPageState();
 }
@@ -45,16 +46,28 @@ class _EditClubPageState extends State<EditClub> {
     'Hindi',
     'Japanese',
   ];
+  bool _hasChanges = false;
+
   @override
   void initState() {
     super.initState();
     _loadClubData(); // Load the club data when the page is initialized
   }
+
+    // Update the onChanged method for each TextFormField
+  void _onFieldChanged() {
+    setState(() {
+      _hasChanges = true; // Mark as changed
+    });
+  }
+
 // Function to load the existing club data for editing
 Future<void> _loadClubData() async {
   setState(() {
     _isLoading = true;
   });
+
+  
  
   try {
     print('Fetching club data from Firestore...');
@@ -206,6 +219,7 @@ void _deleteClubImage() {
   setState(() {
     _clubImageUrl = null; // Set to null to show the default image
     _clubImageFile = null; // Clear any selected image file
+    _hasChanges = true;
   });
   // Changes are now pending and will be saved when 'Update Club' is pressed
 }
@@ -220,6 +234,7 @@ void _deleteClubImage() {
         setState(() {
           _clubImageFile = File(pickedImage.path);
           _clubImageUrl = null; // Reset the URL as a new image is selected
+          _hasChanges = true;
         });
         print('Image selected: ${pickedImage.path}');
       } else {
@@ -432,6 +447,7 @@ Future<void> _pickDiscussionDate() async {
     setState(() {
       _discussionDate = Timestamp.fromDate(fullDateTime);
       print('Selected discussion date: $_discussionDate');
+      _hasChanges = true;
     });
   }
 }
@@ -444,81 +460,87 @@ Future<void> _pickDiscussionDate() async {
   // Helper function to ensure two digits
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
 
-// Show confirmation dialog for back button
+  // Show confirmation dialog for back button
   Future<bool?> _showExitConfirmationDialog() async {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false, // Disable dismissal by clicking outside
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.warning, // Warning icon
-                color: Colors.white,
-                size: 40,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'You will lose any unsaved changes. Are you sure you want to go back?',
-                style: TextStyle(
+    // Only show the dialog if there are changes
+    if (_hasChanges) {
+      return showDialog<bool>(
+        context: context,
+        barrierDismissible: false, // Disable dismissal by clicking outside
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.warning, // Warning icon
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  size: 40,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(true); // Close the dialog and return true
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(255, 245, 114, 105), // Pink background for "Yes"
-                    ),
-                    child: const Text(
-                      'Yes',
-                      style: TextStyle(
-                        fontSize:  14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                const SizedBox(height: 10),
+                const Text(
+                  'You will lose any unsaved changes. Are you sure you want to go back?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(true); // Close the dialog and return true
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(255, 245, 114, 105), // Pink background for "Yes"
+                      ),
+                      child: const Text(
+                        'Yes',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(false); // Close the dialog and return false
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey, // Grey background for "No"
-                    ),
-                    child: const Text(
-                      'No',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(false); // Close the dialog and return false
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey, // Grey background for "No"
+                      ),
+                      child: const Text(
+                        'No',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } else {
+      return Future.value(true); // No changes, allow exit
+    }
   }
+
 
 
   @override
@@ -653,10 +675,7 @@ TextFormField(
     counterText:
         '${_clubNameController.text.length}/30', // Character counter
   ),
-  onChanged: (text) {
-    // This triggers the rebuild of the widget to update the counter text dynamically
-    setState(() {});
-  },
+  onChanged: (text) => _onFieldChanged(),
 ),
 // Description Field
 TextFormField(
@@ -697,10 +716,7 @@ TextFormField(
     counterText:
         '${_descriptionController.text.length}/250', // Character counter
   ),
-  onChanged: (text) {
-    // This triggers the rebuild of the widget to update the counter text dynamically
-    setState(() {});
-  },
+  onChanged: (text) => _onFieldChanged(),
 ),
                     const SizedBox(height: 35),
                     // Language dropdown menu
@@ -715,6 +731,7 @@ TextFormField(
                       onChanged: (String? newValue) {
                         setState(() {
                           _selectedLanguage = newValue;
+                          _hasChanges = true;
                         });
                      },
                       decoration: InputDecoration(
@@ -803,6 +820,7 @@ GestureDetector(
         _bookCover = selectedBook['coverImage']; // Store book cover
         _bookAuthor = selectedBook['author']; // Store author name
         _discussionDate = null; // Clear discussion date
+        _hasChanges = true;
       });
       print('Book selected: $selectedBook');
     } else {
@@ -1186,8 +1204,15 @@ void _showClubDeletionMessage() {
   );
   // Automatically close the confirmation dialog after 2 seconds and navigate to the previous page of the previous page
   Future.delayed(const Duration(seconds: 2), () {
+    if (widget.fromCreate) {
     Navigator.of(context).pop(); // Close the confirmation dialog
-    Navigator.popUntil(context, (route) => route.isFirst); // Navigate back to the previous page of the previous page
+ Navigator.of(context).pop();
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();    } else {
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    }
   });
 }
 }

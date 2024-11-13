@@ -76,6 +76,7 @@ class EditProfile extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfile> {
   bool _isLoading = false;
+  bool _hasChanges = false;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
@@ -354,6 +355,7 @@ Widget build(BuildContext context) {
                     : const AssetImage('assets/images/profile_pic.png'),
             onImagePicked: (File? imageFile) {
               setState(() {
+                _hasChanges = true;
                 _imageFile = imageFile;
                 if (imageFile == null) {
                   _currentPhotoUrl = '';
@@ -483,20 +485,110 @@ _buildUsernameField(widget.username), // Display username as a read-only field
       title: const Text(
         'Edit Profile',
         style: TextStyle(
-          color: Color.fromARGB(
-              255, 37, 30, 30), // Optional: Ensure the text is black
-          fontWeight: FontWeight.bold, // Optional: Make the text bold
+          color: Color.fromARGB(255, 37, 30, 30),
+          fontWeight: FontWeight.bold,
         ),
       ),
       backgroundColor: const Color(0xFFF8F8F3),
-      centerTitle: true, // Center the title in the AppBar
+      centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         color: const Color.fromARGB(255, 47, 35, 35),
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () {
+          _showExitConfirmationDialog().then((confirm) {
+            if (confirm == true) {
+              Navigator.pop(context); // Go back if confirmed
+            }
+          });
+        },
       ),
     ),
   );
+}
+
+// Show confirmation dialog for back button
+Future<bool?> _showExitConfirmationDialog() async {
+  if (_hasChanges) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD).withOpacity(0.9),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.warning, // Warning icon
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'You will lose any unsaved changes. Are you sure you want to go back?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(true); // Close the dialog and return true
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 245, 114, 105), // Pink background for "Yes"
+                    ),
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(false); // Close the dialog and return false
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey, // Grey background for "No"
+                    ),
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  } else {
+    return Future.value(true); // No changes, allow exit
+  }
+}
+void _onFieldChanged() {
+  setState(() {
+    _hasChanges = true; // Mark as changed
+  });
 }
 
 
@@ -519,6 +611,7 @@ Widget _buildTextField({
       ...?inputFormatters, // Keep existing input formatters if any
     ],
     onChanged: (text) {
+      _onFieldChanged();
       if (hintText == "Name") {
         // Trim leading spaces while typing
         if (text.startsWith(' ')) {
@@ -642,6 +735,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   late ImageProvider<Object> _currentImage;
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -702,6 +796,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
       setState(() {
         _imageFile = File(pickedFile.path);
         _currentImage = FileImage(_imageFile!);
+        _hasChanges = true;
       });
       widget.onImagePicked(_imageFile);
     }
@@ -711,6 +806,7 @@ class _ProfilePhotoWidgetState extends State<ProfilePhotoWidget> {
     setState(() {
       _imageFile = null;
       _currentImage = const AssetImage('assets/images/profile_pic.png');
+      _hasChanges = true;
     });
     widget.onImagePicked(null);
   }

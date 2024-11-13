@@ -685,7 +685,7 @@ Widget build(BuildContext context) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditClub(clubId: widget.clubId),
+                  builder: (context) => EditClub(clubId: widget.clubId, fromCreate: widget.fromCreate,),
                 ),
               ).then((_) {
                 // Refresh the club data after returning from EditClub
@@ -722,7 +722,6 @@ Widget build(BuildContext context) {
         _picture = clubData['picture'] ?? '';
         _language = clubData['language'] ?? 'Unknown Language';
         _clubOwnerID = clubData['ownerID'] ?? '';
-        bool isCurrentUser = currentUser?.uid == _clubOwnerID;
 
         
         // Continue with your existing logic to check ownership, membership, etc.
@@ -813,23 +812,14 @@ Widget build(BuildContext context) {
                       children: [
  GestureDetector(
       onTap: () {
-        // Check if the current user is the club owner
-        if (isCurrentUser) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfilePage(onEdit: () {  }),
-            ),
-          );
-        } else {
+
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => OtherProfile(memberId: _clubOwnerID),
             ),
           );
-        }
-      },
+        },
       child: CircleAvatar(
         radius: 20,
         backgroundImage: (_clubOwnerProfilePhoto.isNotEmpty)
@@ -847,23 +837,15 @@ Widget build(BuildContext context) {
         ),
         GestureDetector(
           onTap: () {
-            // Check if the current user is the club owner
-            if (isCurrentUser) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfilePage(onEdit: () { }),
-                ),
-              );
-            } else {
+
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => OtherProfile(memberId: _clubOwnerID),
                 ),
               );
-            }
-          },
+            },
+
           child: Text(
             _clubOwnerName,
             style: const TextStyle(

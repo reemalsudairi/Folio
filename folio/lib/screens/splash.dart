@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/first.page.dart';
+import 'package:folio/screens/homePage.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -10,16 +12,21 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
+  User? user;
   @override
   void initState() {
     super.initState();
+    user = FirebaseAuth.instance.currentUser;
 
     // Immersive mode to hide system UI during splash
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
     // Navigate to SignUp page after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacement(
+      user != null ? Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(userId: user!.uid)),
+      ) : Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const WelcomePage()),
       );
