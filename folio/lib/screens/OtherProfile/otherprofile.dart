@@ -119,7 +119,7 @@ Widget build(BuildContext context) {
             '@$username',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 26,
               color: Color(0xFF351F1F),
             ),
           );

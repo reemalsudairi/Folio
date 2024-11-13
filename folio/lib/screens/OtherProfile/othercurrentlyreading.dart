@@ -74,10 +74,11 @@ class _OtherProfileCurrentlyReadingPageState
         elevation: 0,
         centerTitle: true,
         title: Text(
-          '@${widget.username} Currently Reading Books',
+          '@${widget.username}\nCurrently Reading Books',
+           textAlign: TextAlign.center,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 19,
+            fontSize: 24,
             color: Color(0xFF351F1F),
           ),
         ),

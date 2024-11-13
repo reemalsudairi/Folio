@@ -74,11 +74,13 @@ class _OtherProfileFinishedBooksPageState
         elevation: 0,
         centerTitle: true,
         title: Text(
-          '@${widget.username} Finished Books',
+          '@${widget.username}\nFinished Books',
+           textAlign: TextAlign.center,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 19,
+            fontSize: 26,
             color: Color(0xFF351F1F),
+            
           ),
         ),
       ),
