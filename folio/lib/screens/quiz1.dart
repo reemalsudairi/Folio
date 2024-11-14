@@ -1,6 +1,14 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:folio/screens/recommendation.dart';
 
 class DynamicQuizPage extends StatefulWidget {
+  final dynamic userId;
+
+  const DynamicQuizPage({super.key, required this.userId});
+
   @override
   _DynamicQuizPageState createState() => _DynamicQuizPageState();
 }
@@ -14,7 +22,7 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
         "Business", "Health", "Education", "Biography", "Travel", "Music",
         "Sports", "Nature", "Classics", "Self-help", "Mystery", "Fantasy"
       ],
-      'image': 'assets/images/pic4-removebg-preview.png', // Add image path
+      'image': 'assets/images/pic4-removebg-preview.png',
     },
     {
       'question': "What mood are you in?",
@@ -30,22 +38,22 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
         "Thought-provoking and moving": ["Memoir", "Biography", "Literary Fiction"],
         "Adventurous and exciting": ["Adventure", "Fantasy", "Science Fiction"],
       },
-      'image': 'assets/images/pic2-removebg-preview.png', // Add image path
+      'image': 'assets/images/pic2-removebg-preview.png',
     },
     {
       'question': "Slow, medium, or fast paced read?",
       'options': ["Slow", "Medium", "Fast"],
-      'image': 'assets/images/pic3-removebg-preview.png', // Add image path
+      'image': 'assets/images/pic3-removebg-preview.png',
     },
     {
       'question': "What language do you prefer?",
       'options': ["English", "Arabic"],
-      'image': 'assets/images/pic1-removebg-preview.png', // Add image path
+      'image': 'assets/images/pic1-removebg-preview.png',
     },
   ];
 
   int currentQuestionIndex = 0;
-  Map<String, List<String>> selectedAnswers = {}; // Store multiple selections per question
+  Map<String, List<String>> selectedAnswers = {};
 
   void _toggleOption(String option) {
     setState(() {
@@ -55,23 +63,90 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
       }
 
       if (selectedAnswers[question]!.contains(option)) {
-        selectedAnswers[question]!.remove(option); // Deselect if already selected
+        selectedAnswers[question]!.remove(option); 
       } else {
-        selectedAnswers[question]!.add(option); // Select if not selected
+        selectedAnswers[question]!.add(option); 
       }
     });
   }
 
+Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
+  // Genre and mood selection
+  String genreQuery = selectedAnswers["What genres sound good right now?"]?.join("|") ?? "";
+  String moodQuery = selectedAnswers["What mood are you in?"]?.expand((mood) => questions[1]['moodKeywords'][mood] ?? []).join("|") ?? "";
+  
+  // Page count filter based on selected pace
+  int? minPages;
+  int? maxPages;
+
+  if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Slow") ?? false) {
+    minPages = 0;
+    maxPages = 150; // Slow paced books: < 150 pages
+  } else if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Medium") ?? false) {
+    minPages = 150;
+    maxPages = 300; // Medium paced books: 150 - 300 pages
+  } else if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Fast") ?? false) {
+    minPages = 300; // Fast paced books: > 300 pages
+  }
+
+  String pageCountQuery = '';
+  if (minPages != null && maxPages != null) {
+    pageCountQuery = "pages:$minPages..$maxPages";
+  } else if (minPages != null) {
+    pageCountQuery = "pages:>$minPages";
+  }
+
+  // Language selection
+  String languageQuery = selectedAnswers["What language do you prefer?"]?.first.toLowerCase() ?? "en";
+  
+  // Constructing the Google Books API query URL
+  String query = "subject:$genreQuery+$moodQuery+language:$languageQuery+$pageCountQuery";
+  
+  // Ensure no empty queries are included
+  query = query.replaceAll(RegExp(r'\++$'), ''); // Remove trailing plus signs
+  
+  // API URL
+  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&maxResults=10";
+
+  print('API Request URL: $url'); // Log the request URL for debugging
+
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    List<Map<String, dynamic>> books = [];
+    var data = json.decode(response.body);
+
+    // Check if there are books in the response
+    if (data['items'] != null) {
+      for (var item in data['items']) {
+        books.add({
+          'id': item['id'],
+          'title': item['volumeInfo']['title'],
+          'authors': item['volumeInfo']['authors'] ?? ['Unknown'],
+          'imageUrl': item['volumeInfo']['imageLinks']?['thumbnail'] ?? '',
+        });
+      }
+    } else {
+      print("No books found matching the query.");
+    }
+
+    return books;
+  } else {
+    print("Error fetching books: ${response.statusCode}");
+    throw Exception("Failed to load books");
+  }
+}
+
+
+
+
   @override
   Widget build(BuildContext context) {
     var currentQuestion = questions[currentQuestionIndex];
-
-    // Check if at least one option is selected for the current question
     bool isNextButtonEnabled = selectedAnswers[currentQuestion['question']] != null &&
         selectedAnswers[currentQuestion['question']]!.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -127,14 +202,13 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
               ),
             ),
             SizedBox(height: 20),
-            // Display image below the options
             Center(
-            child: Image.asset(
-              currentQuestion['image'],
-              height: 250, // Reduced image size
-              width: 250, // Reduced image width
-              fit: BoxFit.contain,
-            ),
+              child: Image.asset(
+                currentQuestion['image'],
+                height: 250,
+                width: 250,
+                fit: BoxFit.contain,
+              ),
             ),
             SizedBox(height: 20),
             Align(
@@ -154,49 +228,28 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
                             currentQuestionIndex++;
                           });
                         } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RecommendationPage(answers: selectedAnswers),
-                            ),
-                          );
+                          fetchBooksFromAPI().then((books) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RecommendationPage(
+                                  answers: selectedAnswers,
+                                  books: books, // Pass the books to the next page
+                                  userId: FirebaseAuth.instance.currentUser!.uid,
+                                ),
+                              ),
+                            );
+                          }).catchError((e) {
+                            // Handle error if needed
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching books")));
+                          });
                         }
                       }
-                    : null, // Disable button if no option is selected
+                    : null,
                 child: Text("Next", style: TextStyle(fontSize: 18, color: Colors.white)),
               ),
             ),
-            SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class RecommendationPage extends StatelessWidget {
-  final Map<String, List<String>> answers;
-
-  RecommendationPage({required this.answers});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Recommendations"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Based on your preferences:", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            ...answers.entries.map((entry) => Text(
-              "${entry.key}: ${entry.value.join(', ')}",
-              style: TextStyle(fontSize: 18),
-            )),
-            // Display book recommendations here based on answers
+            SizedBox(height: 80),
           ],
         ),
       ),

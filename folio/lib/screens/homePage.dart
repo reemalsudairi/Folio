@@ -629,7 +629,7 @@ Widget _buildQuiz(BuildContext context) {
                 Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DynamicQuizPage(),
+                  builder: (context) => DynamicQuizPage(userId: FirebaseAuth.instance.currentUser?.uid),
                 ),
                 );
             },
