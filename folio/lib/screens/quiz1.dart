@@ -106,7 +106,7 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
   query = query.replaceAll(RegExp(r'\++$'), ''); // Remove trailing plus signs
   
   // API URL
-  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&maxResults=10";
+  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&maxResults=10&orderBy=newest";
 
   print('API Request URL: $url'); // Log the request URL for debugging
 
