@@ -110,45 +110,50 @@ class _CategoriesPageState extends State<CategoriesPage> {
               ),
               itemCount: categories.length,
               itemBuilder: (context, index) {
-                final category = categories[index]['category'];
-                final icon = categories[index]['icon'];
+  final category = categories[index]['category'];
+  final imagePath = categories[index]['image'];
+  final icon = categories[index]['icon'];
 
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BookListPage(
-                          searchTerm: category,
-                          isCategory: true,
-                        ),
-                      ),
-                    ).then((_) {
-                      // Clear the search field when coming back to this page
-                      _searchController.clear();
-                    });
-                  },
-                  child: Card(
-                    color: pastelColors[index % pastelColors.length],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          icon,
-                          size: 50,
-                          color: const Color.fromARGB(223, 244, 238, 238),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          category,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                          ),
-                          textAlign: TextAlign.center,
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookListPage(
+            searchTerm: category,
+            isCategory: true,
+          ),
+        ),
+      ).then((_) {
+        _searchController.clear();
+      });
+    },
+    child: Card(
+      color: pastelColors[index % pastelColors.length],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+  mainAxisAlignment: MainAxisAlignment.center, // Center elements
+  children: [
+    Padding(
+      padding: const EdgeInsets.all(8.0), // Add some padding
+      child: Image.asset(
+        imagePath,
+        height: 140, // Adjust the height to control size
+        width: 100, // Set width proportional to book cover dimensions
+        fit: BoxFit.contain, // Ensure the image is shown fully without distortion
+      ),
+    ),
+    const SizedBox(height: 3), // Add spacing between the image and the text
+    Text(
+      category,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 24,
+      ),
+      textAlign: TextAlign.center,
+   
                         ),
                       ],
                     ),
