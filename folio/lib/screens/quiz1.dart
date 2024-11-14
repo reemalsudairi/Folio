@@ -249,7 +249,7 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
                 child: Text("Next", style: TextStyle(fontSize: 18, color: Colors.white)),
               ),
             ),
-            SizedBox(height: 80),
+            SizedBox(height: 60),
           ],
         ),
       ),
