@@ -410,6 +410,7 @@ class HomePageContent extends StatelessWidget {
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                         color: Color.fromARGB(255, 53, 31, 31),
+                        fontFamily: 'YoungSerif-Regular'
                       ),
                     ),
                     CircleAvatar(

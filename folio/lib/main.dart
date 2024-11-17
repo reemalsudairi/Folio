@@ -37,6 +37,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF790AD)),
         useMaterial3: true,
+        fontFamily: 'YoungSerif-Regular'
       ),
       home: const Splash() // If user is logged in, show HomePage, otherwise show Splash screen
     );
