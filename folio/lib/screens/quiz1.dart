@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/recommendation.dart';
 
 class DynamicQuizPage extends StatefulWidget {
@@ -18,9 +19,24 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
     {
       'question': "What genres sound good right now?",
       'options': [
-        "Fiction", "Science", "History", "Technology", "Art", "Philosophy",
-        "Business", "Health", "Education", "Biography", "Travel", "Music",
-        "Sports", "Nature", "Classics", "Self-help", "Mystery", "Fantasy"
+        "Fiction",
+        "Science",
+        "History",
+        "Technology",
+        "Art",
+        "Philosophy",
+        "Business",
+        "Health",
+        "Education",
+        "Biography",
+        "Travel",
+        "Music",
+        "Sports",
+        "Nature",
+        "Classics",
+        "Self-help",
+        "Mystery",
+        "Fantasy"
       ],
       'image': 'assets/images/pic4-removebg-preview.png',
     },
@@ -35,7 +51,11 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
       'moodKeywords': {
         "Dark and suspenseful": ["Thriller", "Mystery", "Horror"],
         "Lighthearted and funny": ["Comedy", "Humor", "Feel-good"],
-        "Thought-provoking and moving": ["Memoir", "Biography", "Literary Fiction"],
+        "Thought-provoking and moving": [
+          "Memoir",
+          "Biography",
+          "Literary Fiction"
+        ],
         "Adventurous and exciting": ["Adventure", "Fantasy", "Science Fiction"],
       },
       'image': 'assets/images/pic2-removebg-preview.png',
@@ -63,88 +83,102 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
       }
 
       if (selectedAnswers[question]!.contains(option)) {
-        selectedAnswers[question]!.remove(option); 
+        selectedAnswers[question]!.remove(option);
       } else {
-        selectedAnswers[question]!.add(option); 
+        selectedAnswers[question]!.add(option);
       }
     });
   }
-
 Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
-  // Genre and mood selection
   String genreQuery = selectedAnswers["What genres sound good right now?"]?.join("|") ?? "";
-  String moodQuery = selectedAnswers["What mood are you in?"]?.expand((mood) => questions[1]['moodKeywords'][mood] ?? []).join("|") ?? "";
-  
-  // Page count filter based on selected pace
-  int? minPages;
-  int? maxPages;
+  String moodQuery = selectedAnswers["What mood are you in?"]
+      ?.map((mood) => (questions[1]['moodKeywords'][mood] ?? []).join("|"))
+      .join("|") ?? "";
 
+  String languageQuery = selectedAnswers["What language do you prefer?"]?.first.toLowerCase() == "arabic" ? "ar" : "en";
+
+  List<Map<String, int>> pageRanges = [];
   if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Slow") ?? false) {
-    minPages = 0;
-    maxPages = 150; // Slow paced books: < 150 pages
-  } else if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Medium") ?? false) {
-    minPages = 150;
-    maxPages = 300; // Medium paced books: 150 - 300 pages
-  } else if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Fast") ?? false) {
-    minPages = 300; // Fast paced books: > 300 pages
+    pageRanges.add({'min': 0, 'max': 150}); // Slow-paced: 0-150 pages
+  }
+  if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Medium") ?? false) {
+    pageRanges.add({'min': 150, 'max': 300}); // Medium-paced: 150-300 pages
+  }
+  if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Fast") ?? false) {
+    pageRanges.add({'min': 300, 'max': double.infinity.toInt()}); // Fast-paced: >300 pages
   }
 
-  String pageCountQuery = '';
-  if (minPages != null && maxPages != null) {
-    pageCountQuery = "pages:$minPages..$maxPages";
-  } else if (minPages != null) {
-    pageCountQuery = "pages:>$minPages";
-  }
+  bool applyPageFilter = pageRanges.isNotEmpty;
 
-  // Language selection
-  String languageQuery = selectedAnswers["What language do you prefer?"]?.first.toLowerCase() ?? "en";
-  
-  // Constructing the Google Books API query URL
-  String query = "subject:$genreQuery+$moodQuery+language:$languageQuery+$pageCountQuery";
-  
-  // Ensure no empty queries are included
-  query = query.replaceAll(RegExp(r'\++$'), ''); // Remove trailing plus signs
-  
-  // API URL
-  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&maxResults=10&orderBy=newest";
+  String query = [
+    if (genreQuery.isNotEmpty) "(${genreQuery.split("|").map((cat) => "subject:$cat").join(" OR ")})",
+    if (moodQuery.isNotEmpty) "$moodQuery",
+  ].join("+");
 
-  print('API Request URL: $url'); // Log the request URL for debugging
+  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&langRestrict=$languageQuery&maxResults=40&orderBy=relevance";
 
-  final response = await http.get(Uri.parse(url));
+  print('API Request URL: $url');
 
-  if (response.statusCode == 200) {
-    List<Map<String, dynamic>> books = [];
-    var data = json.decode(response.body);
+  try {
+    final response = await http.get(Uri.parse(url));
 
-    // Check if there are books in the response
-    if (data['items'] != null) {
-      for (var item in data['items']) {
-        books.add({
-          'id': item['id'],
-          'title': item['volumeInfo']['title'],
-          'authors': item['volumeInfo']['authors'] ?? ['Unknown'],
-          'imageUrl': item['volumeInfo']['imageLinks']?['thumbnail'] ?? '',
-        });
-      }
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+
+      print("Total books fetched: ${data['items']?.length ?? 0}");
+
+      return (data['items'] as List<dynamic>)
+          .map<Map<String, dynamic>?>((item) {
+            final volumeInfo = (item as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>? ?? {};
+            final pageCount = volumeInfo['pageCount'] ?? 0;
+            final publishedDate = volumeInfo['publishedDate'] ?? '';
+
+            // Filter out books older than 2000
+            if (publishedDate.isNotEmpty && int.tryParse(publishedDate.split("-").first) != null) {
+              if (int.parse(publishedDate.split("-").first) < 2000) {
+                return null;
+              }
+            }
+
+            // Apply page filtering if needed
+            if (applyPageFilter) {
+              bool matchesPageRange = pageRanges.any((range) {
+                return pageCount >= range['min']! && pageCount <= range['max']!;
+              });
+              if (!matchesPageRange) return null;
+            }
+
+            return {
+              'id': item['id'],
+              'title': volumeInfo['title'] ?? 'No Title',
+              'authors': (volumeInfo['authors'] as List<dynamic>?)?.cast<String>() ?? ['Unknown'],
+              'categories': (volumeInfo['categories'] as List<dynamic>?)?.cast<String>().join(', ') ?? '',
+              'language': volumeInfo['language'] ?? 'Unknown',
+              'imageUrl': volumeInfo['imageLinks']?['thumbnail'] ?? '',
+              'description': volumeInfo['description'] ?? 'No description available.',
+              'pageCount': pageCount,
+              'publishedDate': publishedDate,
+            };
+          })
+          .where((book) => book != null) // Remove null values
+          .toList()
+          .cast<Map<String, dynamic>>(); // Ensure type consistency
     } else {
-      print("No books found matching the query.");
+      throw Exception("Failed to load books");
     }
-
-    return books;
-  } else {
-    print("Error fetching books: ${response.statusCode}");
-    throw Exception("Failed to load books");
+  } catch (e) {
+    print("Error fetching books: $e");
+    return [];
   }
 }
-
-
 
 
   @override
   Widget build(BuildContext context) {
     var currentQuestion = questions[currentQuestionIndex];
-    bool isNextButtonEnabled = selectedAnswers[currentQuestion['question']] != null &&
-        selectedAnswers[currentQuestion['question']]!.isNotEmpty;
+    bool isNextButtonEnabled =
+        selectedAnswers[currentQuestion['question']] != null &&
+            selectedAnswers[currentQuestion['question']]!.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -181,12 +215,17 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
               child: Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: (currentQuestion['options'] as List<String>).map((option) {
-                  bool isSelected = selectedAnswers[currentQuestion['question']]?.contains(option) ?? false;
+                children:
+                    (currentQuestion['options'] as List<String>).map((option) {
+                  bool isSelected = selectedAnswers[currentQuestion['question']]
+                          ?.contains(option) ??
+                      false;
                   return ChoiceChip(
                     label: Text(option),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Color.fromARGB(255, 53, 31, 31),
+                      color: isSelected
+                          ? Colors.white
+                          : Color.fromARGB(255, 53, 31, 31),
                     ),
                     selected: isSelected,
                     selectedColor: Color(0xFFF790AD),
@@ -234,19 +273,23 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
                               MaterialPageRoute(
                                 builder: (context) => RecommendationPage(
                                   answers: selectedAnswers,
-                                  books: books, // Pass the books to the next page
-                                  userId: FirebaseAuth.instance.currentUser!.uid,
+                                  books:
+                                      books, // Pass the books to the next page
+                                  userId:
+                                      FirebaseAuth.instance.currentUser!.uid,
                                 ),
                               ),
                             );
                           }).catchError((e) {
                             // Handle error if needed
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching books")));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text("Error fetching books")));
                           });
                         }
                       }
                     : null,
-                child: Text("Next", style: TextStyle(fontSize: 18, color: Colors.white)),
+                child: Text("Next",
+                    style: TextStyle(fontSize: 18, color: Colors.white)),
               ),
             ),
             SizedBox(height: 60),

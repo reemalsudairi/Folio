@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
-  final String apiKey =
-      'AIzaSyC7ABysTxTaKc2h14e7F8jHCAfSFv8HzXU'; // Replace with your actual API key
+  final String apiKey1 = 'AIzaSyDrp1KN558k99hKG12Zz2RlNd6cWT3-3Wk';
+  final String apiKey2 = 'AIzaSyAfNup8oD9RK6WuV9RIg0WwGvGhu2kTu5I';
 
   // Fetch the top 30 best-selling books (or highly relevant books)
   Future<List<dynamic>> fetchBestSellingBooks() async {
@@ -14,7 +14,7 @@ class GoogleBooksService {
     int maxResults = 30; // Fetch the top 30 books
 
     final Uri url = Uri.parse(
-        '$_baseUrl?q=best+seller&orderBy=relevance&maxResults=$maxResults&key=$apiKey');
+        '$_baseUrl?q=best+seller&orderBy=relevance&maxResults=$maxResults&key=$apiKey1');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -29,7 +29,7 @@ class GoogleBooksService {
 
   // Get details of a specific book by its ID
   Future<Map<String, dynamic>> getBookDetails(String bookId) async {
-    final Uri url = Uri.parse('$_baseUrl/$bookId?key=$apiKey');
+    final Uri url = Uri.parse('$_baseUrl/$bookId?key=$apiKey1');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -56,16 +56,18 @@ class GoogleBooksService {
     return _processBooks(allBooks, query);
   }
 
-  // Fetch books from the API in a specific language
-  Future<List<dynamic>> _fetchBooks(String query, String language) async {
-    List<dynamic> books = [];
-    int maxResultsPerRequest = 40;
-    int totalResultsToFetch = 100;
-    int startIndex = 0;
+ // Fetch books from the API in a specific language with API key fallback
+Future<List<dynamic>> _fetchBooks(String query, String language) async {
+  List<dynamic> books = [];
+  int maxResultsPerRequest = 40;
+  int totalResultsToFetch = 100;
+  int startIndex = 0;
+  String currentKey = apiKey1; // Start with the first key
 
-    while (books.length < totalResultsToFetch) {
+  while (books.length < totalResultsToFetch) {
+    try {
       final Uri url = Uri.parse(
-          '$_baseUrl?q=$query&langRestrict=$language&orderBy=newest&startIndex=$startIndex&maxResults=$maxResultsPerRequest&key=$apiKey');
+          '$_baseUrl?q=$query&langRestrict=$language&orderBy=newest&startIndex=$startIndex&maxResults=$maxResultsPerRequest&key=$currentKey');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -76,13 +78,20 @@ class GoogleBooksService {
 
         books.addAll(fetchedBooks);
         startIndex += maxResultsPerRequest;
+      } else if (response.statusCode == 403) {
+        // Switch to the second API key if quota is exceeded
+        currentKey = currentKey == apiKey1 ? apiKey2 : apiKey1;
+        continue; // Retry the request with the new key
       } else {
         throw Exception('Failed to load books: ${response.statusCode}');
       }
+    } catch (e) {
+      throw Exception('Error fetching books: $e');
     }
-
-    return books;
   }
+
+  return books;
+}
 
   // Process books and filter them based on excluded keywords, duplicates, etc.
   List<dynamic> _processBooks(List<dynamic> books, String searchTerm) {
@@ -166,24 +175,27 @@ class GoogleBooksService {
   // Get predefined categories for book selection
   List<Map<String, dynamic>> getBookCategories() {
     return [
-      {'category': 'Fiction', 'image': 'assets/images/behind you is the sea .png'},
-      {'category': 'Science', 'image': 'assets/images/OfT.png' },
+      {
+        'category': 'Fiction',
+        'image': 'assets/images/behind you is the sea .png'
+      },
+      {'category': 'Science', 'image': 'assets/images/OfT.png'},
       {'category': 'History', 'image': 'assets/images/earth.png'},
       {'category': 'Technology', 'image': 'assets/images/tech.png'},
       {'category': 'Art', 'image': 'assets/images/art.png'},
       {'category': 'Philosophy', 'image': 'assets/images/lost.png'},
-      {'category': 'Business','image': 'assets/images/all.png'},
-      {'category': 'Health','image' :'assets/images/health.png'},
-      {'category': 'Education', 'image' :'assets/images/edu.png'},
-      {'category': 'Biography', 'image' :'assets/images/we.png'},
-      {'category': 'Travel','image' :'assets/images/sea.png' },
-      {'category': 'Music','image' :'assets/images/music.png' },
-      {'category': 'Sports','image' :'assets/images/sport.png' },
-      {'category': 'Nature', 'image' :'assets/images/wo.png'},
-      {'category': 'Classics', 'image' :'assets/images/ce.png'},
-      {'category': 'Self-help','image' :'assets/images/self.png' },
-      {'category': 'Mystery', 'image' :'assets/images/case.png'},
-      {'category': 'Fantasy',  'image' :'assets/images/wolf.png'},
+      {'category': 'Business', 'image': 'assets/images/all.png'},
+      {'category': 'Health', 'image': 'assets/images/health.png'},
+      {'category': 'Education', 'image': 'assets/images/edu.png'},
+      {'category': 'Biography', 'image': 'assets/images/we.png'},
+      {'category': 'Travel', 'image': 'assets/images/sea.png'},
+      {'category': 'Music', 'image': 'assets/images/music.png'},
+      {'category': 'Sports', 'image': 'assets/images/sport.png'},
+      {'category': 'Nature', 'image': 'assets/images/wo.png'},
+      {'category': 'Classics', 'image': 'assets/images/ce.png'},
+      {'category': 'Self-help', 'image': 'assets/images/self.png'},
+      {'category': 'Mystery', 'image': 'assets/images/case.png'},
+      {'category': 'Fantasy', 'image': 'assets/images/wolf.png'},
     ];
   }
 }

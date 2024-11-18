@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/book_details_page.dart';
 
 class RecommendationPage extends StatelessWidget {
-  final Map<String, List<String>> answers; // User's answers to quiz questions
-  final List<Map<String, dynamic>> books; // List of recommended books
+  final Map<String, List<String>> answers; // User's quiz answers
+  final List<Map<String, dynamic>> books; // Combined books from APIs
   final String userId;
 
   const RecommendationPage({
@@ -16,9 +16,22 @@ class RecommendationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Book Recommendations')),
+      appBar: AppBar(
+        title: Text(
+          'Book Recommendations',
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.black),
+      ),
       body: books.isEmpty
-          ? Center(child: Text("No books found based on your preferences"))
+          ? Center(
+              child: Text(
+                "No books found based on your preferences",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            )
           : PageView.builder(
               itemCount: books.length,
               itemBuilder: (context, index) {
@@ -34,19 +47,34 @@ class RecommendationPage extends StatelessWidget {
                     children: [
                       // Matches text above the book cover
                       Text(
-                        "Matches your preferences: $matches",
+                        "Matches:",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        matches,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
+                          color: Colors.black,
                         ),
                       ),
                       SizedBox(height: 16),
                       // Book cover image
-                      Image.network(
-                        book['imageUrl'] ?? '',
-                        height: 200,
-                        fit: BoxFit.cover,
+                      Center(
+                        child: Image.network(
+                          book['imageUrl'] ?? '',
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.image_not_supported,
+                            size: 200,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ),
                       SizedBox(height: 16),
                       // Book title and author below the image
@@ -65,18 +93,29 @@ class RecommendationPage extends StatelessWidget {
                       Spacer(),
                       // Button to navigate to BookDetailsPage
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.pinkAccent,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => BookDetailsPage(
-                                bookId: book['id'],
+                                bookId: book['id'] ?? 'Unknown',
                                 userId: userId,
                               ),
                             ),
                           );
                         },
-                        child: Text('View Details'),
+                        child: Text(
+                          'View Details',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
                     ],
                   ),
@@ -86,29 +125,33 @@ class RecommendationPage extends StatelessWidget {
     );
   }
 
-  // Helper function to build a string with matches based on user preferences
-// Helper function to build a string with matches based on user preferences
-String _getBookMatches(Map<String, dynamic> book) {
-  List<String> matches = [];
+  /// Helper function to build a string with matches based on user preferences
+  String _getBookMatches(Map<String, dynamic> book) {
+    List<String> matches = [];
 
-  // Normalize user preferences and book data for case-insensitive comparison
-  var genreMatches = answers["What genres sound good right now?"]?.map((e) => e.toLowerCase()).toList() ?? [];
-  var moodMatches = answers["What mood are you in?"]?.map((e) => e.toLowerCase()).toList() ?? [];
-  var languageMatches = answers["What language do you prefer?"]?.map((e) => e.toLowerCase()).toList() ?? [];
+    // Fetch user preferences
+    var genrePreferences = answers["What genres sound good right now?"]?.map((e) => e.toLowerCase()).toList() ?? [];
+    var moodPreferences = answers["What mood are you in?"]?.map((e) => e.toLowerCase()).toList() ?? [];
+    var languagePreferences = answers["What language do you prefer?"]?.map((e) => e.toLowerCase()).toList() ?? [];
+    var pacingPreference = answers["Slow, medium, or fast paced read?"]?.first.toLowerCase();
 
-if (genreMatches.contains(book['genre']?.toLowerCase() ?? "")) {
-  matches.add("Genre: ${book['genre']}");
-}
-if (moodMatches.contains(book['mood']?.toLowerCase() ?? "")) {
-  matches.add("Mood: ${book['mood']}");
-}
-if (languageMatches.contains(book['language']?.toLowerCase() ?? "")) {
-  matches.add("Language: ${book['language']}");
-}
+    // Check for genre match
+    if (genrePreferences.isNotEmpty &&
+        genrePreferences.any((genre) => book['categories'].toLowerCase().contains(genre))) {
+      matches.add(book['categories']);
+    }
 
+    // Check for language match
+    if (languagePreferences.contains(book['language']?.toLowerCase() ?? '')) {
+      matches.add(book['language'] == 'en' ? "English" : "Arabic");
+    }
 
-  // Return a string that lists the matches
-  return matches.isEmpty ? "No specific matches" : matches.join(", ");
-}
+    // Check for pacing match
+    if (pacingPreference != null) {
+      matches.add(pacingPreference);
+    }
 
+    // Construct the matches string
+    return matches.isEmpty ? "No specific matches" : matches.join(" · ");
+  }
 }
