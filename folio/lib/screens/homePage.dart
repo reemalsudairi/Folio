@@ -397,7 +397,7 @@ class HomePageContent extends StatelessWidget {
         color: const Color(0xFFF8F8F3), // Updated background color
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(30.0),
+            padding: const EdgeInsets.fromLTRB(30.0, 0, 30.0, 30.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -410,6 +410,7 @@ class HomePageContent extends StatelessWidget {
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                         color: Color.fromARGB(255, 53, 31, 31),
+                        fontFamily: 'YoungSerif-Regular'
                       ),
                     ),
                     CircleAvatar(
@@ -430,34 +431,6 @@ class HomePageContent extends StatelessWidget {
                 const SizedBox(height: 30),
                 _buildClubsSection(context, allClubs),
                 const SizedBox(height: 30),
-                // Create Club Button
-                // SizedBox(
-                //   width: double.infinity,
-                //   child: ElevatedButton(
-                //     onPressed: () {
-                //       Navigator.push(
-                //         context,
-                //         MaterialPageRoute(
-                //             builder: (context) => const CreateClubPage()),
-                //       );
-                //     },
-                //     style: ElevatedButton.styleFrom(
-                //       backgroundColor: const Color(0xFFF790AD),
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(12),
-                //       ),
-                //       padding: const EdgeInsets.symmetric(vertical: 16),
-                //     ),
-                //     child: const Text(
-                //       'Create a Club',
-                //       style: TextStyle(
-                //         fontSize: 18,
-                //         fontWeight: FontWeight.bold,
-                //         color: Colors.white,
-                //       ),
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           ),
