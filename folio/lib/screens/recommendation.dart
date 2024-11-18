@@ -149,7 +149,10 @@ class RecommendationPage extends StatelessWidget {
     if (languagePreferences.contains("arabic") && book['language']?.toLowerCase() == "ar") {
       matches.add("Arabic");
     }
-
+    // Check if the book is in Arabic and the user prefers Arabic
+    if (languagePreferences.contains("english") && book['language']?.toLowerCase() == "en") {
+      matches.add("English");
+    }
     // Check for pacing match
     if (pacingPreference != null) {
       matches.add(pacingPreference);
