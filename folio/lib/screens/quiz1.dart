@@ -41,26 +41,6 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
       'image': 'assets/images/pic4-removebg-preview.png',
     },
     {
-      'question': "What mood are you in?",
-      'options': [
-        "Dark and suspenseful",
-        "Lighthearted and funny",
-        "Thought-provoking and moving",
-        "Adventurous and exciting",
-      ],
-      'moodKeywords': {
-        "Dark and suspenseful": ["Thriller", "Mystery", "Horror"],
-        "Lighthearted and funny": ["Comedy", "Humor", "Feel-good"],
-        "Thought-provoking and moving": [
-          "Memoir",
-          "Biography",
-          "Literary Fiction"
-        ],
-        "Adventurous and exciting": ["Adventure", "Fantasy", "Science Fiction"],
-      },
-      'image': 'assets/images/pic2-removebg-preview.png',
-    },
-    {
       'question': "Slow, medium, or fast paced read?",
       'options': ["Slow", "Medium", "Fast"],
       'image': 'assets/images/pic3-removebg-preview.png',
@@ -68,7 +48,7 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
     {
       'question': "What language do you prefer?",
       'options': ["English", "Arabic"],
-      'image': 'assets/images/pic1-removebg-preview.png',
+      'image': 'assets/images/pic2-removebg-preview.png',
     },
   ];
 
@@ -89,35 +69,18 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
       }
     });
   }
+
 Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
-  String genreQuery = selectedAnswers["What genres sound good right now?"]?.join("|") ?? "";
-  String moodQuery = selectedAnswers["What mood are you in?"]
-      ?.map((mood) => (questions[1]['moodKeywords'][mood] ?? []).join("|"))
-      .join("|") ?? "";
-
-  String languageQuery = selectedAnswers["What language do you prefer?"]?.first.toLowerCase() == "arabic" ? "ar" : "en";
-
-  List<Map<String, int>> pageRanges = [];
-  if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Slow") ?? false) {
-    pageRanges.add({'min': 0, 'max': 150}); // Slow-paced: 0-150 pages
-  }
-  if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Medium") ?? false) {
-    pageRanges.add({'min': 150, 'max': 300}); // Medium-paced: 150-300 pages
-  }
-  if (selectedAnswers["Slow, medium, or fast paced read?"]?.contains("Fast") ?? false) {
-    pageRanges.add({'min': 300, 'max': double.infinity.toInt()}); // Fast-paced: >300 pages
-  }
-
-  bool applyPageFilter = pageRanges.isNotEmpty;
+  String genreQuery = selectedAnswers["What genres sound good right now?"]?.map((g) => "subject:${g.trim()}").join(" OR ") ?? "";
+  String languageQuery = selectedAnswers["What language do you prefer?"]?.map((lang) => lang.toLowerCase() == "arabic" ? "ar" : "en").join("|") ?? "en";
 
   String query = [
-    if (genreQuery.isNotEmpty) "(${genreQuery.split("|").map((cat) => "subject:$cat").join(" OR ")})",
-    if (moodQuery.isNotEmpty) "$moodQuery",
+    if (genreQuery.isNotEmpty) "($genreQuery)",
   ].join("+");
 
-  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&langRestrict=$languageQuery&maxResults=40&orderBy=relevance";
+  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&langRestrict=$languageQuery&maxResults=40&orderBy=newest";
 
-  print('API Request URL: $url');
+  
 
   try {
     final response = await http.get(Uri.parse(url));
@@ -125,27 +88,14 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
 
-      print("Total books fetched: ${data['items']?.length ?? 0}");
-
       return (data['items'] as List<dynamic>)
           .map<Map<String, dynamic>?>((item) {
             final volumeInfo = (item as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>? ?? {};
             final pageCount = volumeInfo['pageCount'] ?? 0;
-            final publishedDate = volumeInfo['publishedDate'] ?? '';
+            final publishedYear = int.tryParse(volumeInfo['publishedDate']?.split("-")?.first ?? '') ?? 0;
 
-            // Filter out books older than 2000
-            if (publishedDate.isNotEmpty && int.tryParse(publishedDate.split("-").first) != null) {
-              if (int.parse(publishedDate.split("-").first) < 2000) {
-                return null;
-              }
-            }
-
-            // Apply page filtering if needed
-            if (applyPageFilter) {
-              bool matchesPageRange = pageRanges.any((range) {
-                return pageCount >= range['min']! && pageCount <= range['max']!;
-              });
-              if (!matchesPageRange) return null;
+            if (publishedYear < 2015 || volumeInfo['imageLinks']?['thumbnail'] == null || volumeInfo['description'] == null) {
+              return null;
             }
 
             return {
@@ -157,12 +107,16 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
               'imageUrl': volumeInfo['imageLinks']?['thumbnail'] ?? '',
               'description': volumeInfo['description'] ?? 'No description available.',
               'pageCount': pageCount,
-              'publishedDate': publishedDate,
+              'publishedDate': volumeInfo['publishedDate'] ?? '',
+              'averageRating': volumeInfo['averageRating'] ?? 0.0,
+              'ratingsCount': volumeInfo['ratingsCount'] ?? 0,
+              'matches': calculateMatches(volumeInfo),
             };
           })
-          .where((book) => book != null) // Remove null values
+          .where((book) => book != null)
           .toList()
-          .cast<Map<String, dynamic>>(); // Ensure type consistency
+          .cast<Map<String, dynamic>>()
+          ..sort((a, b) => b['matches'].compareTo(a['matches']));
     } else {
       throw Exception("Failed to load books");
     }
@@ -171,6 +125,49 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
     return [];
   }
 }
+
+
+int calculateMatches(Map<String, dynamic> volumeInfo) {
+  int score = 0;
+
+  // Check for genre matches
+  var categories = (volumeInfo['categories'] as List<dynamic>?)?.cast<String>() ?? [];
+  if (selectedAnswers["What genres sound good right now?"]?.any((genre) => categories.any((cat) => cat.toLowerCase().contains(genre.toLowerCase()))) ?? false) {
+    score += 3;
+  }
+
+  // Check for language match
+  if (selectedAnswers["What language do you prefer?"]?.contains(volumeInfo['language']?.toLowerCase() ?? '') ?? false) {
+    score += 3;
+  }
+
+  // Match pacing preferences
+  int pageCount = volumeInfo['pageCount'] ?? 0;
+  if (selectedAnswers["Slow, medium, or fast paced read?"]?.any((pacing) {
+        if (pacing.toLowerCase() == "slow" && pageCount <= 150) return true;
+        if (pacing.toLowerCase() == "medium" && pageCount > 150 && pageCount <= 300) return true;
+        if (pacing.toLowerCase() == "fast" && pageCount > 300) return true;
+        return false;
+      }) ??
+      false) {
+    score += 2;
+  }
+
+  // Boost for recency
+  int publishedYear = int.tryParse(volumeInfo['publishedDate']?.split("-")?.first ?? '') ?? 0;
+  if (publishedYear >= 2020) {
+    score += 2;
+  }
+
+  // Boost for popularity
+  int ratingsCount = volumeInfo['ratingsCount'] ?? 0;
+  if (ratingsCount > 100) {
+    score += 2;
+  }
+
+  return score;
+}
+
 
 
   @override
@@ -267,16 +264,14 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
                             currentQuestionIndex++;
                           });
                         } else {
-                          fetchBooksFromAPI().then((books) {
+                          fetchBooksFromAPI().then ((books) {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => RecommendationPage(
                                   answers: selectedAnswers,
-                                  books:
-                                      books, // Pass the books to the next page
-                                  userId:
-                                      FirebaseAuth.instance.currentUser!.uid,
+                                  books: books, // Pass the books to the next page
+                                  userId: FirebaseAuth.instance.currentUser !.uid,
                                 ),
                               ),
                             );

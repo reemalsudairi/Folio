@@ -131,7 +131,6 @@ class RecommendationPage extends StatelessWidget {
 
     // Fetch user preferences
     var genrePreferences = answers["What genres sound good right now?"]?.map((e) => e.toLowerCase()).toList() ?? [];
-    var moodPreferences = answers["What mood are you in?"]?.map((e) => e.toLowerCase()).toList() ?? [];
     var languagePreferences = answers["What language do you prefer?"]?.map((e) => e.toLowerCase()).toList() ?? [];
     var pacingPreference = answers["Slow, medium, or fast paced read?"]?.first.toLowerCase();
 
@@ -144,6 +143,11 @@ class RecommendationPage extends StatelessWidget {
     // Check for language match
     if (languagePreferences.contains(book['language']?.toLowerCase() ?? '')) {
       matches.add(book['language'] == 'en' ? "English" : "Arabic");
+    }
+
+    // Check if the book is in Arabic and the user prefers Arabic
+    if (languagePreferences.contains("arabic") && book['language']?.toLowerCase() == "ar") {
+      matches.add("Arabic");
     }
 
     // Check for pacing match
