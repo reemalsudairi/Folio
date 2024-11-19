@@ -1,3 +1,4 @@
+//flutter run -d chrome --target=lib/admin_main.dart
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/admin_screens/AdminLoginPage.dart'; // Ensure this path is correct
@@ -25,6 +26,7 @@ class AdminApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF790AD)),
         useMaterial3: true,
+        fontFamily: 'YoungSerif-Regular'
       ),
       home: AdminLoginPage(), // Change this line if necessary
     );

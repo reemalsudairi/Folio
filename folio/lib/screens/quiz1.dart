@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/recommendation.dart';
 
 class DynamicQuizPage extends StatefulWidget {
@@ -170,86 +169,125 @@ int calculateMatches(Map<String, dynamic> volumeInfo) {
 
 
 
-  @override
-  Widget build(BuildContext context) {
-    var currentQuestion = questions[currentQuestionIndex];
-    bool isNextButtonEnabled =
-        selectedAnswers[currentQuestion['question']] != null &&
-            selectedAnswers[currentQuestion['question']]!.isNotEmpty;
+@override
+Widget build(BuildContext context) {
+  var currentQuestion = questions[currentQuestionIndex];
+  bool isNextButtonEnabled =
+      selectedAnswers[currentQuestion['question']] != null &&
+          selectedAnswers[currentQuestion['question']]!.isNotEmpty;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color.fromARGB(255, 53, 31, 31)),
-          onPressed: () {
-            if (currentQuestionIndex > 0) {
-              setState(() {
-                currentQuestionIndex--;
-              });
-            } else {
-              Navigator.pop(context);
-            }
-          },
-        ),
+  return Scaffold(
+    appBar: AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: Color.fromARGB(255, 53, 31, 31)),
+        onPressed: () {
+          if (currentQuestionIndex > 0) {
+            setState(() {
+              currentQuestionIndex--;
+            });
+          } else {
+            Navigator.pop(context);
+          }
+        },
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              currentQuestion['question'],
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 53, 31, 31),
-              ),
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children:
-                    (currentQuestion['options'] as List<String>).map((option) {
-                  bool isSelected = selectedAnswers[currentQuestion['question']]
-                          ?.contains(option) ??
-                      false;
-                  return ChoiceChip(
-                    label: Text(option),
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? Colors.white
-                          : Color.fromARGB(255, 53, 31, 31),
+    ),
+    body: Column(
+      children: [
+        // Progress Bar (Fixed position at the top)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: List.generate(questions.length, (index) {
+                  return Expanded(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 4.0),
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: index <= currentQuestionIndex
+                            ? Color(0xFFF790AD) // Pink for completed segments
+                            : Colors.grey[300], // Grey for remaining segments
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
-                    selected: isSelected,
-                    selectedColor: Color(0xFFF790AD),
-                    backgroundColor: Colors.grey[200],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    onSelected: (selected) {
-                      _toggleOption(option);
-                    },
                   );
-                }).toList(),
+                }),
               ),
+            ],
+          ),
+        ),
+        SizedBox(height: 20), // Space below the progress bar
+
+        // Main Content (Split into question, options, and image + button section)
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Question Section
+                Text(
+                  currentQuestion['question'],
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 53, 31, 31),
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                // Options Section
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: (currentQuestion['options'] as List<String>)
+                      .map((option) {
+                    bool isSelected = selectedAnswers[currentQuestion['question']]
+                            ?.contains(option) ??
+                        false;
+                    return ChoiceChip(
+                      label: Text(option),
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : Color.fromARGB(255, 53, 31, 31),
+                      ),
+                      selected: isSelected,
+                      selectedColor: Color(0xFFF790AD),
+                      backgroundColor: Colors.grey[200],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      onSelected: (selected) {
+                        _toggleOption(option);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
-            SizedBox(height: 20),
-            Center(
-              child: Image.asset(
+          ),
+        ),
+
+        // Image and Button Section
+        Padding(
+          padding: const EdgeInsets.only(bottom: 50.0), // Adjust spacing for the button
+          child: Column(
+            children: [
+              // Image (Consistently above the button)
+              Image.asset(
                 currentQuestion['image'],
-                height: 250,
-                width: 250,
+                height: 180,
                 fit: BoxFit.contain,
               ),
-            ),
-            SizedBox(height: 20),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: ElevatedButton(
+              SizedBox(height: 20), // Space between the image and the button
+
+              // Next Button
+              ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color.fromARGB(255, 53, 31, 31),
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
@@ -264,33 +302,38 @@ int calculateMatches(Map<String, dynamic> volumeInfo) {
                             currentQuestionIndex++;
                           });
                         } else {
-                          fetchBooksFromAPI().then ((books) {
+                          fetchBooksFromAPI().then((books) {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => RecommendationPage(
                                   answers: selectedAnswers,
-                                  books: books, // Pass the books to the next page
-                                  userId: FirebaseAuth.instance.currentUser !.uid,
+                                  books: books,
+                                  userId: FirebaseAuth.instance.currentUser!.uid,
                                 ),
                               ),
                             );
                           }).catchError((e) {
-                            // Handle error if needed
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text("Error fetching books")));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Error fetching books")));
                           });
                         }
                       }
                     : null,
-                child: Text("Next",
-                    style: TextStyle(fontSize: 18, color: Colors.white)),
+                child: Text(
+                  "Next",
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
-            ),
-            SizedBox(height: 60),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
+
+
+
+
 }
