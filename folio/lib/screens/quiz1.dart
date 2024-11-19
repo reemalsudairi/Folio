@@ -16,7 +16,7 @@ class DynamicQuizPage extends StatefulWidget {
 class _DynamicQuizPageState extends State<DynamicQuizPage> {
   final List<Map<String, dynamic>> questions = [
     {
-      'question': "What genres sound good right now?",
+      'question': "What are you in the mood for?",
       'options': [
         "Fiction",
         "Science",
@@ -70,7 +70,7 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
   }
 
 Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
-  String genreQuery = selectedAnswers["What genres sound good right now?"]?.map((g) => "subject:${g.trim()}").join(" OR ") ?? "";
+  String genreQuery = selectedAnswers["What are you in the mood for?"]?.map((g) => "subject:${g.trim()}").join(" OR ") ?? "";
   String languageQuery = selectedAnswers["What language do you prefer?"]?.map((lang) => lang.toLowerCase() == "arabic" ? "ar" : "en").join("|") ?? "en";
 
   String query = [
@@ -131,7 +131,7 @@ int calculateMatches(Map<String, dynamic> volumeInfo) {
 
   // Check for genre matches
   var categories = (volumeInfo['categories'] as List<dynamic>?)?.cast<String>() ?? [];
-  if (selectedAnswers["What genres sound good right now?"]?.any((genre) => categories.any((cat) => cat.toLowerCase().contains(genre.toLowerCase()))) ?? false) {
+  if (selectedAnswers["What are you in the mood for?"]?.any((genre) => categories.any((cat) => cat.toLowerCase().contains(genre.toLowerCase()))) ?? false) {
     score += 3;
   }
 
