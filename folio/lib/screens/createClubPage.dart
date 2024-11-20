@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart';
 import 'package:folio/screens/viewClub.dart';
+import 'package:folio/services/local.notifications.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CreateClubPage extends StatefulWidget {
@@ -166,6 +167,49 @@ class _CreateClubPageState extends State<CreateClubPage> {
           if (_selectedBookId != null && _discussionDate != null)
             'discussionDate': _discussionDate,
         });
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (!userDoc.exists) {
+          setState(() {
+            _errorMessage = "User document does not exist.";
+          });
+          return;
+        }
+
+        Map<String, dynamic>? userData =
+            userDoc.data() as Map<String, dynamic>?;
+        if (userData == null || !userData.containsKey('name')) {
+          setState(() {
+            _errorMessage = "User document does not have a 'name' field.";
+          });
+          return;
+        }
+
+        String clubOwnerName = userData[
+            'name']; // Assuming 'name' is the field where the owner's name is stored
+
+        if (_discussionDate != null) {
+          // Notification for the owner
+          LocalNotificationService.showScheduledNotification(
+            id: clubRef.id.hashCode, // Unique ID for the club notification
+            title: '${_clubNameController.text} Discussion Starts',
+            body:
+                'Your club discussion started, Be there to lead the discussion!',
+
+            scheduledTime: _discussionDate!.toDate(),
+          );
+
+          //Notification for the club members (you can adjust this as needed)
+          LocalNotificationService.showScheduledNotification(
+            id: clubRef.id.hashCode +
+                1, // Ensure a unique ID for members' notification
+            title:
+                '${_clubNameController.text} Discussion Starts', // Club name as the title
+            body:
+                '$clubOwnerName invites you to join a meeting.', // Owner name as the body
+            scheduledTime: _discussionDate!.toDate(),
+          );
+        }
 
         // Show success message
         _showConfirmationMessage();
@@ -177,7 +221,10 @@ class _CreateClubPageState extends State<CreateClubPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ViewClub(clubId: clubRef.id, fromCreate: true,),
+            builder: (context) => ViewClub(
+              clubId: clubRef.id,
+              fromCreate: true,
+            ),
           ),
         );
 

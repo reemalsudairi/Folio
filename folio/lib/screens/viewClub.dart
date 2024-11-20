@@ -1,13 +1,14 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/MemberListPage.dart';
 import 'package:folio/screens/OtherProfile/otherprofile.dart';
-import 'package:folio/screens/Profile/profile.dart';
 import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/screens/editClub.dart';
+import 'package:folio/services/local.notifications.dart';
 import 'package:folio/view/callPage.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -17,7 +18,8 @@ class ViewClub extends StatefulWidget {
   final String clubId;
   final bool fromCreate;
 
-  ViewClub({Key? key, required this.clubId, this.fromCreate = false}) : super(key: key);
+  ViewClub({Key? key, required this.clubId, this.fromCreate = false})
+      : super(key: key);
 
   @override
   _ViewClubState createState() => _ViewClubState();
@@ -67,7 +69,6 @@ class _ViewClubState extends State<ViewClub> {
   String _clubOwnerProfilePhoto = '';
   String _language = '';
   final User? currentUser = FirebaseAuth.instance.currentUser;
-
 
   @override
   void initState() {
@@ -580,7 +581,22 @@ class _ViewClubState extends State<ViewClub> {
 
       setState(() {
         _isMember = true;
+        log("mem");
       });
+
+      // Ensure the notification is scheduled only if the discussion date is valid
+      if (_discussionDate != null &&
+          _isDiscussionScheduled &&
+          DateTime.now().isBefore(_discussionDate!.toLocal())) {
+        LocalNotificationService.showScheduledNotification(
+          id: widget.clubId.hashCode, // Unique ID for the club notification
+          title: '$_name Discussion Starts', // Club name as the title
+          body:
+              '$_clubOwnerName invites you to join a meeting.', // Owner name as the body
+          scheduledTime: _discussionDate!,
+        );
+        log("Notification scheduled for $_discussionDate");
+      }
     } catch (e) {
       print('Error joining club: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -641,392 +657,361 @@ class _ViewClubState extends State<ViewClub> {
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  // Determine if the discussion date has been reached
-  bool isDiscussionDateReached = _discussionDate != null &&
-      DateTime.now().isAfter(_discussionDate!.toLocal());
+  @override
+  Widget build(BuildContext context) {
+    // Determine if the discussion date has been reached
+    bool isDiscussionDateReached = _discussionDate != null &&
+        DateTime.now().isAfter(_discussionDate!.toLocal());
 
-  // Determine if the "Join Discussion" button should be visible and enabled
-  bool canJoinDiscussion = (_isMember || _isOwner) &&
-      _isDiscussionScheduled &&
-      isDiscussionDateReached;
+    // Determine if the "Join Discussion" button should be visible and enabled
+    bool canJoinDiscussion = (_isMember || _isOwner) &&
+        _isDiscussionScheduled &&
+        isDiscussionDateReached;
 
-  return Scaffold(
-    backgroundColor: const Color(0xFFF8F5F0),
-    appBar: AppBar(
-      backgroundColor: const Color(0xFFF8F5F0),
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
-        onPressed: () {
-          if (widget.fromCreate) {
-            Navigator.pop(context);
-            Navigator.pop(context);
-          } else {
-            Navigator.pop(context);
-          }
-        },
-      ),
-      title: const Text(
-        'Club Details',
-        style: TextStyle(
-          color: Color(0xFF4A2E2A),
-          fontSize: 25,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      centerTitle: true,
-      actions: [
-        if (_isOwner)
-          IconButton(
-            icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
+    return Scaffold(
+        backgroundColor: const Color(0xFFF8F5F0),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF8F5F0),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2E2A)),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditClub(clubId: widget.clubId, fromCreate: widget.fromCreate,),
-                ),
-              ).then((_) {
-                // Refresh the club data after returning from EditClub
-                setState(() {
-                  _isLoading = true; // Set loading state before fetching
-                });
-              });
+              if (widget.fromCreate) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              } else {
+                Navigator.pop(context);
+              }
             },
           ),
-        const SizedBox(width: 8),
-      ],
-    ),
-    body: StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('clubs')
-          .doc(widget.clubId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error fetching club data.'));
-        }
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const Center(child: Text('Club does not exist.'));
-        }
+          title: const Text(
+            'Club Details',
+            style: TextStyle(
+              color: Color(0xFF4A2E2A),
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          centerTitle: true,
+          actions: [
+            if (_isOwner)
+              IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF4A2E2A)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditClub(
+                        clubId: widget.clubId,
+                        fromCreate: widget.fromCreate,
+                      ),
+                    ),
+                  ).then((_) {
+                    // Refresh the club data after returning from EditClub
+                    setState(() {
+                      _isLoading = true; // Set loading state before fetching
+                    });
+                  });
+                },
+              ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('clubs')
+                .doc(widget.clubId)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return const Center(child: Text('Error fetching club data.'));
+              }
+              if (!snapshot.hasData || !snapshot.data!.exists) {
+                return const Center(child: Text('Club does not exist.'));
+              }
 
-        final clubData = snapshot.data!.data() as Map<String, dynamic>;
+              final clubData = snapshot.data!.data() as Map<String, dynamic>;
 
-        // Update your state variables from clubData
-        _name = clubData['name'] ?? 'No Name Available';
-        _clubDescription = clubData['description'] ?? 'No Description Available';
-        _picture = clubData['picture'] ?? '';
-        _language = clubData['language'] ?? 'Unknown Language';
-        _clubOwnerID = clubData['ownerID'] ?? '';
+              // Update your state variables from clubData
+              _name = clubData['name'] ?? 'No Name Available';
+              _clubDescription =
+                  clubData['description'] ?? 'No Description Available';
+              _picture = clubData['picture'] ?? '';
+              _language = clubData['language'] ?? 'Unknown Language';
+              _clubOwnerID = clubData['ownerID'] ?? '';
 
-        
-        // Continue with your existing logic to check ownership, membership, etc.
-        // ...
+              // Continue with your existing logic to check ownership, membership, etc.
+              // ...
 
-        return SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Club picture
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image(
-                    image: _picture.isNotEmpty
-                        ? NetworkImage(_picture)
-                        : AssetImage('assets/images/clubs.jpg'),
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Club name and Join/Leave button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Club name
-                    Expanded(
-                      child: Text(
-                        _name,
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Club picture
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image(
+                          image: _picture.isNotEmpty
+                              ? NetworkImage(_picture)
+                              : AssetImage('assets/images/clubs.jpg'),
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // Club name and Join/Leave button
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Club name
+                          Expanded(
+                            child: Text(
+                              _name,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4A2E2A),
+                              ),
+                            ),
+                          ),
+                          // Join/Leave button
+                          if (!_isOwner)
+                            _isMember
+                                ? ElevatedButton(
+                                    onPressed: () {
+                                      _showJoinLeaveConfirmation(false);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Color.fromARGB(255, 245, 114, 105),
+                                    ),
+                                    child: Text(
+                                      "Leave Club",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : ElevatedButton(
+                                    onPressed: () {
+                                      _showJoinLeaveConfirmation(true);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Color.fromARGB(255, 131, 201, 133),
+                                    ),
+                                    child: Text(
+                                      "Join Club",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                        ],
+                      ),
+                      // Club description
+                      Text(
+                        _clubDescription,
                         style: const TextStyle(
-                          fontSize: 28,
+                          fontSize: 14,
+                          color: Color(0xFF4A2E2A),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Club owner and members
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      OtherProfile(memberId: _clubOwnerID),
+                                ),
+                              );
+                            },
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundImage:
+                                  (_clubOwnerProfilePhoto.isNotEmpty)
+                                      ? NetworkImage(_clubOwnerProfilePhoto)
+                                      : const AssetImage(
+                                              'assets/images/profile_pic.png')
+                                          as ImageProvider,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Created by',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          OtherProfile(memberId: _clubOwnerID),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  _clubOwnerName,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const Spacer(),
+                          // Dynamic member count
+                          FutureBuilder<QuerySnapshot>(
+                            future: FirebaseFirestore.instance
+                                .collection('clubs')
+                                .doc(widget.clubId)
+                                .collection('members')
+                                .get(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              }
+                              if (snapshot.hasError) {
+                                return const Text(
+                                  'Members',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                );
+                              }
+
+                              // Get the number of members
+                              final memberCount = snapshot.data!.docs.length;
+
+                              // Set display count to 1 if there are no members, otherwise display the actual count
+                              final displayCount =
+                                  memberCount == 0 ? 1 : memberCount;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  // Check if clubID and ownerID are valid
+                                  if (widget.clubId.isNotEmpty &&
+                                      _clubOwnerID.isNotEmpty) {
+                                    // Navigate to the MemberListPage
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MemberListPage(
+                                          clubID: widget.clubId,
+                                          ownerID: _clubOwnerID,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    // Handle the error appropriately, e.g., show a snackbar or log the issue
+                                    print('Club ID or Owner ID is empty.');
+                                  }
+                                },
+                                child: Text(
+                                  '$displayCount Members', // Use the display count
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Divider(color: Colors.grey),
+                      const SizedBox(height: 10),
+
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF4A2E2A),
+                          ),
+                          children: [
+                            TextSpan(
+                              text: "Club's language: ",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(text: _language),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+                      const Divider(color: Colors.grey),
+                      const SizedBox(height: 10),
+                      // Currently reading book section
+                      const Text(
+                        'Currently reading',
+                        style: TextStyle(
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF4A2E2A),
                         ),
                       ),
-                    ),
-                    // Join/Leave button
-                    if (!_isOwner)
-                      _isMember
-                          ? ElevatedButton(
-                              onPressed: () {
-                                _showJoinLeaveConfirmation(false);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(255, 245, 114, 105),
-                              ),
-                              child: Text(
-                                "Leave Club",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : ElevatedButton(
-                              onPressed: () {
-                                _showJoinLeaveConfirmation(true);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(255, 131, 201, 133),
-                              ),
-                              child: Text(
-                                "Join Club",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-              ),
-            ),
-  ],
-),
-                    // Club description
-                    Text(
-                      _clubDescription,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF4A2E2A),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Club owner and members
-                    Row(
-                      children: [
- GestureDetector(
-      onTap: () {
+                      const SizedBox(height: 2),
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OtherProfile(memberId: _clubOwnerID),
-            ),
-          );
-        },
-      child: CircleAvatar(
-        radius: 20,
-        backgroundImage: (_clubOwnerProfilePhoto.isNotEmpty)
-            ? NetworkImage(_clubOwnerProfilePhoto)
-            : const AssetImage('assets/images/profile_pic.png') as ImageProvider,
-      ),
-    ),
-    const SizedBox(width: 8),
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Created by',
-          style: TextStyle(fontSize: 12),
-        ),
-        GestureDetector(
-          onTap: () {
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => OtherProfile(memberId: _clubOwnerID),
-                ),
-              );
-            },
-
-          child: Text(
-            _clubOwnerName,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    ),
-
-                        const Spacer(),
-                        // Dynamic member count
-                        FutureBuilder<QuerySnapshot>(
-                          future: FirebaseFirestore.instance
-                              .collection('clubs')
-                              .doc(widget.clubId)
-                              .collection('members')
-                              .get(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            }
-                            if (snapshot.hasError) {
-                              return const Text(
-                                'Members',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              );
-                            }
-
-                            // Get the number of members
-                            final memberCount = snapshot.data!.docs.length;
-
-                            // Set display count to 1 if there are no members, otherwise display the actual count
-                            final displayCount =
-                                memberCount == 0 ? 1 : memberCount;
-
-                            return GestureDetector(
-                              onTap: () {
-                                // Check if clubID and ownerID are valid
-                                if (widget.clubId.isNotEmpty &&
-                                    _clubOwnerID.isNotEmpty) {
-                                  // Navigate to the MemberListPage
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MemberListPage(
-                                        clubID: widget.clubId,
-                                        ownerID: _clubOwnerID,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  // Handle the error appropriately, e.g., show a snackbar or log the issue
-                                  print('Club ID or Owner ID is empty.');
-                                }
-                              },
-                              child: Text(
-                                '$displayCount Members', // Use the display count
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
+                      // Currently reading book section
+                      FutureBuilder(
+                        future: _fetchBookData(widget.clubId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const CircularProgressIndicator();
+                          }
+                          if (snapshot.hasError) {
+                            return const Text(
+                              'Error fetching data',
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.grey),
                             );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 10),
+                          }
 
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF4A2E2A),
-                        ),
-                        children: [
-                          TextSpan(
-                            text: "Club's language: ",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: _language),
-                        ],
-                      ),
-                    ),
+                          final bookData = snapshot.data;
 
-                    const SizedBox(height: 10),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 10),
-                    // Currently reading book section
-                    const Text(
-                      'Currently reading',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4A2E2A),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
+                          if (bookData == null) {
+                            return const Text(
+                              'No book has been selected for this club.',
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.grey),
+                            );
+                          }
 
-                    // Currently reading book section
-                    FutureBuilder(
-                      future: _fetchBookData(widget.clubId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        }
-                        if (snapshot.hasError) {
-                          return const Text(
-                            'Error fetching data',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          );
-                        }
-
-                        final bookData = snapshot.data;
-
-                        if (bookData == null) {
-                          return const Text(
-                            'No book has been selected for this club.',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          );
-                        }
-
-                        return Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    // Navigate to BookDetailsPage when the book cover is tapped
-                                    if (bookData['bookID'] != null) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => BookDetailsPage(
-                                            bookId: bookData['bookID'],
-                                            userId: FirebaseAuth
-                                                .instance.currentUser!.uid,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                'Book ID is not available.')),
-                                      );
-                                    }
-                                  },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    child: Container(
-                                      width: 80,
-                                      height: 120,
-                                      child: bookData['image'] != null
-                                          ? Image.network(
-                                              bookData['image'],
-                                              fit: BoxFit.cover,
-                                            )
-                                          : Image.asset(
-                                              'folio/assets/images/clubs.jpg'), // Display default image
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: GestureDetector(
+                          return Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  GestureDetector(
                                     onTap: () {
-                                      // Navigate to BookDetailsPage when the book title is tapped
+                                      // Navigate to BookDetailsPage when the book cover is tapped
                                       if (bookData['bookID'] != null) {
                                         Navigator.push(
                                           context,
@@ -1048,113 +1033,146 @@ Widget build(BuildContext context) {
                                         );
                                       }
                                     },
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        if (bookData['title'] != null)
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Container(
+                                        width: 80,
+                                        height: 120,
+                                        child: bookData['image'] != null
+                                            ? Image.network(
+                                                bookData['image'],
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Image.asset(
+                                                'folio/assets/images/clubs.jpg'), // Display default image
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Navigate to BookDetailsPage when the book title is tapped
+                                        if (bookData['bookID'] != null) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  BookDetailsPage(
+                                                bookId: bookData['bookID'],
+                                                userId: FirebaseAuth
+                                                    .instance.currentUser!.uid,
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Book ID is not available.')),
+                                          );
+                                        }
+                                      },
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          if (bookData['title'] != null)
+                                            Text(
+                                              bookData['title'],
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF4A2E2A),
+                                              ),
+                                            ),
+                                          if (bookData['author'] != null)
+                                            Text(
+                                              bookData['author'],
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          const SizedBox(height: 16),
+                                          const Text(
+                                            'Next discussion date',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xFF4A2E2A),
+                                            ),
+                                          ),
                                           Text(
-                                            bookData['title'],
+                                            _clubDiscussionDate, // Discussion date from Firestore
                                             style: const TextStyle(
-                                              fontSize: 18,
+                                              fontSize: 14,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFF4A2E2A),
                                             ),
                                           ),
-                                        if (bookData['author'] != null)
-                                          Text(
-                                            bookData['author'],
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          'Next discussion date',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Color(0xFF4A2E2A),
-                                          ),
-                                        ),
-                                        Text(
-                                          _clubDiscussionDate, // Discussion date from Firestore
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF4A2E2A),
-                                          ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    SizedBox(height: 10),
-                    Divider(color: Colors.grey),
-                    SizedBox(height: 5),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      SizedBox(height: 10),
+                      Divider(color: Colors.grey),
+                      SizedBox(height: 5),
 // Join Discussion Button and Close Meeting Button
-                    Row(
-                      children: [
-                        // Join Discussion Button
-                        ElevatedButton(
-                          onPressed: canJoinDiscussion
-                              ? () {
-                                  if (_callID.isNotEmpty) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => CallPage(
-                                          callID:
-                                              _callID, // Use the stored callID
-                                          userId: FirebaseAuth
-                                              .instance
-                                              .currentUser!
-                                              .uid, // Pass the current user's UID
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    // Handle the case where callID is missing
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Call ID is not available. Please try again later.')),
-                                    );
-                                  }
-                                }
-                              : null, // Disable if discussion date is not reached
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFFF790AD), // Button color
-                          ),
-                          child: Text(
-                            "Join Meeting",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        // Close Meeting Button (Visible only to Owner)
-                        if (_isOwner &&
-                            _isDiscussionScheduled &&
-                            DateTime.now().isAfter(_discussionDate!.toLocal()))
+                      Row(
+                        children: [
+                          // Join Discussion Button
                           ElevatedButton(
-                            onPressed:
-                                _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
+                            onPressed: canJoinDiscussion
+                                ? () {
+                                    if (_callID.isNotEmpty) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CallPage(
+                                            callID:
+                                                _callID, // Use the stored callID
+                                            userId: FirebaseAuth
+                                                .instance
+                                                .currentUser!
+                                                .uid, // Pass the current user's UID
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      // Handle the case where callID is missing
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(
+                                                'Call ID is not available. Please try again later.')),
+                                      );
+                                    }
+                                    if (_discussionDate != null) {
+                                      LocalNotificationService
+                                          .showScheduledNotification(
+                                        id: widget.clubId
+                                            .hashCode, // Unique ID for the club notification
+                                        title: 'Upcoming Discussion for $_name',
+                                        body:
+                                            'The discussion is scheduled for $_clubDiscussionDate.',
+                                        scheduledTime: _discussionDate!,
+                                      );
+                                    }
+                                  }
+                                : null, // Disable if discussion date is not reached
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromARGB(255, 245, 114,
-                                  105), // Red button for closing the meeting
+                              backgroundColor:
+                                  Color(0xFFF790AD), // Button color
                             ),
                             child: Text(
-                              'End Meeting',
+                              "Join Meeting",
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -1162,21 +1180,40 @@ Widget build(BuildContext context) {
                               ),
                             ),
                           ),
-                      ],
-                    ),
-                    SizedBox(height: 5),
+                          SizedBox(width: 16),
+                          // Close Meeting Button (Visible only to Owner)
+                          if (_isOwner &&
+                              _isDiscussionScheduled &&
+                              DateTime.now()
+                                  .isAfter(_discussionDate!.toLocal()))
+                            ElevatedButton(
+                              onPressed:
+                                  _showCloseMeetingConfirmation, // Trigger the new confirmation dialog
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color.fromARGB(255, 245, 114,
+                                    105), // Red button for closing the meeting
+                              ),
+                              child: Text(
+                                'End Meeting',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 5),
 
-                    SizedBox(height: 5),
-                    // Only show the Join/Leave button for non-owners
-                    
-                    const SizedBox(height: 25),
-                  ],
+                      SizedBox(height: 5),
+                      // Only show the Join/Leave button for non-owners
+
+                      const SizedBox(height: 25),
+                    ],
+                  ),
                 ),
-              ),
-            
-    );
-      
-      }));
-
-}
+              );
+            }));
+  }
 }
