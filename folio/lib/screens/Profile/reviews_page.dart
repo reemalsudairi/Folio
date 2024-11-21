@@ -1,3 +1,5 @@
+
+
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,11 +7,26 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/book_details_page.dart';
 import 'package:http/http.dart' as http;
 
-class ReviewsPage extends StatelessWidget {
+class ReviewsPage extends StatefulWidget {
   final String readerId; // Current user's uid
   final String currentUserId; // Current user's ID
 
   ReviewsPage({required this.readerId, required this.currentUserId});
+
+  @override
+  _ReviewsPageState createState() => _ReviewsPageState();
+}
+class _ReviewsPageState extends State<ReviewsPage> {
+
+  late String readerId; // Current user's uid
+  late String currentUserId; // Current user's ID
+
+  @override
+  void initState() {
+    super.initState();
+    readerId = widget.readerId; // Access from widget
+    currentUserId = widget.currentUserId; // Access from widget
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,31 +54,31 @@ class ReviewsPage extends StatelessWidget {
           }
 
           return ListView(
-            children: snapshot.data!.docs.map((DocumentSnapshot document) {
-              Map<String, dynamic> data =
-                  document.data() as Map<String, dynamic>;
+  children: snapshot.data!.docs.map((DocumentSnapshot document) {
+    Map<String, dynamic> data =
+        document.data() as Map<String, dynamic>;
 
-              return ReviewTile(
-                reviewText: data['reviewText'],
-                rating: data['rating'] is int
-                    ? (data['rating'] as int).toDouble()
-                    : (data['rating'] is double)
-                        ? (data['rating'] as double)
-                        : double.tryParse(data['rating']) ??
-                            0.0, // Handle string case
-                bookID: data['bookID'],
-                reviewId: document.id,
-                readerId: data['reader_id'], // This is the review's reader ID
-                isOwner: data['reader_id'] ==
-                    currentUserId, // Pass the isOwner flag based on current user
-                createdAt: data['createdAt'], // Pass createdAt timestamp
-              );
-            }).toList(),
-          );
+    return ReviewTile(
+      reviewText: data['reviewText'],
+      rating: data['rating'] is int
+          ? (data['rating'] as int).toDouble()
+          : (data['rating'] is double)
+              ? (data['rating'] as double)
+              : double.tryParse(data['rating']) ?? 0.0, // Handle string case
+      bookID: data['bookID'],
+      reviewId: document.id,
+      readerId: data['reader_id'], // This is the review's reader ID
+      isOwner: data['reader_id'] == currentUserId, // Pass the isOwner flag based on current user
+      createdAt: data['createdAt'], // Pass createdAt timestamp
+      currentUserId: currentUserId, // Pass currentUser Id here
+    );
+  }).toList(),
+);
         },
       ),
     );
   }
+  
 }
 
 class ReviewTile extends StatelessWidget {
@@ -72,6 +89,7 @@ class ReviewTile extends StatelessWidget {
   final String readerId;
   final bool isOwner;
   final Timestamp createdAt;
+  final String currentUserId; // Add this line
 
   ReviewTile({
     required this.reviewText,
@@ -81,6 +99,7 @@ class ReviewTile extends StatelessWidget {
     required this.readerId,
     required this.isOwner,
     required this.createdAt,
+    required this.currentUserId, // Add this parameter
   });
 
   final List<String> reasons = [
@@ -120,99 +139,426 @@ class ReviewTile extends StatelessWidget {
     }
   }
 
-void _showReportDialog(BuildContext context) {
-  // Variable to hold the input for "Other"
-  String otherReasonText = '';
-  
-  // Initializing selectedReasons map
-  final Map<String, bool> selectedReasons = {
-    for (var reason in reasons) reason: false, // Initialize all to false
-  };
+void _showReportDialog(BuildContext context, String bookID) async {
+  bool hasReported = await _checkIfReported(reviewId);
+  if (hasReported) {
+    _showAlreadyReportedDialog(context);
+    return;
+  }
+
+  List<bool> selectedReasons = List.generate(reasons.length, (index) => false);
+  bool showError = false;
+  String otherReasonText = ''; // Store the text input for "Other"
 
   showDialog(
     context: context,
+    barrierDismissible: false,
     builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Report Review'),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: [
-              // List of reasons with checkboxes
-              StatefulBuilder(
-                builder: (context, setState) {
-                  return Column(
-                    children: reasons.map((reason) {
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedReasons[reason] = !(selectedReasons[reason] ?? false);
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(reason),
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: selectedReasons[reason] ?? false ? Colors.pink : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.grey),
-                                ),
-                                child: selectedReasons[reason] ?? false
-                                    ? Icon(Icons.check, color: Colors.white, size: 20)
-                                    : null,
-                              ),
-                            ],
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setDialogState) {
+          return AlertDialog(
+            title: const Text(
+              'Report Review',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Please select the reason(s) for reporting this review:",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                Column(
+                  children: List.generate(reasons.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              reasons[index],
+                              style: const TextStyle(fontSize: 18),
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
-              // TextField for "Other" reason
-              if (selectedReasons['Other'] ?? false)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: TextField(
-                    onChanged: (value) {
-                      otherReasonText = value; // Update the text input
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Please specify',
-                      border: OutlineInputBorder(),
+                          GestureDetector(
+                            onTap: () {
+                              setDialogState(() {
+                                selectedReasons[index] = !selectedReasons[index];
+                                // Check if "Other" is selected
+                                if (reasons[index] == 'Other') {
+                                  // If "Other" is selected, toggle the state
+                                  if (selectedReasons[index]) {
+                                    otherReasonText = ''; // Clear the text when selected
+                                  }
+                                }
+                                showError = false; // Clear error when a reason is selected
+                              });
+                            },
+                            child: Container(
+                              width: 30, // Width for the checkbox
+                              height: 30, // Height for the checkbox
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey), // Border color and width
+                                borderRadius: BorderRadius.circular(4),
+                                color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent, // Fill color when checked
+                              ),
+                              child: selectedReasons[index]
+                                  ? const Icon(Icons.check, color: Colors.white, size: 16) // Check icon
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+                // Show the TextField for "Other" reason if selected
+                if (selectedReasons.last) // Check if "Other" is selected
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: TextField(
+                      onChanged: (value) {
+                        otherReasonText = value; // Update the other reason text
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Please specify...',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
+                const SizedBox(height: 20),
+                if (showError)
+                  const Text(
+                    'Please select at least one reason.',
+                    style: TextStyle(color: Colors.red, fontSize: 16),
+                  ),
+              ],
+            ),
+            actions: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          // Validate selection
+                          if (selectedReasons.contains(true) || (selectedReasons.last && otherReasonText.isNotEmpty)) {
+                            // Call the submit report method
+                            _submitReport(selectedReasons, reviewId, otherReasonText, context, bookID);
+                            Navigator.of(context).pop(); // Close the dialog
+                          } else {
+                            setDialogState(() {
+                              showError = true; // Show error if no reason is selected
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF790AD), // Pink color for submit button
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+ ),
+                        child: const Text(
+                          'Submit',
+                          style: TextStyle(fontSize: 18, color: Colors.white), // White text
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(), // Close the dialog
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.grey[300], // Gray color for cancel button
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontSize: 18, color: Colors.black), // Black text
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              ),
             ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
-            },
-          ),
-          TextButton(
-            child: Text('Report'),
-            onPressed: () {
-              // Handle the reporting logic
-              print('Reported reasons: ${selectedReasons.entries.where((entry) => entry.value).map((entry) => entry.key).toList()}');
-              if (otherReasonText.isNotEmpty) {
-                print('Other reason: $otherReasonText'); // Log the custom reason
-              }
-              Navigator.of(context).pop(); // Close the dialog
-            },
-          ),
-        ],
+          );
+        },
       );
     },
   );
+}
+
+void _showReportConfirmationDialog(
+    List<bool> selectedReasons,
+    String reviewId,
+    String otherReasonText,
+    BuildContext context,
+    String bookID) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD).withOpacity(0.9),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.report,
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Are you sure you want to report this review?',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 245, 114, 105),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40),
+                  ),
+                  onPressed: () async {
+                    // Call the submit report method
+                   await _submitReport(selectedReasons, reviewId, otherReasonText, context, bookID);
+                    Navigator.of(context).pop(); // Close the confirmation dialog
+                  },
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    minimumSize: const Size(100, 40),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog without action
+                  },
+                  child: const Text(
+                    'No',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _submitReport(
+    List<bool> selectedReasons,
+    String reviewId,
+    String otherReasonText,
+    BuildContext context,
+    String bookID) async {
+  List<String> reasonsToSubmit = [];
+  for (int i = 0; i < selectedReasons.length; i++) {
+    if (selectedReasons[i]) {
+      reasonsToSubmit.add(reasons[i]);
+    }
+  }
+
+  // Add the other reason if provided
+  if (selectedReasons.last && otherReasonText.isNotEmpty) {
+    reasonsToSubmit.add(otherReasonText);
+  }
+
+  if (reasonsToSubmit.isNotEmpty) {
+  try {
+    await FirebaseFirestore.instance.collection('reports').add({
+      'reviewId': reviewId,
+      'userId': currentUserId,
+      'bookID': bookID, // Include the bookID here
+      'reasons': reasonsToSubmit,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Show successful report message
+    if (context.mounted) {
+      _showSuccessfulReportMessage(context);
+    }
+  } catch (e) {
+    // Handle Firestore error
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit report: $e')),
+      );
+    }
+  }
+} else {
+    // Show message to select at least one reason
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select at least one reason.')),
+      );
+    }
+  }
+}
+
+Future<bool> _checkIfReported(String reviewId) async {
+  var snapshot = await FirebaseFirestore.instance
+      .collection('reports')
+      .where('reviewId', isEqualTo: reviewId)
+      .where('userId', isEqualTo: currentUserId)
+      .get();
+
+  return snapshot.docs.isNotEmpty; // Returns true if a report exists
+}
+
+void _showAlreadyReportedDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF790AD), // Pink background
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning, // Warning icon
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'You have already reported this review.',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey, // Gray background for "Exit"
+              ),
+              child: const Text(
+                'Exit',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
+void _showSuccessfulReportMessage(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7), // Green background
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 50,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Report Submitted',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                'Thank you for your report. It will be reviewed by our team.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+
+  // Automatically close the dialog after 3 seconds
+  Future.delayed(const Duration(seconds: 3), () {
+    if (context.mounted) {
+      Navigator.of(context).pop(); // Close the dialog using the context
+    }
+  });
 }
  
 
@@ -335,6 +681,61 @@ Future<bool> _deleteReview(BuildContext context) async {
   }
 }
 
+ // Method to show success message after report submission
+void _showSuccessfulMessage2(BuildContext context) {
+  // Show the dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext dialogContext) {
+      // Create a unique key to identify the dialog
+      final GlobalKey dialogKey = GlobalKey();
+
+      // Automatically close the dialog after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (dialogKey.currentContext != null) {
+          Navigator.of(dialogKey.currentContext!)
+              .pop(); // Close the dialog if it's open
+        }
+      });
+
+      
+
+      return Dialog(
+        key: dialogKey,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.lightGreen.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Review reported Successfully!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
 void _showSuccessfulMessage(BuildContext context) {
   // Show the dialog
   showDialog(
@@ -351,6 +752,8 @@ void _showSuccessfulMessage(BuildContext context) {
               .pop(); // Close the dialog if it's open
         }
       });
+
+      
 
       return Dialog(
         key: dialogKey,
@@ -509,10 +912,10 @@ Widget build(BuildContext context) {
                         onPressed: () => _confirmDeleteReview(context),
                       ),
                     if (!isOwner)
-                      IconButton(
-                        icon: Icon(Icons.flag, color: const Color.fromARGB(255, 120, 120, 120)), // Flag icon
-                        onPressed: () => _showReportDialog(context), // Show report dialog
-                      ),
+                     IconButton(
+  icon: Icon(Icons.flag, color: Colors.grey),
+ onPressed: () => _showReportDialog(context, bookID), // Show report dialog
+),
                     const SizedBox(width: 20),
                     GestureDetector(
                       onTap: () {
