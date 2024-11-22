@@ -321,7 +321,7 @@ class _EditClubPageState extends State<EditClub> {
         }
       }
 
-      // If the image was deleted (i.e., _clubImageUrl is null and there was an original image)
+      // If the image was deleted
       bool isImageDeleted =
           _originalClubImageUrl != null && _clubImageUrl == null;
       if (isImageDeleted) {
@@ -340,82 +340,59 @@ class _EditClubPageState extends State<EditClub> {
             : FieldValue.delete(),
       };
 
-      try {
-        // Retrieve the club owner's name from Firestore
-        DocumentSnapshot userDoc =
-            await _firestore.collection('users').doc(user.uid).get();
-
-        // Check if the user document exists
-        if (!userDoc.exists) {
-          throw Exception('User document does not exist');
-        }
-
-        // Retrieve the club owner's name from the document
-        String clubOwnerName =
-            userDoc['name']; // Assuming 'name' is the correct field
-        if (clubOwnerName == null) {
-          throw Exception('User name field is missing');
-        }
-
-        if (_discussionDate != null) {
-          // Notification for the owner
-          LocalNotificationService.showScheduledNotification(
-            id: widget.clubId.hashCode, // Unique ID for the club notification
-            title: '${_clubNameController.text} Discussion Starts',
-            body:
-                'Your club discussion started. Be there to lead the discussion!',
-            scheduledTime: _discussionDate!.toDate(),
-          );
-
-          // Notification for the club members
-          LocalNotificationService.showScheduledNotification(
-            id: widget.clubId.hashCode +
-                1, // Ensure a unique ID for members' notification
-            title:
-                '${_clubNameController.text} Discussion Starts', // Club name as the title
-            body:
-                '$clubOwnerName invites you to join a meeting.', // Owner name as the body
-            scheduledTime: _discussionDate!.toDate(),
-          );
-        }
-
-        // Update Firestore document
-        await _firestore
-            .collection('clubs')
-            .doc(widget.clubId)
-            .update(updateData);
-        print('Firestore update successful.');
-      } catch (e) {
-        print('Error updating club: $e');
-        setState(() {
-          _errorMessage = 'Failed to update club. Please try again.';
-        });
-      }
-
       if (imageUrl != null && imageUrl.isNotEmpty) {
         updateData['picture'] = imageUrl;
-        print('Adding picture URL to updateData.');
       } else if (isImageDeleted) {
         updateData['picture'] = FieldValue.delete(); // Remove the picture field
-        print('Removing picture URL from updateData.');
       }
 
-      print('Updating Firestore document...');
+      // Update the club document in Firestore
       await _firestore
           .collection('clubs')
           .doc(widget.clubId)
           .update(updateData);
       print('Firestore update successful.');
 
-      // Notify the previous screen to refresh data
-//  Navigator.of(context)
-//           .pop(true); // Pass a result indicating a successful update
+      // Fetch the updated club document to get members
+      DocumentSnapshot clubSnapshot =
+          await _firestore.collection('clubs').doc(widget.clubId).get();
+
+      if (clubSnapshot.exists && clubSnapshot.data() != null) {
+        Map<String, dynamic> clubData =
+            clubSnapshot.data() as Map<String, dynamic>;
+
+        // Notify the owner
+        if (_discussionDate != null) {
+          LocalNotificationService.showScheduledNotification(
+            id: widget.clubId.hashCode, // Unique ID for the owner notification
+            title: 'Discussion Stats for Club "${_clubNameController.text}"',
+            body: 'Join the discussion now to be part of the conversation ',
+            scheduledTime: _discussionDate!.toDate(),
+          );
+        }
+
+        // Extract members, excluding the owner
+        List<String> members = List<String>.from(clubData['members'])
+            .where((memberId) => memberId != user.uid)
+            .toList();
+
+        for (var memberId in members) {
+          LocalNotificationService.showScheduledNotification(
+            id: widget.clubId.hashCode +
+                memberId.hashCode, // Unique ID per member
+            title: 'Discussion Stats for Club "${_clubNameController.text}"',
+            body: 'Join the discussion now to be part of the conversation ',
+            scheduledTime: _discussionDate!.toDate(),
+          );
+        }
+      }
+
       // Show success message
       _showUpdateSuccessMessage();
-// Delay navigating back until the dialog disappears
+
+      // Delay navigating back until the dialog disappears
       Future.delayed(const Duration(seconds: 2), () {
-        Navigator.of(context)
-            .pop(true); // Navigate back after the success message
+        Navigator.of(context).pop(true); // Navigate back after success
       });
     } catch (e) {
       print('Error updating club: $e');

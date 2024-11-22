@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -166,36 +167,63 @@ class _CreateClubPageState extends State<CreateClubPage> {
           'picture': _clubImageUrl ?? null, // Club picture URL
           if (_selectedBookId != null && _discussionDate != null)
             'discussionDate': _discussionDate,
-          // Add members as an empty list for now (you can add logic to add members)
-          'members': [user.uid], // The owner is automatically added as a member
+          'members': [user.uid], // Add the owner as the initial member
         });
 
+        // Log club creation
+        log('Club created with ID: ${clubRef.id}');
+        log('Owner ID: ${user.uid}');
+        log('Discussion Date: ${_discussionDate?.toDate().toString()}');
+
         if (_discussionDate != null) {
-          // Corrected Notification for the owner
+          // Notify the owner
+          log('Sending notification to owner...');
           LocalNotificationService.showScheduledNotification(
-            id: clubRef.id.hashCode, // Unique ID for the club notification
-            title:
-                'Discussion Time for ${_clubNameController.text}', // Access the text value here
-            body: 'Discussion Time starts, Join now to lead the conversation!',
+            id: clubRef.id.hashCode, // Unique ID for the owner notification
+            title: 'Discussion Stats for Club "${_clubNameController.text}"',
+            body: 'Join the discussion now to be part of the conversation ',
             scheduledTime: _discussionDate!.toDate(),
           );
+          log('Notification sent to owner: ${user.uid}');
         }
 
-        // Notify the members of the club (including the owner)
-        var members = [
-          user.uid
-        ]; // Assuming the owner is part of the list, add other members here
-        for (var memberId in members) {
-          // Fetch member's information (e.g., name, profile picture) if needed
-          // For now, we just use memberId to schedule the notification
-          LocalNotificationService.showScheduledNotification(
-            id: clubRef.id.hashCode +
-                1, // Ensure unique ID for members' notification
-            title: 'Upcoming Discussion for ${_clubNameController.text}',
-            body:
-                'Your scheduled discussion is set for ${_formatTimestamp(_discussionDate!)}.',
-            scheduledTime: _discussionDate!.toDate(),
-          );
+        // Fetch the updated club document to get the members
+        DocumentSnapshot clubSnapshot =
+            await _firestore.collection('clubs').doc(clubRef.id).get();
+
+        if (clubSnapshot.exists && clubSnapshot.data() != null) {
+          // Extract the members list
+          List<String> allMembers = List<String>.from(clubSnapshot['members']);
+          log('All members fetched from Firestore: $allMembers');
+
+          // Separate owner and members
+          String ownerID = clubSnapshot['ownerID'];
+          List<String> members =
+              allMembers.where((memberId) => memberId != ownerID).toList();
+          log('Owner ID: $ownerID');
+          log('Filtered members (excluding owner): $members');
+
+          // Check if the logged-in user is the owner
+          if (user.uid == ownerID) {
+            log('You are the owner of the club!');
+          } else {
+            log('You are a member of the club.');
+          }
+
+          // Notify each member
+          for (var memberId in members) {
+            log('Sending notification to member: $memberId');
+            LocalNotificationService.showScheduledNotification(
+              id: clubRef.id.hashCode +
+                  memberId.hashCode, // Unique ID per member
+              title: 'Discussion Stats for Club "${_clubNameController.text}"',
+              body: 'Join the discussion now to be part of the conversation ',
+              scheduledTime: _discussionDate!.toDate(),
+            );
+            log('Notification sent to member: $memberId');
+          }
+        } else {
+          log('Error: Club document not found or data is null');
         }
 
         // Show success message
@@ -828,4 +856,39 @@ class _CreateClubPageState extends State<CreateClubPage> {
                       child: ElevatedButton(
                         onPressed: () {
                           // Check if the club name is empty or contains only whitespace
-                          if (_clubNameController.t
+                          if (_clubNameController.text.trim().isEmpty) {
+                            setState(() {
+                              _errorMessage =
+                                  'Please enter a club name.'; // Set error message
+                            });
+                            return; // Return early if there's an error
+                          }
+                          _showCreateClubConfirmation(); // Show confirmation dialog if name is valid
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF790AD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text(
+                          'Create Club',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+              const SizedBox(height: 50),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
