@@ -82,6 +82,20 @@ class _ViewClubState extends State<ViewClub> {
     return uuid.v4();
   }
 
+  Future<void> _navigateAndRefresh() async {
+    // Navigate to the edit club page
+    bool? updated = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditClub(clubId: widget.clubId)),
+    );
+
+    // Check if the result is true (meaning the club details were updated)
+    if (updated == true) {
+      // Refresh the club data
+      _fetchClubData();
+    }
+  }
+
   Future<void> _fetchClubData() async {
     try {
       // Fetch the club data using the passed clubId
@@ -585,18 +599,18 @@ class _ViewClubState extends State<ViewClub> {
       });
 
       // Ensure the notification is scheduled only if the discussion date is valid
-      if (_discussionDate != null &&
-          _isDiscussionScheduled &&
-          DateTime.now().isBefore(_discussionDate!.toLocal())) {
-        LocalNotificationService.showScheduledNotification(
-          id: widget.clubId.hashCode, // Unique ID for the club notification
-          title: '$_name Discussion Starts', // Club name as the title
-          body:
-              '$_clubOwnerName invites you to join a meeting.', // Owner name as the body
-          scheduledTime: _discussionDate!,
-        );
-        log("Notification scheduled for $_discussionDate");
-      }
+      // if (_discussionDate != null &&
+      //     _isDiscussionScheduled &&
+      //     DateTime.now().isBefore(_discussionDate!.toLocal())) {
+      //   LocalNotificationService.showScheduledNotification(
+      //     id: widget.clubId.hashCode, // Unique ID for the club notification
+      //     title: '$_name Discussion Starts', // Club name as the title
+      //     body:
+      //         '$_clubOwnerName invites you to join a meeting.', // Owner name as the body
+      //     scheduledTime: _discussionDate!,
+      //   );
+      //   log("Notification scheduled for $_discussionDate");
+      // }
     } catch (e) {
       print('Error joining club: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -708,9 +722,7 @@ class _ViewClubState extends State<ViewClub> {
                     ),
                   ).then((_) {
                     // Refresh the club data after returning from EditClub
-                    setState(() {
-                      _isLoading = true; // Set loading state before fetching
-                    });
+                    _fetchClubData(); // Call a method to fetch updated club details
                   });
                 },
               ),

@@ -166,6 +166,8 @@ class _CreateClubPageState extends State<CreateClubPage> {
           'picture': _clubImageUrl ?? null, // Club picture URL
           if (_selectedBookId != null && _discussionDate != null)
             'discussionDate': _discussionDate,
+          // Add members as an empty list for now (you can add logic to add members)
+          'members': [user.uid], // The owner is automatically added as a member
         });
 
         if (_discussionDate != null) {
@@ -179,14 +181,22 @@ class _CreateClubPageState extends State<CreateClubPage> {
           );
         }
 
-        // Notification for the club members (you can adjust this as needed)
-        //   LocalNotificationService.showScheduledNotification(
-        //     id: clubRef.id.hashCode + 1, // Ensure a unique ID for members' notification
-        //     title: 'Upcoming Discussion for $_clubNameController.text',
-        //     body: 'Your scheduled discussion is set for ${_formatTimestamp(_discussionDate!)}.',
-        //     scheduledTime: _discussionDate!.toDate(),
-        //   );
-        // }
+        // Notify the members of the club (including the owner)
+        var members = [
+          user.uid
+        ]; // Assuming the owner is part of the list, add other members here
+        for (var memberId in members) {
+          // Fetch member's information (e.g., name, profile picture) if needed
+          // For now, we just use memberId to schedule the notification
+          LocalNotificationService.showScheduledNotification(
+            id: clubRef.id.hashCode +
+                1, // Ensure unique ID for members' notification
+            title: 'Upcoming Discussion for ${_clubNameController.text}',
+            body:
+                'Your scheduled discussion is set for ${_formatTimestamp(_discussionDate!)}.',
+            scheduledTime: _discussionDate!.toDate(),
+          );
+        }
 
         // Show success message
         _showConfirmationMessage();
@@ -391,6 +401,27 @@ class _CreateClubPageState extends State<CreateClubPage> {
       setState(() {
         _discussionDate = Timestamp.fromDate(fullDateTime);
       });
+
+      // Call the method to schedule the notification after the date is picked
+      _scheduleDiscussionNotification();
+    }
+  }
+
+  void _scheduleDiscussionNotification() {
+    if (_discussionDate != null) {
+      // Generate a unique ID using DateTime or any other unique logic
+      int clubNotificationId = DateTime.now().millisecondsSinceEpoch;
+
+      // Corrected Notification for the owner
+      LocalNotificationService.showScheduledNotification(
+        id: clubNotificationId, // Use generated unique ID
+        title:
+            'Discussion Time for ${_clubNameController.text}', // Access the club name
+        body: 'Discussion Time starts, Join now to lead the conversation!',
+        scheduledTime: _discussionDate!
+            .toDate(), // Ensure correct conversion from Timestamp
+      );
+      print("Notification scheduled for discussion time!");
     }
   }
 
@@ -797,39 +828,4 @@ class _CreateClubPageState extends State<CreateClubPage> {
                       child: ElevatedButton(
                         onPressed: () {
                           // Check if the club name is empty or contains only whitespace
-                          if (_clubNameController.text.trim().isEmpty) {
-                            setState(() {
-                              _errorMessage =
-                                  'Please enter a club name.'; // Set error message
-                            });
-                            return; // Return early if there's an error
-                          }
-                          _showCreateClubConfirmation(); // Show confirmation dialog if name is valid
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF790AD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
-                          'Create Club',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 20,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-
-              const SizedBox(height: 50),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+                          if (_clubNameController.t

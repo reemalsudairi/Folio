@@ -281,7 +281,6 @@ class _EditClubPageState extends State<EditClub> {
     }
   }
 
-// Function to update the club details
   Future<void> _updateClub() async {
     // Validate club name
     if (_clubNameController.text.trim().isEmpty) {
@@ -290,16 +289,18 @@ class _EditClubPageState extends State<EditClub> {
       });
       return;
     }
+
     final user =
         FirebaseAuth.instance.currentUser; // Ensure the current user is fetched
 
-// Ensure `user` is not null
+    // Ensure `user` is not null
     if (user == null) {
       setState(() {
         _errorMessage = 'User not authenticated. Please log in again.';
       });
       return;
     }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -340,11 +341,21 @@ class _EditClubPageState extends State<EditClub> {
       };
 
       try {
-        // Retrieve the club owner's name
+        // Retrieve the club owner's name from Firestore
         DocumentSnapshot userDoc =
             await _firestore.collection('users').doc(user.uid).get();
+
+        // Check if the user document exists
+        if (!userDoc.exists) {
+          throw Exception('User document does not exist');
+        }
+
+        // Retrieve the club owner's name from the document
         String clubOwnerName =
             userDoc['name']; // Assuming 'name' is the correct field
+        if (clubOwnerName == null) {
+          throw Exception('User name field is missing');
+        }
 
         if (_discussionDate != null) {
           // Notification for the owner
@@ -396,8 +407,16 @@ class _EditClubPageState extends State<EditClub> {
           .update(updateData);
       print('Firestore update successful.');
 
+      // Notify the previous screen to refresh data
+//  Navigator.of(context)
+//           .pop(true); // Pass a result indicating a successful update
       // Show success message
       _showUpdateSuccessMessage();
+// Delay navigating back until the dialog disappears
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.of(context)
+            .pop(true); // Navigate back after the success message
+      });
     } catch (e) {
       print('Error updating club: $e');
       setState(() {
@@ -1176,7 +1195,7 @@ class _EditClubPageState extends State<EditClub> {
                       Navigator.of(context).pop(); // Close the dialog
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey, // Green background for "No"
+                      backgroundColor: Colors.grey, // Grey background for "No"
                     ),
                     child: const Text(
                       'No',
@@ -1232,10 +1251,11 @@ class _EditClubPageState extends State<EditClub> {
         ),
       ),
     );
-    // Automatically close the confirmation dialog after 2 seconds and navigate to the previous page of the previous page
+    // Automatically close the dialog after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pop(); // Close the confirmation dialog
-      Navigator.of(context).pop(); // Navigate back to the previous page
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop(); // Close the success dialog
+      }
     });
   }
 
