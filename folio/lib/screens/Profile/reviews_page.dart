@@ -141,12 +141,13 @@ void _showReportDialog(BuildContext context, String bookID) async {
   bool hasReported = await _checkIfReported(reviewId);
   if (hasReported) {
     _showAlreadyReportedDialog(context);
-    return;
+    return; // Exit early if the review has already been reported
   }
 
+  // Proceed with showing the reporting dialog if not reported
   List<bool> selectedReasons = List.generate(reasons.length, (index) => false);
   bool showError = false;
-  String otherReasonText = ''; // Store the text input for "Other"
+  String otherReasonText = '';// Store the text input for "Other"
 
   showDialog(
     context: context,
@@ -410,7 +411,7 @@ Future<void> _submitReport(
       await FirebaseFirestore.instance.collection('reports').add({
         'reviewId': reviewId,
         'WhoReportID': currentUserId, // ID of the user who reported the review
-        'userId': reviewWriterID, // Reader ID of the review writer
+        'reviewWriterID': reviewWriterID, // Reader ID of the review writer
         'bookID': bookID,
         'reasons': reasonsToSubmit,
         'timestamp': FieldValue.serverTimestamp(),
@@ -455,7 +456,7 @@ Future<bool> _checkIfReported(String reviewId) async {
   var snapshot = await FirebaseFirestore.instance
       .collection('reports')
       .where('reviewId', isEqualTo: reviewId)
-      .where('userId', isEqualTo: currentUserId)
+      .where('WhoReportID', isEqualTo: currentUserId) // Ensure you are checking the correct field
       .get();
 
   return snapshot.docs.isNotEmpty; // Returns true if a report exists
@@ -930,7 +931,7 @@ Widget build(BuildContext context) {
                     if (!isOwner)
                      IconButton(
   icon: Icon(Icons.flag, color: Colors.grey),
- onPressed: () => _showReportDialog(context, bookID), // Show report dialog
+  onPressed: () => _showReportDialog(context, bookID), // Show report dialog
 ),
                     const SizedBox(width: 20),
                     GestureDetector(

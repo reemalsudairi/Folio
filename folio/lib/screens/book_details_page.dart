@@ -51,151 +51,183 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     'Spam or Advertising',
     'Irrelevant to the Book',
     'Harassment or Hate Speech',
-    'Duplicate Review'
+    'Duplicate Review',
+    'Other'
   ];
 
 void _showReportDialog(String reviewId) async {
-    // Check if the review has already been reported
-    bool hasReported = await _checkIfReported(widget.bookId, userId!);
+  // Check if the review has already been reported
+  bool hasReported = await _checkIfReported(reviewId, userId!);
 
-    if (hasReported) {
-      // Show a message if the review has already been reported
-      _showAlreadyReportedDialog();
-      return; // Exit the method early
-    }
-
-    List<bool> selectedReasons = List.generate(reasons.length, (index) => false);
-    bool showError = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setDialogState) {
-            return AlertDialog(
-              title: const Text(
-                'Report Review',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Please select the reason(s) for reporting this review:",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Column(
-                    children: List.generate(reasons.length, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 20.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                reasons[index],
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                setDialogState(() {
-                                  selectedReasons[index] = !selectedReasons[index];
-                                  showError = false; // Clear error when a reason is selected
-                                });
-                              },
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: selectedReasons[index]
-                                    ? const Icon(Icons.check, color: Colors.white, size: 16)
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 20),
-                  if (showError)
-                    const Text(
-                      'Please select at least one reason.',
-                      style: TextStyle(color: Colors.red, fontSize: 16),
- ),
-                ],
-              ),
-              actions: [
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            bool isAnySelected = selectedReasons.contains(true);
-                            if (isAnySelected) {
-                              _submitReport(selectedReasons, reviewId);
-                              Navigator.of(context).pop();
-                            } else {
-                              setDialogState(() {
-                                showError = true; // Display error message if no reason is selected
-                              });
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF790AD),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          child: const Text(
-                            'Submit',
-                            style: TextStyle(fontSize: 18, color: Colors.white),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop(); // Close the dialog
-                          },
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.grey[300],
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(fontSize: 18, color: Colors.black),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+  if (hasReported) {
+    _showAlreadyReportedDialog(); // Show the already reported dialog
+    return; // Exit the method early
   }
 
-Future<bool> _checkIfReported(String bookId, String userId) async {
+  // Fetch the review writer ID
+  String reviewWriterId = await _getReviewWriterID(reviewId);
+
+  // Proceed with showing the reporting dialog
+  List<bool> selectedReasons = List.generate(reasons.length, (index) => false);
+  bool showError = false;
+  String customReason = ''; // Variable to hold the custom reason
+  bool isOtherSelected = false; // Track if "Other" is selected
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setDialogState) {
+          return AlertDialog(
+            title: const Text(
+              'Report Review',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Please select the reason(s) for reporting this review:",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                Column(
+                  children: List.generate(reasons.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              reasons[index],
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setDialogState(() {
+                                selectedReasons[index] = !selectedReasons[index];
+                                showError = false; // Clear error when a reason is selected
+                                if (reasons[index] == 'Other') {
+                                  isOtherSelected = selectedReasons[index];
+                                }
+                              });
+                            },
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: selectedReasons[index]
+                                  ? const Icon(Icons.check, color: Colors.white, size: 16)
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+                // Display the TextField for the "Other" reason if selected
+                if (isOtherSelected)
+                  TextField(
+                    onChanged: (value) {
+                      customReason = value; // Update the custom reason as the user types
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Please specify...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                if (showError)
+                  const Text(
+                    'Please select at least one reason.',
+                    style: TextStyle(color: Colors.red, fontSize: 16),
+                  ),
+              ],
+            ),
+            actions: [
+  Center(
+    child: Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              bool isAnySelected = selectedReasons.contains(true);
+              if (isAnySelected) {
+                // If "Other" is selected, add the custom reason
+                if (isOtherSelected && customReason.isNotEmpty) {
+                  selectedReasons[reasons.length - 1] = true; // Assuming "Other" is the last item
+                }
+                _submitReport(selectedReasons, reviewId, reviewWriterId, customReason); // Pass custom reason
+                Navigator.of(context).pop(); // Close the dialog
+              } else {
+                setDialogState(() {
+                  showError = true; // Display error message if no reason is selected
+                });
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF790AD),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: const Text(
+              'Submit',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white, // Set text color to white
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black, // Set text color to black
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<bool> _checkIfReported(String reviewId, String userId) async {
   var snapshot = await FirebaseFirestore.instance
       .collection('reports')
-      .where('bookId', isEqualTo: bookId)
-      .where('userId', isEqualTo: userId)
+      .where('reviewId', isEqualTo: reviewId) // Check for the specific review
+      .where('WhoReportID', isEqualTo: userId) // Check for the specific user
       .get();
 
   return snapshot.docs.isNotEmpty; // Returns true if a report exists
@@ -245,7 +277,7 @@ void _showAlreadyReportedDialog() {
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
-              ),
+ ),
             ),
           ],
         ),
@@ -258,7 +290,7 @@ void _showAlreadyReportedDialog() {
 
 
 
- Future<void> _submitReport(List<bool> selectedReasons, String reviewId) async {
+Future<void> _submitReport(List<bool> selectedReasons, String reviewId, String reviewWriterId, String customReason) async {
   List<String> reasonsToSubmit = [];
   for (int i = 0; i < selectedReasons.length; i++) {
     if (selectedReasons[i]) {
@@ -266,16 +298,18 @@ void _showAlreadyReportedDialog() {
     }
   }
 
+  // Check if "Other" is selected and add the custom reason
+  if (selectedReasons.last && customReason.isNotEmpty) {
+    reasonsToSubmit.add(customReason); // Add custom text for "Other"
+  }
+
   if (reasonsToSubmit.isNotEmpty) {
     try {
-      // Fetch the review writer ID (reader_id) from the reviews collection
-      String reviewWriterID = await _getReviewWriterID(reviewId);
-
       await FirebaseFirestore.instance.collection('reports').add({
         'bookId': widget.bookId,
-        'WhoReportID': userId ?? widget.userId,
+        'WhoReportID': userId,
         'reviewId': reviewId, // Add reviewId to the report
-        'reviewWriterID': reviewWriterID, // Add the review writer ID
+        'reviewWriterID': reviewWriterId, // Add reviewWriterID to the report
         'reasons': reasonsToSubmit,
         'timestamp': FieldValue.serverTimestamp(),
       });
