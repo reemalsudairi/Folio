@@ -1,12 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
-  final String apiKey1 = 'AIzaSyDrp1KN558k99hKG12Zz2RlNd6cWT3-3Wk';
-  final String apiKey2 = 'AIzaSyAfNup8oD9RK6WuV9RIg0WwGvGhu2kTu5I';
+final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
+  final String apiKey2 = 'AIzaSyA_g6ljLsAnGo_mM6ufkasr_KESLvSWils';
 
   // Fetch the top 30 best-selling books (or highly relevant books)
   Future<List<dynamic>> fetchBestSellingBooks() async {

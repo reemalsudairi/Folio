@@ -258,7 +258,7 @@ void _showAlreadyReportedDialog() {
 
 
 
-  Future<void> _submitReport(List<bool> selectedReasons, String reviewId) async {
+ Future<void> _submitReport(List<bool> selectedReasons, String reviewId) async {
   List<String> reasonsToSubmit = [];
   for (int i = 0; i < selectedReasons.length; i++) {
     if (selectedReasons[i]) {
@@ -268,10 +268,14 @@ void _showAlreadyReportedDialog() {
 
   if (reasonsToSubmit.isNotEmpty) {
     try {
+      // Fetch the review writer ID (reader_id) from the reviews collection
+      String reviewWriterID = await _getReviewWriterID(reviewId);
+
       await FirebaseFirestore.instance.collection('reports').add({
         'bookId': widget.bookId,
-        'userId': widget.userId,
+        'WhoReportID': userId ?? widget.userId,
         'reviewId': reviewId, // Add reviewId to the report
+        'reviewWriterID': reviewWriterID, // Add the review writer ID
         'reasons': reasonsToSubmit,
         'timestamp': FieldValue.serverTimestamp(),
       });
@@ -284,6 +288,18 @@ void _showAlreadyReportedDialog() {
     // Optionally show a message if no reasons were selected
     print("No reasons selected for the report.");
   }
+}
+
+Future<String> _getReviewWriterID(String reviewId) async {
+  var snapshot = await FirebaseFirestore.instance
+      .collection('reviews')
+      .doc(reviewId)
+      .get();
+
+  if (snapshot.exists) {
+    return snapshot.data()?['reader_id'] ?? ''; // Return the reader_id
+  }
+  return ''; // Return an empty string if not found
 }
 
   // Method to show success message after report submission

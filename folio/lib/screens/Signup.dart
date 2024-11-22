@@ -96,6 +96,8 @@ class _SignUpState extends State<SignUp> {
           'email': _emailController.text.trim(),
           'uid': userCredential.user!.uid,
           'createdAt': Timestamp.now(),
+          'banned': false,
+          'NumberOfReports':0,
         });
 
         // Navigate to the Profile Setup screen

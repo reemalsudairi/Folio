@@ -1,5 +1,3 @@
-
-
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -391,6 +389,10 @@ Future<void> _submitReport(
     String otherReasonText,
     BuildContext context,
     String bookID) async {
+  
+  // Fetch the review writer ID (reader_id) from the reviews collection
+  String reviewWriterID = await _getReviewWriterID(reviewId);
+  
   List<String> reasonsToSubmit = [];
   for (int i = 0; i < selectedReasons.length; i++) {
     if (selectedReasons[i]) {
@@ -404,28 +406,29 @@ Future<void> _submitReport(
   }
 
   if (reasonsToSubmit.isNotEmpty) {
-  try {
-    await FirebaseFirestore.instance.collection('reports').add({
-      'reviewId': reviewId,
-      'userId': currentUserId,
-      'bookID': bookID, // Include the bookID here
-      'reasons': reasonsToSubmit,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+    try {
+      await FirebaseFirestore.instance.collection('reports').add({
+        'reviewId': reviewId,
+        'WhoReportID': currentUserId, // ID of the user who reported the review
+        'userId': reviewWriterID, // Reader ID of the review writer
+        'bookID': bookID,
+        'reasons': reasonsToSubmit,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
 
-    // Show successful report message
-    if (context.mounted) {
-      _showSuccessfulReportMessage(context);
+      // Show successful report message
+      if (context.mounted) {
+        _showSuccessfulReportMessage(context);
+      }
+    } catch (e) {
+      // Handle Firestore error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit report: $e')),
+        );
+      }
     }
-  } catch (e) {
-    // Handle Firestore error
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit report: $e')),
-      );
-    }
-  }
-} else {
+  } else {
     // Show message to select at least one reason
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -433,6 +436,19 @@ Future<void> _submitReport(
       );
     }
   }
+}
+
+// Helper function to get the review writer ID (reader_id)
+Future<String> _getReviewWriterID(String reviewId) async {
+  var snapshot = await FirebaseFirestore.instance
+      .collection('reviews')
+      .doc(reviewId)
+      .get();
+
+  if (snapshot.exists) {
+    return snapshot.data()?['reader_id'] ?? ''; // Return the reader_id
+  }
+  return ''; // Return an empty string if not found
 }
 
 Future<bool> _checkIfReported(String reviewId) async {
@@ -665,10 +681,10 @@ Future<bool> _deleteReview(BuildContext context) async {
   try {
     // Attempt to delete the review from Firestore
     var snapshot = await FirebaseFirestore.instance
-        .collection('reviews')
-        .where('bookID', isEqualTo: bookID)
-        .where('reader_id', isEqualTo: readerId)
-        .get();
+    .collection('reviews')
+    .where('bookID', isEqualTo: bookID)
+    .where('reader_id', isEqualTo: readerId)
+    .get();
 
     for (var doc in snapshot.docs) {
       await doc.reference.delete(); // Delete each document that matches
