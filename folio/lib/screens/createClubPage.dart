@@ -690,126 +690,101 @@ class _CreateClubPageState extends State<CreateClubPage> {
                 menuMaxHeight: 200, // Set a max height for the dropdown menu
               ),
               const SizedBox(height: 35),
-
-              Column(
-                children: [
-// Current Book Field with custom styling
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            // Navigate to SelectBookPage when the container is tapped
-                            final selectedBook = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SelectBookPage(),
-                              ),
-                            );
-
-                            // Check if a book was selected
-                            if (selectedBook != null) {
-                              setState(() {
-                                _selectedBookId =
-                                    selectedBook['id']; // Store book ID
-                                _currentBookController.text =
-                                    selectedBook['title']; // Set title
-                                _bookCover = selectedBook[
-                                    'coverImage']; // Store book cover
-                                _bookAuthor =
-                                    selectedBook['author']; // Store author name
-                              });
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.circular(40), // Match the design
-                              border: Border.all(
-                                  color:
-                                      const Color(0xFFF790AD)), // Border color
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    _currentBookController.text.isNotEmpty
-                                        ? _currentBookController.text
-                                        : 'Select a Book',
-                                    maxLines: 2,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color:
-                                          _currentBookController.text.isNotEmpty
-                                              ? Colors.black
-                                              : Colors.grey,
-                                    ),
-                                    overflow: TextOverflow
-                                        .ellipsis, // Truncate if too long
-                                  ),
-                                ),
-                                // Search icon
-                                const Icon(
-                                  Icons.search,
-                                  color:
-                                      Color(0xFFF790AD), // Customize icon color
-                                ),
-                                if (_currentBookController.text.isNotEmpty)
-                                  IconButton(
-                                    icon: const Icon(Icons.close,
-                                        color: Colors.red), // X icon
-                                    onPressed: () {
-                                      setState(() {
-                                        _currentBookController
-                                            .clear(); // Clear the book title
-                                        _bookCover =
-                                            null; // Clear the book cover
-                                        _bookAuthor =
-                                            null; // Clear the author name
-                                        _selectedBookId =
-                                            null; // Clear the book ID
-                                        _discussionDate =
-                                            null; // Clear the discussion date
-                                      });
-                                    },
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+// Current Book Field with custom styling (Modified to match Club Name field design)
+              TextFormField(
+                controller: _currentBookController,
+                cursorColor: const Color(0xFFF790AD),
+                decoration: InputDecoration(
+                  labelText:
+                      'Select a Book', // Label for the book selection field
+                  labelStyle: const TextStyle(
+                    color: Color(0xFF695555),
+                    fontWeight: FontWeight.w400,
+                    fontSize: 18,
                   ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(40), // Match the design
+                    borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(40),
+                    borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(40),
+                    borderSide: const BorderSide(color: Color(0xFFF790AD)),
+                  ),
+                  counterText: '', // No character counter needed here
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFFF790AD), // Customize icon color
+                  ),
+                  suffixIcon: _currentBookController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close,
+                              color: Colors.red), // X icon
+                          onPressed: () {
+                            setState(() {
+                              _currentBookController
+                                  .clear(); // Clear the book title
+                              _bookCover = null; // Clear the book cover
+                              _bookAuthor = null; // Clear the author name
+                              _selectedBookId = null; // Clear the book ID
+                            });
+                          },
+                        )
+                      : null, // Only show the X icon if there's text in the field
+                ),
+                onTap: () async {
+                  // Navigate to SelectBookPage when the container is tapped
+                  final selectedBook = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SelectBookPage(),
+                    ),
+                  );
 
-                  // Display the selected book cover and author
-                  if (_bookCover != null) ...[
-                    const SizedBox(height: 16), // Space between fields
-                    Image.network(
-                      _bookCover!,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons
-                              .error), // Error icon if the image fails to load
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _bookAuthor != null ? 'Author: $_bookAuthor' : '',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
+                  // Check if a book was selected
+                  if (selectedBook != null) {
+                    setState(() {
+                      _selectedBookId = selectedBook['id']; // Store book ID
+                      _bookCover =
+                          selectedBook['coverImage']; // Store book cover
+                      _bookAuthor = selectedBook['author']; // Store author name
+                      _currentBookController.text =
+                          selectedBook['title']; // Update the title
+                    });
+                  }
+                },
+                readOnly:
+                    true, // Make the field read-only since it's for display purposes
               ),
+
+// Display the selected book cover and author
+              if (_bookCover != null) ...[
+                const SizedBox(height: 16), // Space between fields
+                Image.network(
+                  _bookCover!,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(
+                          Icons.error), // Error icon if the image fails to load
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _bookAuthor != null ? 'Author: $_bookAuthor' : '',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 20),
 
