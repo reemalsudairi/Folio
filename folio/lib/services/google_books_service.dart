@@ -1,18 +1,10 @@
 import 'dart:convert';
-<<<<<<< Updated upstream
-
-=======
-import 'package:flutter/material.dart';
->>>>>>> Stashed changes
 import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
 
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
-<<<<<<< Updated upstream
 final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
-=======
-  final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
->>>>>>> Stashed changes
   final String apiKey2 = 'AIzaSyA_g6ljLsAnGo_mM6ufkasr_KESLvSWils';
 
   // Fetch the top 30 best-selling books (or highly relevant books)
