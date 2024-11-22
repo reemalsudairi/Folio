@@ -1,10 +1,18 @@
 import 'dart:convert';
+<<<<<<< Updated upstream
 
+=======
+import 'package:flutter/material.dart';
+>>>>>>> Stashed changes
 import 'package:http/http.dart' as http;
 
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
+<<<<<<< Updated upstream
 final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
+=======
+  final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
+>>>>>>> Stashed changes
   final String apiKey2 = 'AIzaSyA_g6ljLsAnGo_mM6ufkasr_KESLvSWils';
 
   // Fetch the top 30 best-selling books (or highly relevant books)
@@ -113,20 +121,23 @@ Future<List<dynamic>> _fetchBooks(String query, String language) async {
       List<dynamic> categories = book['volumeInfo']['categories'] ?? [];
 
       // Exclude books with explicit content or certain keywords
-      List<String> excludedKeywords = [
-        'erotic',
-        'lgbt',
-        'gay',
-        'adult',
-        'explicit',
-        'israel',
-        'judaism',
-        'jewish',
-        'zionism'
-      ];
+     List<String> excludedKeywords = [
+          'erotic',
+          'lgbt',
+          'gay',
+          'adult',
+          'explicit',
+          'israel',
+          'judaism',
+          'jewish',
+          'zionism',
+          'porn',
+          'sex',
+          'xxx'
+        ];
 
       if (maturityRating == 'MATURE' ||
-          _containsExcludedKeyword(description, categories, excludedKeywords)) {
+          containsExcludedKeyword(description, categories, excludedKeywords)) {
         continue;
       }
 
@@ -156,7 +167,7 @@ Future<List<dynamic>> _fetchBooks(String query, String language) async {
   }
 
   // Check if the book description or categories contain excluded keywords
-  bool _containsExcludedKeyword(String description, List<dynamic> categories,
+  bool containsExcludedKeyword(String description, List<dynamic> categories,
       List<String> excludedKeywords) {
     for (String keyword in excludedKeywords) {
       if (description.contains(keyword)) {
@@ -197,4 +208,6 @@ Future<List<dynamic>> _fetchBooks(String query, String language) async {
       {'category': 'Fantasy', 'image': 'assets/images/wolf.png'},
     ];
   }
+
+  
 }

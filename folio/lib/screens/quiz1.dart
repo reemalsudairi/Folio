@@ -70,16 +70,24 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
   }
 
 Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
-  String genreQuery = selectedAnswers["What are you in the mood for?"]?.map((g) => "subject:${g.trim()}").join(" OR ") ?? "";
-  String languageQuery = selectedAnswers["What language do you prefer?"]?.map((lang) => lang.toLowerCase() == "arabic" ? "ar" : "en").join("|") ?? "en";
+  // Build genre query
+  String genreQuery = selectedAnswers["What are you in the mood for?"]
+          ?.map((g) => "subject:${g.trim().toLowerCase()}")
+          .join(" OR ") ??
+      "";
 
-  String query = [
-    if (genreQuery.isNotEmpty) "($genreQuery)",
-  ].join("+");
+  // Build language query
+  String languageQuery = selectedAnswers["What language do you prefer?"]
+          ?.map((lang) => lang.toLowerCase() == "arabic" ? "ar" : "en")
+          .join("|") ??
+      "en";
 
-  String url = "https://www.googleapis.com/books/v1/volumes?q=$query&langRestrict=$languageQuery&maxResults=40&orderBy=newest";
+  // Ensure fallback if no genre or language is selected
+  String query = genreQuery.isNotEmpty ? "$genreQuery" : "bestseller";
+  String url =
+      "https://www.googleapis.com/books/v1/volumes?q=$query&langRestrict=$languageQuery&maxResults=40&orderBy=newest";
 
-  
+  debugPrint("API Request URL: $url");
 
   try {
     final response = await http.get(Uri.parse(url));
@@ -87,10 +95,14 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
 
+      debugPrint("Total books fetched: ${data['items']?.length ?? 0}");
+
       return (data['items'] as List<dynamic>)
           .map<Map<String, dynamic>?>((item) {
-            final volumeInfo = (item as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>? ?? {};
-            final pageCount = volumeInfo['pageCount'] ?? 0;
+            final volumeInfo =
+                (item as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>? ?? {};
+                //here
+                final pageCount = volumeInfo['pageCount'] ?? 0;
             final publishedYear = int.tryParse(volumeInfo['publishedDate']?.split("-")?.first ?? '') ?? 0;
 
             if (publishedYear < 2015 || volumeInfo['imageLinks']?['thumbnail'] == null || volumeInfo['description'] == null) {
@@ -105,25 +117,30 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
               'language': volumeInfo['language'] ?? 'Unknown',
               'imageUrl': volumeInfo['imageLinks']?['thumbnail'] ?? '',
               'description': volumeInfo['description'] ?? 'No description available.',
-              'pageCount': pageCount,
+              //here
               'publishedDate': volumeInfo['publishedDate'] ?? '',
               'averageRating': volumeInfo['averageRating'] ?? 0.0,
               'ratingsCount': volumeInfo['ratingsCount'] ?? 0,
               'matches': calculateMatches(volumeInfo),
+
+              'pageCount': volumeInfo['pageCount'] ?? 0,
             };
           })
           .where((book) => book != null)
           .toList()
-          .cast<Map<String, dynamic>>()
-          ..sort((a, b) => b['matches'].compareTo(a['matches']));
+          
+          .cast<Map<String, dynamic>>();
+//delete sort
     } else {
+      debugPrint("API Error: ${response.statusCode}");
       throw Exception("Failed to load books");
     }
   } catch (e) {
-    print("Error fetching books: $e");
+    debugPrint("Error fetching books: $e");
     return [];
   }
 }
+
 
 
 int calculateMatches(Map<String, dynamic> volumeInfo) {
@@ -151,6 +168,7 @@ int calculateMatches(Map<String, dynamic> volumeInfo) {
       false) {
     score += 2;
   }
+  
 
   // Boost for recency
   int publishedYear = int.tryParse(volumeInfo['publishedDate']?.split("-")?.first ?? '') ?? 0;
@@ -332,8 +350,4 @@ Widget build(BuildContext context) {
     ),
   );
 }
-
-
-
-
 }

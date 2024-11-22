@@ -112,7 +112,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
               itemBuilder: (context, index) {
   final category = categories[index]['category'];
   final imagePath = categories[index]['image'];
-  final icon = categories[index]['icon'];
 
   return GestureDetector(
     onTap: () {
