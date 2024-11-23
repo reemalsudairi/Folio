@@ -235,7 +235,7 @@ void _showReportDialog(BuildContext context, String bookID) async {
                             errorText: showOtherError ? 'This field cannot be empty' : null, // Show error message
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 6),
                         // Display character count
                         Align(
                           alignment: Alignment.centerRight,
