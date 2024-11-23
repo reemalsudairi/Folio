@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'ResetPasswordPage.dart';
 import 'Signup.dart';
 import 'first.page.dart';
@@ -61,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
- Future<void> signUserIn() async {
+Future<void> signUserIn() async {
   if (_formKey.currentState?.validate() ?? false && _isPasswordFieldValid) {
     FocusScope.of(context).unfocus();
     
@@ -77,6 +79,25 @@ class _LoginPageState extends State<LoginPage> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+
+      // Fetch user data from Firestore
+      var userDoc = await FirebaseFirestore.instance.collection('reader').doc(userCredential.user?.uid).get();
+
+      if (userDoc.exists) {
+        int numberOfReports = userDoc.data()?['NumberOfReports'] ?? 0;
+
+        // Check if the user should be banned
+        if (numberOfReports >= 3) {
+          // Set the banned field to true in Firestore
+          await FirebaseFirestore.instance.collection('reader').doc(userCredential.user?.uid).update({'banned': true});
+          
+          Navigator.pop(context); // Remove loading dialog
+          setState(() {
+            _errorMessage = "Your account has been suspended. Please contact Follio444@gmail.com for assistance."; // Set the error message
+          });
+          return; // Exit the function to prevent further processing
+        }
+      }
 
       Navigator.pop(context); // Remove loading dialog
 
