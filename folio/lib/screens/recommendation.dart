@@ -360,8 +360,10 @@ Future<void> _fetchRecommendedBooks() async {
                       minimumSize: const Size(100, 40),
                     ),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close the dialog
-                      Navigator.of(context).pop(); // Exit the screen
+                      int popCount = 5;
+              for (int i = 0; i < popCount; i++) {
+                if (Navigator.canPop(context)) Navigator.pop(context);
+              }
                     },
                     child: const Text(
                       'Yes, Exit',
