@@ -942,10 +942,10 @@ Widget build(BuildContext context) {
                         onPressed: () => _confirmDeleteReview(context),
                       ),
                     if (!isOwner)
-                     IconButton(
-  icon: Icon(Icons.flag, color: Colors.grey),
-  onPressed: () => _showReportDialog(context, bookID), // Show report dialog
-),
+  IconButton(
+    icon: Icon(Icons.flag, color: Colors.grey),
+    onPressed: () => _showReportDialog(context, bookID), // Show report dialog
+  ),
                     const SizedBox(width: 20),
                     GestureDetector(
                       onTap: () {
