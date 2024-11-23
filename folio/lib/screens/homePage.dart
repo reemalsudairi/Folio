@@ -14,7 +14,7 @@ import 'package:folio/screens/searchMemebr.dart';
 import 'package:folio/screens/settings.dart';
 import 'package:folio/screens/viewClub.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:folio/screens/UpdatesNotificationBell.dart';
 import 'Profile/book.dart';
 
 class HomePage extends StatefulWidget {
@@ -37,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   List<Club> joinedClubs = [];
   bool _isLoadingBooks = true;
   bool _isLoadingClubs = true;
+  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
   @override
   void initState() {
     super.initState();
@@ -81,7 +82,10 @@ class _HomePageState extends State<HomePage> {
           .doc(user.uid)
           .collection('currently reading');
 
-      booksRef.orderBy('timestamp', descending: true).snapshots().listen((snapshot) async {
+      booksRef
+          .orderBy('timestamp', descending: true)
+          .snapshots()
+          .listen((snapshot) async {
         List<Book> books = [];
         for (var doc in snapshot.docs) {
           var bookId = doc['bookID'];
@@ -113,136 +117,137 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
- Future<void> _fetchClubs() async {
-  final user = FirebaseAuth.instance.currentUser;
-  final userId = user?.uid ?? '';
+  Future<void> _fetchClubs() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final userId = user?.uid ?? '';
 
-  if (userId.isEmpty) {
-    print('User is not logged in.');
-    return;
-  }
+    if (userId.isEmpty) {
+      print('User is not logged in.');
+      return;
+    }
 
-  try {
-    // Listener for clubs the user owns
-    FirebaseFirestore.instance
-        .collection('clubs')
-        .where('ownerID', isEqualTo: userId)
-        .snapshots()
-        .listen((QuerySnapshot myClubsSnapshot) {
-      List<Club> tempMyClubs = [];
+    try {
+      // Listener for clubs the user owns
+      FirebaseFirestore.instance
+          .collection('clubs')
+          .where('ownerID', isEqualTo: userId)
+          .snapshots()
+          .listen((QuerySnapshot myClubsSnapshot) {
+        List<Club> tempMyClubs = [];
 
-      for (var doc in myClubsSnapshot.docs) {
-        // Real-time listener for member count in each owned club
-        FirebaseFirestore.instance
-            .collection('clubs')
-            .doc(doc.id)
-            .collection('members')
-            .snapshots()
-            .listen((membersSnapshot) {
-          int memberCount = membersSnapshot.size;
+        for (var doc in myClubsSnapshot.docs) {
+          // Real-time listener for member count in each owned club
+          FirebaseFirestore.instance
+              .collection('clubs')
+              .doc(doc.id)
+              .collection('members')
+              .snapshots()
+              .listen((membersSnapshot) {
+            int memberCount = membersSnapshot.size;
 
-          Club club = Club.fromMap(
-            doc.data() as Map<String, dynamic>,
-            doc.id,
-            memberCount,
-          );
+            Club club = Club.fromMap(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+              memberCount,
+            );
 
-          int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
-          if (existingIndex >= 0) {
-            tempMyClubs[existingIndex] = club;
-          } else {
-            tempMyClubs.add(club);
-          }
+            int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
+            if (existingIndex >= 0) {
+              tempMyClubs[existingIndex] = club;
+            } else {
+              tempMyClubs.add(club);
+            }
 
-          setState(() {
-            myClubs = tempMyClubs;
+            setState(() {
+              myClubs = tempMyClubs;
+            });
           });
+        }
+
+        // Remove clubs that were deleted from Firestore
+        final updatedClubIds =
+            myClubsSnapshot.docs.map((doc) => doc.id).toSet();
+        tempMyClubs.removeWhere((club) => !updatedClubIds.contains(club.id));
+
+        setState(() {
+          myClubs = tempMyClubs;
         });
-      }
-
-      // Remove clubs that were deleted from Firestore
-      final updatedClubIds = myClubsSnapshot.docs.map((doc) => doc.id).toSet();
-      tempMyClubs.removeWhere((club) => !updatedClubIds.contains(club.id));
-
-      setState(() {
-        myClubs = tempMyClubs;
       });
-    });
 
-    // Listener for clubs the user has joined but does not own
-    FirebaseFirestore.instance.collection('clubs').snapshots().listen(
-      (QuerySnapshot joinedClubsSnapshot) {
-        List<Club> tempJoinedClubs = [];
+      // Listener for clubs the user has joined but does not own
+      FirebaseFirestore.instance.collection('clubs').snapshots().listen(
+        (QuerySnapshot joinedClubsSnapshot) {
+          List<Club> tempJoinedClubs = [];
 
-        for (var doc in joinedClubsSnapshot.docs) {
-          var clubData = doc.data() as Map<String, dynamic>?;
+          for (var doc in joinedClubsSnapshot.docs) {
+            var clubData = doc.data() as Map<String, dynamic>?;
 
-          if (clubData != null && clubData['ownerID'] != userId) {
-            // Check if the user is a member of this club
-            FirebaseFirestore.instance
-                .collection('clubs')
-                .doc(doc.id)
-                .collection('members')
-                .doc(userId)
-                .snapshots()
-                .listen((memberSnapshot) {
-              if (memberSnapshot.exists) {
-                // Real-time listener for member count updates
-                FirebaseFirestore.instance
-                    .collection('clubs')
-                    .doc(doc.id)
-                    .collection('members')
-                    .snapshots()
-                    .listen((membersSnapshot) {
-                  int memberCount = membersSnapshot.size;
+            if (clubData != null && clubData['ownerID'] != userId) {
+              // Check if the user is a member of this club
+              FirebaseFirestore.instance
+                  .collection('clubs')
+                  .doc(doc.id)
+                  .collection('members')
+                  .doc(userId)
+                  .snapshots()
+                  .listen((memberSnapshot) {
+                if (memberSnapshot.exists) {
+                  // Real-time listener for member count updates
+                  FirebaseFirestore.instance
+                      .collection('clubs')
+                      .doc(doc.id)
+                      .collection('members')
+                      .snapshots()
+                      .listen((membersSnapshot) {
+                    int memberCount = membersSnapshot.size;
 
-                  Club club = Club.fromMap(
-                    clubData,
-                    doc.id,
-                    memberCount,
-                  );
+                    Club club = Club.fromMap(
+                      clubData,
+                      doc.id,
+                      memberCount,
+                    );
 
-                  int existingIndex = tempJoinedClubs.indexWhere((c) => c.id == doc.id);
-                  if (existingIndex >= 0) {
-                    tempJoinedClubs[existingIndex] = club;
-                  } else {
-                    tempJoinedClubs.add(club);
-                  }
+                    int existingIndex =
+                        tempJoinedClubs.indexWhere((c) => c.id == doc.id);
+                    if (existingIndex >= 0) {
+                      tempJoinedClubs[existingIndex] = club;
+                    } else {
+                      tempJoinedClubs.add(club);
+                    }
 
+                    setState(() {
+                      joinedClubs = tempJoinedClubs;
+                      _isLoadingClubs = false;
+                    });
+                  });
+                } else {
+                  // Remove club if the user is no longer a member
+                  tempJoinedClubs.removeWhere((c) => c.id == doc.id);
                   setState(() {
                     joinedClubs = tempJoinedClubs;
                     _isLoadingClubs = false;
                   });
-                });
-              } else {
-                // Remove club if the user is no longer a member
-                tempJoinedClubs.removeWhere((c) => c.id == doc.id);
-                setState(() {
-                  joinedClubs = tempJoinedClubs;
-                  _isLoadingClubs = false;
-                });
-              }
-            });
+                }
+              });
+            }
           }
-        }
-      },
-      onError: (e) {
-        print('Error fetching joined clubs: $e');
-        setState(() {
-          _isLoadingClubs = false;
-        });
-      },
-    );
-  } catch (e) {
-    print('Error setting up club listeners: $e');
-    setState(() {
-      _isLoadingClubs = false;
-    });
+        },
+        onError: (e) {
+          print('Error fetching joined clubs: $e');
+          setState(() {
+            _isLoadingClubs = false;
+          });
+        },
+      );
+    } catch (e) {
+      print('Error setting up club listeners: $e');
+      setState(() {
+        _isLoadingClubs = false;
+      });
+    }
   }
-}
 
-
- Stream<int> fetchMemberCount(String clubId) {
+  Stream<int> fetchMemberCount(String clubId) {
     try {
       // Listen for real-time updates from the members subcollection
       return FirebaseFirestore.instance
@@ -358,38 +363,40 @@ class HomePageContent extends StatelessWidget {
           elevation: 0,
           automaticallyImplyLeading: false,
           actions: [
-            IgnorePointer(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.notifications_active,
-                  color: Color.fromARGB(255, 35, 23, 23),
-                  size: 30,
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SettingsPage()),
-                  );
-                },
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_active,
+                color: Color.fromARGB(255, 35, 23, 23),
+                size: 30,
               ),
+              onPressed: () {
+                // Navigate to the UpdatesNotificationBell page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UpdatesNotificationBell(
+                      currentUserId: FirebaseAuth.instance.currentUser?.uid ??
+                          '', // Ensure this is not empty
+                    ),
+                  ),
+                );
+              },
             ),
-           IconButton(
-  icon: const Icon(
-    Icons.person_search_rounded,
-    color: Color.fromARGB(255, 35, 23, 23),
-    size: 30,
-  ),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SearchMembersPage(),
-      ),
-    );
-  },
-)
-
+            IconButton(
+              icon: const Icon(
+                Icons.person_search_rounded,
+                color: Color.fromARGB(255, 35, 23, 23),
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SearchMembersPage(),
+                  ),
+                );
+              },
+            )
           ],
         ),
       ),
@@ -407,11 +414,10 @@ class HomePageContent extends StatelessWidget {
                     Text(
                       'Good Day,\n$name!',
                       style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 53, 31, 31),
-                        fontFamily: 'YoungSerif-Regular'
-                      ),
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 53, 31, 31),
+                          fontFamily: 'YoungSerif-Regular'),
                     ),
                     CircleAvatar(
                       radius: 40,
@@ -572,51 +578,51 @@ class HomePageContent extends StatelessWidget {
     );
   }
 
-Widget _buildQuiz(BuildContext context) {
-  return Center(
-    child: Stack(
-      alignment: Alignment.center, // Center the button over the image
-      children: [
-        // Photo widget
-        ClipRRect(
-           borderRadius: BorderRadius.circular(20),
-        child: Image.asset(
-          'assets/images/quiz.jpeg',
-          width: 350,
-          height: 320,
-          fit: BoxFit.cover,
-        ),
-        ),
-        // Button widget
-        Positioned(
-          bottom: 20, // Adjust the position as needed
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFF790AD), // Pink color for the button
-              padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-            onPressed: () {
-                Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DynamicQuizPage(userId: FirebaseAuth.instance.currentUser!.uid),
-                ),
-                );
-            },
-            child: Text(
-              'Get book recommendations',
-              style: TextStyle(fontSize: 16, color: Colors.white),
+  Widget _buildQuiz(BuildContext context) {
+    return Center(
+      child: Stack(
+        alignment: Alignment.center, // Center the button over the image
+        children: [
+          // Photo widget
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/quiz.jpeg',
+              width: 350,
+              height: 320,
+              fit: BoxFit.cover,
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
+          // Button widget
+          Positioned(
+            bottom: 20, // Adjust the position as needed
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFF790AD), // Pink color for the button
+                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DynamicQuizPage(
+                        userId: FirebaseAuth.instance.currentUser!.uid),
+                  ),
+                );
+              },
+              child: Text(
+                'Get book recommendations',
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildClubsSection(BuildContext context, List<Club> allClubs) {
     return Container(
@@ -684,7 +690,7 @@ Widget _buildQuiz(BuildContext context) {
   }
 
   Widget _buildClubCard(BuildContext context, Club club) {
-     return GestureDetector(
+    return GestureDetector(
       // Wrap with GestureDetector
       onTap: () {
         // Navigate to ViewClub page and pass the club ID
@@ -696,79 +702,79 @@ Widget _buildQuiz(BuildContext context) {
           ),
         );
       },
-    child: Container(
-      width: 200, // Set a fixed width to ensure consistent card sizes
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          club.picture.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
+      child: Container(
+        width: 200, // Set a fixed width to ensure consistent card sizes
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            club.picture.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 140,
+                      width: double.infinity,
+                      child: Image.network(
+                        club.picture,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 140,
+                            width: double.infinity,
+                            color: Colors.red,
+                            child: Icon(Icons.error, color: Colors.white),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(child: CircularProgressIndicator());
+                        },
+                      ),
+                    ),
+                  )
+                : Container(
                     height: 140,
                     width: double.infinity,
-                    child: Image.network(
-                      club.picture,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 140,
-                          width: double.infinity,
-                          color: Colors.red,
-                          child: Icon(Icons.error, color: Colors.white),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(child: CircularProgressIndicator());
-                      },
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.withOpacity(0.2),
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/clubs.jpg'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                )
-              : Container(
-                  height: 140,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.grey.withOpacity(0.2),
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/clubs.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-          const SizedBox(height: 10),
-          Text(
-            club.name,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color.fromARGB(255, 53, 31, 31),
+            const SizedBox(height: 10),
+            Text(
+              club.name,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 53, 31, 31),
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${club.memberCount} members',
-            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              '${club.memberCount} members',
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }

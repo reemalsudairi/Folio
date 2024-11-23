@@ -66,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
 Future<void> signUserIn() async {
   if (_formKey.currentState?.validate() ?? false && _isPasswordFieldValid) {
     FocusScope.of(context).unfocus();
-    
+
     // Show loading dialog
     showDialog(
       context: context,
@@ -75,28 +75,34 @@ Future<void> signUserIn() async {
     );
 
     try {
+      // Sign in the user
       UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      // Fetch user data from Firestore
-      var userDoc = await FirebaseFirestore.instance.collection('reader').doc(userCredential.user?.uid).get();
+      final userId = userCredential.user?.uid ?? '';
+      final readerDoc = FirebaseFirestore.instance.collection('reader').doc(userId);
 
-      if (userDoc.exists) {
-        int numberOfReports = userDoc.data()?['NumberOfReports'] ?? 0;
+      // Fetch user data from Firestore
+      var userDocSnapshot = await readerDoc.get();
+
+      if (userDocSnapshot.exists) {
+        int numberOfReports = userDocSnapshot.data()?['NumberOfReports'] ?? 0;
 
         // Check if the user should be banned
         if (numberOfReports >= 3) {
-          // Set the banned field to true in Firestore
-          await FirebaseFirestore.instance.collection('reader').doc(userCredential.user?.uid).update({'banned': true});
-          
+          await readerDoc.update({'banned': true});
+
           Navigator.pop(context); // Remove loading dialog
           setState(() {
-            _errorMessage = "Your account has been suspended. Please contact Follio444@gmail.com for assistance."; // Set the error message
+            _errorMessage = "Your account has been suspended. Please contact support for assistance.";
           });
-          return; // Exit the function to prevent further processing
+          return;
         }
+
+        // Ensure 'hiddenUpdates' field exists
+        await initializeHiddenUpdates(readerDoc);
       }
 
       Navigator.pop(context); // Remove loading dialog
@@ -105,29 +111,23 @@ Future<void> signUserIn() async {
         _errorMessage = null;
       });
 
-      _showConfirmationMessage(); // Show login confirmation
+      _showConfirmationMessage();
 
       // Delay navigation AFTER confirmation dialog is shown and closed
       Future.delayed(const Duration(seconds: 2), () {
-        // Close confirmation dialog and navigate to the home page
         Navigator.pop(context); // Close the confirmation dialog
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(userId: userCredential.user?.uid ?? ''),
-          ),
+          MaterialPageRoute(builder: (context) => HomePage(userId: userId)),
         );
       });
-
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context); // Remove loading dialog on error
-
       setState(() {
         _errorMessage = _handleAuthError(e);
       });
     } catch (e) {
       Navigator.pop(context);
-
       setState(() {
         _errorMessage = "An unexpected error occurred.";
       });
@@ -138,6 +138,32 @@ Future<void> signUserIn() async {
     });
   }
 }
+
+Future<void> initializeHiddenUpdates(DocumentReference readerDoc) async {
+  try {
+    // Get the document snapshot
+    DocumentSnapshot readerSnapshot = await readerDoc.get();
+
+    if (readerSnapshot.exists) {
+      // Safely check if 'hiddenUpdates' exists
+      Map<String, dynamic>? data = readerSnapshot.data() as Map<String, dynamic>?;
+      if (data != null && !data.containsKey('hiddenUpdates')) {
+        await readerDoc.update({
+          'hiddenUpdates': FieldValue.arrayUnion([]),
+        });
+      }
+    } else {
+      // Create the document with 'hiddenUpdates' field
+      await readerDoc.set({'hiddenUpdates': []}, SetOptions(merge: true));
+    }
+  } catch (e) {
+    print("Error initializing hidden updates: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error initializing document: $e')),
+    );
+  }
+}
+
 
 void _showConfirmationMessage() {
   showDialog(
