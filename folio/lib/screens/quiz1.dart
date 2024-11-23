@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:folio/screens/recommendation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DynamicQuizPage extends StatefulWidget {
   final dynamic userId;
@@ -196,12 +197,15 @@ int calculateMatches(Map<String, dynamic> volumeInfo) {
 
 @override
 Widget build(BuildContext context) {
+  
   var currentQuestion = questions[currentQuestionIndex];
   bool isNextButtonEnabled =
       selectedAnswers[currentQuestion['question']] != null &&
           selectedAnswers[currentQuestion['question']]!.isNotEmpty;
 
   return Scaffold(
+        backgroundColor: const Color(0xFFF8F8F3),
+
     appBar: AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -327,21 +331,42 @@ Widget build(BuildContext context) {
                             currentQuestionIndex++;
                           });
                         } else {
-                          fetchBooksFromAPI().then((books) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RecommendationPage(
-                                  answers: selectedAnswers,
-                                  books: books,
-                                  userId: FirebaseAuth.instance.currentUser!.uid,
-                                ),
-                              ),
-                            );
-                          }).catchError((e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Error fetching books")));
-                          });
+                 fetchBooksFromAPI().then((books) async {
+  // Fetch savedBooks from Firebase
+  List<String> savedBooks = [];
+  try {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final snapshot = await FirebaseFirestore.instance
+        .collection('reader')
+        .doc(userId)
+        .collection('save')
+        .get();
+
+    // Extract saved book IDs
+    savedBooks = snapshot.docs.map((doc) => doc.id).toList();
+  } catch (e) {
+    debugPrint("Error fetching savedBooks: $e");
+  }
+
+  // Navigate to RecommendationPage
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => RecommendationPage(
+        answers: selectedAnswers,
+        books: books,
+        userId: FirebaseAuth.instance.currentUser!.uid,
+        savedBooks: savedBooks,
+      ),
+    ),
+  );
+}).catchError((e) {
+  // Handle errors
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("Error fetching books: $e")),
+  );
+});
+
                         }
                       }
                     : null,
