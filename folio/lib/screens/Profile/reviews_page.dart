@@ -146,8 +146,9 @@ void _showReportDialog(BuildContext context, String bookID) async {
 
   // Proceed with showing the reporting dialog if not reported
   List<bool> selectedReasons = List.generate(reasons.length, (index) => false);
-  bool showError = false;
-  String otherReasonText = '';// Store the text input for "Other"
+  bool showError = false; // Track if there's an error
+  bool showOtherError = false; // Track if the "Other" field is empty
+  String otherReasonText = ''; // Store the text input for "Other"
 
   showDialog(
     context: context,
@@ -190,21 +191,21 @@ void _showReportDialog(BuildContext context, String bookID) async {
                                   // If "Other" is selected, toggle the state
                                   if (selectedReasons[index]) {
                                     otherReasonText = ''; // Clear the text when selected
+                                    showOtherError = false; // Clear error message
                                   }
                                 }
-                                showError = false; // Clear error when a reason is selected
                               });
                             },
                             child: Container(
-                              width: 30, // Width for the checkbox
-                              height: 30, // Height for the checkbox
+                              width: 30,
+                              height: 30,
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey), // Border color and width
+                                border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(4),
-                                color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent, // Fill color when checked
+                                color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
                               ),
                               child: selectedReasons[index]
-                                  ? const Icon(Icons.check, color: Colors.white, size: 16) // Check icon
+                                  ? const Icon(Icons.check, color: Colors.white, size: 16)
                                   : null,
                             ),
                           ),
@@ -214,17 +215,26 @@ void _showReportDialog(BuildContext context, String bookID) async {
                   }),
                 ),
                 // Show the TextField for "Other" reason if selected
-                if (selectedReasons.last) // Check if "Other" is selected
+                if (selectedReasons.last)
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
-                    child: TextField(
-                      onChanged: (value) {
-                        otherReasonText = value; // Update the other reason text
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Please specify...',
-                        border: OutlineInputBorder(),
-                      ),
+                    child: Column(
+                      children: [
+                        TextField(
+                          onChanged: (value) {
+                            otherReasonText = value; // Update the other reason text
+                            setDialogState(() {
+                              showOtherError = false; // Clear error when user types
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Please specify...',
+                            border: OutlineInputBorder(),
+                            errorText: showOtherError ? 'This field cannot be empty' : null, // Show error message
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ),
                   ),
                 const SizedBox(height: 20),
@@ -252,25 +262,28 @@ void _showReportDialog(BuildContext context, String bookID) async {
                           } else {
                             setDialogState(() {
                               showError = true; // Show error if no reason is selected
+                              if (selectedReasons.last && otherReasonText.isEmpty) {
+                                showOtherError = true ; // Show error if "Other" is selected but empty
+                              }
                             });
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF790AD), // Pink color for submit button
+                          backgroundColor: const Color(0xFFF790AD),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
- ),
+                        ),
                         child: const Text(
                           'Submit',
-                          style: TextStyle(fontSize: 18, color: Colors.white), // White text
+                          style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(), // Close the dialog
                         style: TextButton.styleFrom(
-                          backgroundColor: Colors.grey[300], // Gray color for cancel button
+                          backgroundColor: Colors.grey[300],
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
@@ -278,7 +291,7 @@ void _showReportDialog(BuildContext context, String bookID) async {
                         ),
                         child: const Text(
                           'Cancel',
-                          style: TextStyle(fontSize: 18, color: Colors.black), // Black text
+                          style: TextStyle(fontSize: 18, color: Colors.black),
                         ),
                       ),
                     ],

@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter/material.dart';
@@ -207,11 +208,12 @@ void _showReportDialog(String reviewId) async {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black, // Set text color to black
+                color: Color.fromARGB(255, 255, 255, 255), // Set text color to black
               ),
             ),
           ),
         ],
+       
       ),
     ),
   ),
