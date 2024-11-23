@@ -141,17 +141,31 @@ void _showReportDialog(String reviewId) async {
                 ),
                 // Display the TextField for the "Other" reason if selected
                 if (isOtherSelected)
-                  TextField(
-                    onChanged: (value) {
-                      customReason = value; // Update the custom reason as the user types
-                      setDialogState(() {
-                        showOtherError = false; // Clear error when user types
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Please specify...',
-                      border: OutlineInputBorder(),
-                      errorText: showOtherError ? 'This field cannot be empty' : null, // Show error message
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Column(
+                      children: [
+                        TextField(
+                          maxLength: 50, // Limit to 50 characters
+                          onChanged: (value) {
+                            customReason = value; // Update the custom reason as the user types
+                            setDialogState(() {
+                              showOtherError = false; // Clear error when user types
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Please specify...',
+                            border: OutlineInputBorder(),
+                            errorText: showOtherError ? 'This field cannot be empty' : null, // Show error message
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Display character count
+                        Align(
+                          alignment: Alignment.centerRight,
+                         
+                        ),
+                      ],
                     ),
                   ),
                 const SizedBox(height: 20),

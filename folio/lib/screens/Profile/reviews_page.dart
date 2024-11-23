@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -221,6 +222,7 @@ void _showReportDialog(BuildContext context, String bookID) async {
                     child: Column(
                       children: [
                         TextField(
+                          maxLength: 50, // Limit to 50 characters
                           onChanged: (value) {
                             otherReasonText = value; // Update the other reason text
                             setDialogState(() {
@@ -234,6 +236,11 @@ void _showReportDialog(BuildContext context, String bookID) async {
                           ),
                         ),
                         const SizedBox(height: 10),
+                        // Display character count
+                        Align(
+                          alignment: Alignment.centerRight,
+                          
+                        ),
                       ],
                     ),
                   ),
@@ -255,16 +262,20 @@ void _showReportDialog(BuildContext context, String bookID) async {
                       ElevatedButton(
                         onPressed: () {
                           // Validate selection
-                          if (selectedReasons.contains(true) || (selectedReasons.last && otherReasonText.isNotEmpty)) {
-                            // Call the submit report method
-                            _submitReport(selectedReasons, reviewId, otherReasonText, context, bookID);
-                            Navigator.of(context).pop(); // Close the dialog
+                          if (selectedReasons.contains(true)) {
+                            // If "Other" is selected, check if the input is empty
+                            if (selectedReasons.last && otherReasonText.isEmpty) {
+                              setDialogState(() {
+                                showOtherError = true; // Show error if "Other" is selected but empty
+                              });
+                            } else {
+                              // Call the submit report method
+                              _submitReport(selectedReasons, reviewId, otherReasonText, context, bookID);
+                              Navigator.of(context).pop(); // Close the dialog
+                            }
                           } else {
                             setDialogState(() {
                               showError = true; // Show error if no reason is selected
-                              if (selectedReasons.last && otherReasonText.isEmpty) {
-                                showOtherError = true ; // Show error if "Other" is selected but empty
-                              }
                             });
                           }
                         },
