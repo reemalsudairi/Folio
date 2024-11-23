@@ -48,6 +48,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF790AD)),
         useMaterial3: true,
+        fontFamily: 'YoungSerif-Regular'
       ),
       home: user == null
           ? const Splash()
