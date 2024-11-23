@@ -5,7 +5,11 @@ import 'package:http/http.dart' as http;
 
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
+<<<<<<< Updated upstream
   final String apiKey1 = 'AIzaSyAVmPWubYM8o859NEMU-ntUjZaSdd1zYxg';
+=======
+final String apiKey1 = 'AIzaSyAVmPWubYM8o859NEMU-ntUjZaSdd1zYxg';
+>>>>>>> Stashed changes
   final String apiKey2 = 'AIzaSyA_g6ljLsAnGo_mM6ufkasr_KESLvSWils';
 
 // Fetch books sorted by the most recent published date

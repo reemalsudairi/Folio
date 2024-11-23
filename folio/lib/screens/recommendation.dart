@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:folio/screens/book_details_page.dart';
 import 'package:folio/services/google_books_service.dart';
-import 'package:folio/utils.dart ';
+import 'package:folio/utils.dart';
 
 class RecommendationPage extends StatefulWidget {
   final Map<String, List<String>> answers; // User's quiz answers
@@ -24,6 +24,8 @@ class _RecommendationPageState extends State<RecommendationPage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> books = []; // Store fetched book details
   String errorMessage = '';
+    int currentIndex = 0;
+
 
   @override
   void initState() {
@@ -332,209 +334,260 @@ class _RecommendationPageState extends State<RecommendationPage> {
                             ],
                           ),
                         ),
-                        Expanded(
-                          child: PageView.builder(
-                            controller: PageController(
-                                viewportFraction:
-                                    0.65), // Show parts of adjacent books
-                            itemCount: books.length,
-                            itemBuilder: (context, index) {
-                              var book = books[index];
-                              String matches = _getBookMatches(book);
+Expanded(
+  child: Column(
+    children: [
+      Expanded(
+        child: PageView.builder(
+          controller: PageController(viewportFraction: 0.65),
+          itemCount: books.length,
+          onPageChanged: (index) {
+            setState(() {
+              currentIndex = index; // Update the current page index
+            });
+          },
+          itemBuilder: (context, index) {
+            var book = books[index];
+            String matches = _getBookMatches(book);
 
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => BookDetailsPage(
-                                          bookId: book['id'] ?? 'Unknown',
-                                          userId: widget.userId,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        // Matches section (moved to the top)
-                                        Column(
-                                          children: [
-                                            Text(
-                                              "Matches: $matches",
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                            const SizedBox(height: 8),
-                                          ],
-                                        ),
-                                        // Book cover image
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(12.0),
-                                          child: Image.network(
-                                            book['volumeInfo']['imageLinks']
-                                                    ?['thumbnail'] ??
-                                                '',
-                                            height: 200,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) =>
-                                                    const Icon(
-                                              Icons.image_not_supported,
-                                              size: 100,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        // Book title and description
-                                        Column(
-                                          children: [
-                                            Text(
-                                              book['volumeInfo']['title'] ??
-                                                  'No Title',
-                                              style: const TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              (book['volumeInfo']['authors']
-                                                          as List<dynamic>?)
-                                                      ?.join(', ') ??
-                                                  'Unknown Author',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.grey,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 16),
-                                        // Book category and pages
-                                        Text(
-                                          "${(book['volumeInfo']['categories'] as List<dynamic>?)?.join(', ') ?? 'Unknown Category'} · ${book['volumeInfo']['pageCount'] ?? 'N/A'} pages",
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black54,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+            return Padding(
+              padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 50.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookDetailsPage(
+                        bookId: book['id'] ?? 'Unknown',
+                        userId: widget.userId,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 300, // Fixed height for the card
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Book cover image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12.0),
+                        child: Image.network(
+                          book['volumeInfo']['imageLinks']?['thumbnail'] ?? '',
+                          height: 300, // Fixed height for book cover
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.image_not_supported,
+                            size: 100,
+                            color: Colors.grey,
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Book title
+                      Text(
+                        book['volumeInfo']['title'] ?? 'No Title',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      // Book author
+                      Text(
+                        (book['volumeInfo']['authors'] as List<dynamic>?)
+                                ?.join(', ') ??
+                            'Unknown Author',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      // Book details
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            (book['volumeInfo']['categories']
+                                        as List<dynamic>?)
+                                    ?.map((category) => category.toString())
+                                    .join('/')
+                                    .split('/')
+                                    .take(5)
+                                    .join(', ') ??
+                                'Unknown Category',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${book['volumeInfo']['pageCount'] ?? 'N/A'} pages · ${_getPacingText(book['volumeInfo']['pageCount'] ?? 0)}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Language: ${_getPreferredLanguage(book['volumeInfo']['language'] ?? '', widget.answers["What language do you prefer?"])}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      const SizedBox(height: 16), // Adjust spacing between content and indicator
+   
+      const SizedBox(height: 16), // Add padding below the indicators if needed
+    ],
+  ),
+),
+
+
+
                       ],
                     ),
     );
   }
 
-  String _getBookMatches(Map<String, dynamic> book) {
-    List<String> matches = [];
-
-    // Fetch user preferences
-    var genrePreferences = widget.answers["What genres sound good right now?"]
-            ?.map((e) => e.toLowerCase())
-            .toList() ??
-        [];
-    var languagePreferences = widget.answers["What language do you prefer?"]
-            ?.map((e) => e.toLowerCase())
-            .toList() ??
-        [];
-    var pacingPreferences =
-        widget.answers["Slow, medium, or fast paced read?"] ?? [];
-
-    bool genreMatched = false;
-    bool languageMatched = false;
-    bool pacingMatched = false;
-
-    // Check for genre match
-    if (genrePreferences.isNotEmpty) {
-      List<String> bookGenres =
-          ((book['volumeInfo']['categories'] ?? []) as List<dynamic>)
-              .map((category) => category.toString().toLowerCase())
-              .toList();
-
-      genreMatched = genrePreferences.any((userGenre) =>
-          bookGenres.any((bookGenre) => bookGenre.contains(userGenre)));
-
-      if (genreMatched) {
-        String matchedGenre = genrePreferences.firstWhere((userGenre) =>
-            bookGenres.any((bookGenre) => bookGenre.contains(userGenre)));
-        matches.add(matchedGenre.capitalize());
-      }
-    }
-
-    // Check for language match
-    if (languagePreferences.isNotEmpty) {
-      String bookLanguageCode =
-          (book['volumeInfo']['language'] ?? '').toLowerCase();
-      Map<String, String> languageMap = {
-        'en': 'english',
-        'ar': 'arabic',
-      };
-      String bookLanguage = languageMap[bookLanguageCode] ?? bookLanguageCode;
-
-      languageMatched = languagePreferences.contains(bookLanguage);
-      if (languageMatched) {
-        matches.add(bookLanguage.capitalize());
-      }
-    }
-
-    // Check for pacing match
-   
-    int pageCount = book['volumeInfo']['pageCount'] ?? 0;
-if (pacingPreferences.isNotEmpty) {
-  for (var pacing in pacingPreferences) {
-    if (pacing.toLowerCase() == "slow" && pageCount <= 150) {
-      pacingMatched = true;
-      matches.add("Slow");
-      break;
-    }
-    if (pacing.toLowerCase() == "medium" && pageCount > 150 && pageCount <= 300) {
-      pacingMatched = true;
-      matches.add("Medium");
-      break;
-    }
-    if (pacing.toLowerCase() == "fast" && pageCount > 300) {
-      pacingMatched = true;
-      matches.add("Fast");
-      break;
-    }
+  String _getPacingText(int pageCount) {
+  if (pageCount <= 150) {
+    return 'slow-paced read';
+  } else if (pageCount > 150 && pageCount <= 300) {
+    return 'medium-paced read';
+  } else {
+    return 'fast-paced read';
   }
 }
 
+String _getPreferredLanguage(String bookLanguage, List<String>? userLanguages) {
+  Map<String, String> languageMap = {
+    'en': 'English',
+    'ar': 'Arabic',
+    // Add more mappings as needed
+  };
 
-    debugPrint(
-        'Book: ${book['volumeInfo']['title']} | GenreMatched: $genreMatched, LanguageMatched: $languageMatched, PacingMatched: $pacingMatched');
+  String readableLanguage = languageMap[bookLanguage] ?? bookLanguage.capitalize();
+  if (userLanguages != null &&
+      userLanguages.map((l) => l.toLowerCase()).contains(readableLanguage.toLowerCase())) {
+    return readableLanguage;
+  }
+  return "Not specified";
+}
 
-    if (languageMatched && pacingMatched) {
-      return matches.join(" · ");
-    } else {
-      return "No specific matches"; // Ensure books that don't fully match are excluded
+String _getBookMatches(Map<String, dynamic> book) {
+  List<String> matches = [];
+
+  // Fetch user preferences
+var genrePreferences = widget.answers["What genres sound good right now?"]
+        ?.map((e) => e.toLowerCase())
+        .toList() ??
+    [];
+debugPrint("User Genre Preferences: $genrePreferences");
+
+  var languagePreferences = widget.answers["What language do you prefer?"]
+          ?.map((e) => e.toLowerCase())
+          .toList() ??
+      [];
+  var pacingPreferences =
+      widget.answers["Slow, medium, or fast paced read?"] ?? [];
+
+  // Check for genre match
+List<dynamic>? categories = book['volumeInfo']['categories'];
+debugPrint("Book Categories: $categories");
+if (categories != null && genrePreferences.isNotEmpty) {
+  List<String> bookGenres = categories
+      .map((category) => category.toString().toLowerCase())
+      .toList();
+
+  debugPrint("Book Genres: $bookGenres");
+  debugPrint("User Genres: $genrePreferences");
+
+  List<String> matchedGenres = genrePreferences
+      .where((userGenre) =>
+          bookGenres.any((bookGenre) => bookGenre.contains(userGenre)))
+      .toList();
+
+  if (matchedGenres.isNotEmpty) {
+    matches.add("Genres: ${matchedGenres.map((g) => g.capitalize()).join(', ')}");
+    debugPrint("Matched Genres Added: ${matchedGenres.map((g) => g.capitalize()).join(', ')}");
+  } else {
+    debugPrint("No Genre Matches Found.");
+  }
+} else {
+  debugPrint("Genres or preferences missing.");
+}
+
+
+  // Check for language match
+  if (languagePreferences.isNotEmpty) {
+    String bookLanguageCode =
+        (book['volumeInfo']['language'] ?? '').toLowerCase();
+    Map<String, String> languageMap = {
+      'en': 'english',
+      'ar': 'arabic',
+    };
+    String bookLanguage = languageMap[bookLanguageCode] ?? bookLanguageCode;
+
+    if (languagePreferences.contains(bookLanguage)) {
+      matches.add("Language: ${bookLanguage.capitalize()}");
+      debugPrint("Matched Language: ${bookLanguage.capitalize()}");
     }
   }
+
+  // Check for pacing match
+  int pageCount = book['volumeInfo']['pageCount'] ?? 0;
+  if (pacingPreferences.isNotEmpty) {
+    for (var pacing in pacingPreferences) {
+      if (pacing.toLowerCase() == "slow" && pageCount <= 150) {
+        matches.add("Pacing: Slow");
+        break;
+      }
+      if (pacing.toLowerCase() == "medium" &&
+          pageCount > 150 &&
+          pageCount <= 300) {
+        matches.add("Pacing: Medium");
+        break;
+      }
+      if (pacing.toLowerCase() == "fast" && pageCount > 300) {
+        matches.add("Pacing: Fast");
+        break;
+      }
+    }
+  }
+
+  debugPrint("Final Matches List: $matches");
+  return matches.isNotEmpty ? matches.join(" · ") : "No specific matches";
+}
+
 }

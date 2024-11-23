@@ -146,14 +146,21 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
 int calculateMatches(Map<String, dynamic> volumeInfo) {
   int score = 0;
 
+  // Fetch book categories and user-selected genres
+  var categories = (volumeInfo['categories'] as List<dynamic>?)
+          ?.cast<String>() ??
+      [];
+  var userGenres = selectedAnswers["What are you in the mood for?"] ?? [];
+
   // Check for genre matches
-  var categories = (volumeInfo['categories'] as List<dynamic>?)?.cast<String>() ?? [];
-  if (selectedAnswers["What are you in the mood for?"]?.any((genre) => categories.any((cat) => cat.toLowerCase().contains(genre.toLowerCase()))) ?? false) {
-    score += 3;
+  if (doesCategoryMatch(categories, userGenres)) {
+    score += 3; // Increase score for matching genres
   }
 
   // Check for language match
-  if (selectedAnswers["What language do you prefer?"]?.contains(volumeInfo['language']?.toLowerCase() ?? '') ?? false) {
+  if (selectedAnswers["What language do you prefer?"]
+          ?.contains(volumeInfo['language']?.toLowerCase() ?? '') ??
+      false) {
     score += 3;
   }
 
@@ -168,7 +175,6 @@ int calculateMatches(Map<String, dynamic> volumeInfo) {
       false) {
     score += 2;
   }
-  
 
   // Boost for recency
   int publishedYear = int.tryParse(volumeInfo['publishedDate']?.split("-")?.first ?? '') ?? 0;
@@ -184,6 +190,7 @@ int calculateMatches(Map<String, dynamic> volumeInfo) {
 
   return score;
 }
+
 
 
 
@@ -350,4 +357,21 @@ Widget build(BuildContext context) {
     ),
   );
 }
+bool doesCategoryMatch(List<String> bookCategories, List<String> userGenres) {
+  // Normalize book categories and user genres
+  var normalizedBookGenres = bookCategories
+      .map((category) => category
+          .split('/') // Split hierarchical categories
+          .map((c) => c.trim().toLowerCase())) // Trim and lowercase
+      .expand((e) => e) // Flatten the list
+      .toList();
+
+  var normalizedUserGenres =
+      userGenres.map((genre) => genre.trim().toLowerCase()).toList();
+
+  // Check if any user genre matches any normalized book genre
+  return normalizedUserGenres.any((userGenre) =>
+      normalizedBookGenres.any((bookGenre) => bookGenre.contains(userGenre)));
+}
+
 }
