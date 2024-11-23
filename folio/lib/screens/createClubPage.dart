@@ -30,33 +30,48 @@ class _CreateClubPageState extends State<CreateClubPage> {
   File? _clubImageFile;
   String? _clubImageUrl;
   bool _isLoading = false;
+  bool _isLoading1 = true;
   String? _selectedLanguage;
   String? _errorMessage;
-
+  List<String> _languages = [];
   TextEditingController _currentBookDetailsController = TextEditingController();
   String? _selectedBookId; // Variable to store the selected book ID
   String? _bookCover; // Variable to store the book cover URL
   String? _bookAuthor; // Variable to store the author name
 
   // List of popular languages including Arabic
-  final List<String> _languages = [
-    'English',
-    'Spanish',
-    'Mandarin',
-    'French',
-    'German',
-    'Arabic',
-    'Russian',
-    'Portuguese',
-    'Hindi',
-    'Japanese',
-  ];
 
   @override
   void initState() {
     super.initState();
     // Set the default image to 'assets/images/clubs.jpg'
     _currentImage = const AssetImage('assets/images/clubs.jpg');
+    _loadLanguages();
+  }
+
+  // Firestore fetch method directly inside the widget
+  Future<void> _loadLanguages() async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('languages')
+          .doc('languageList') // Replace with your document ID
+          .get();
+
+      if (doc.exists) {
+        List<dynamic> languages = doc['availableLanguages'] ?? [];
+        setState(() {
+          _languages = List<String>.from(languages);
+          _isLoading1 = false;
+        });
+      } else {
+        throw Exception('Language document does not exist');
+      }
+    } catch (e) {
+      print('Error loading languages: $e');
+      setState(() {
+        _isLoading1 = false;
+      });
+    }
   }
 
   // Function to show options for picking an image
@@ -618,15 +633,15 @@ class _CreateClubPageState extends State<CreateClubPage> {
               // Language dropdown menu
               DropdownButtonFormField<String>(
                 value: _selectedLanguage,
-                items: _languages.map((String language) {
-                  return DropdownMenuItem<String>(
-                    value: language,
-                    child: Text(language),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
+                items: _languages
+                    .map((language) => DropdownMenuItem<String>(
+                          value: language,
+                          child: Text(language),
+                        ))
+                    .toList(),
+                onChanged: (value) {
                   setState(() {
-                    _selectedLanguage = newValue;
+                    _selectedLanguage = value;
                   });
                 },
                 decoration: InputDecoration(
