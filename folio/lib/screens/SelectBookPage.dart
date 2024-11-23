@@ -22,7 +22,7 @@ class _SelectBookPageState extends State<SelectBookPage> {
   @override
   void initState() {
     super.initState();
-    _loadBestSellingBooks(); // Load best-selling books initially
+    _loadNewestBooks(); // Load best-selling books initially
 
     // Add a listener to the search controller to track whether the user is searching
     _searchController.addListener(() {
@@ -32,10 +32,11 @@ class _SelectBookPageState extends State<SelectBookPage> {
     });
   }
 
-  // Function to load 30 best-selling books from Google Books API
-  void _loadBestSellingBooks() async {
+  // Function to load 30 newest books from Google Books API
+  void _loadNewestBooks() async {
     try {
-      final books = await _googleBooksService.fetchBestSellingBooks();
+      final books = await _googleBooksService
+          .fetchBooksByRecentPublication(); // Update to fetch newest books
       if (books.isEmpty) {
         setState(() => _errorMessage = "No books found.");
       } else {
@@ -147,7 +148,7 @@ class _SelectBookPageState extends State<SelectBookPage> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Bestsellers",
+                  "Newest",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
@@ -303,8 +304,4 @@ class _SelectBookPageState extends State<SelectBookPage> {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
+   

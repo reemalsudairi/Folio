@@ -667,8 +667,8 @@ class _CreateClubPageState extends State<CreateClubPage> {
                 decoration: InputDecoration(
                   labelText:
                       'Select a Book', // Label for the book selection field
-                  labelStyle: const TextStyle(
-                    color: Color(0xFF695555),
+                  labelStyle: TextStyle(
+                    color: _selectedBookId == null ? Colors.grey : Colors.black,
                     fontWeight: FontWeight.w400,
                     fontSize: 18,
                   ),
@@ -687,9 +687,11 @@ class _CreateClubPageState extends State<CreateClubPage> {
                     borderSide: const BorderSide(color: Color(0xFFF790AD)),
                   ),
                   counterText: '', // No character counter needed here
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search,
-                    color: Color(0xFFF790AD), // Customize icon color
+                    color: _selectedBookId == null
+                        ? Colors.grey // Gray before selection
+                        : Color(0xFFF790AD), // Pink after selection
                   ),
                   suffixIcon: _currentBookController.text.isNotEmpty
                       ? IconButton(
@@ -735,23 +737,32 @@ class _CreateClubPageState extends State<CreateClubPage> {
 // Display the selected book cover and author
               if (_bookCover != null) ...[
                 const SizedBox(height: 16), // Space between fields
-                Image.network(
-                  _bookCover!,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                          Icons.error), // Error icon if the image fails to load
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _bookAuthor != null ? 'Author: $_bookAuthor' : '',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.network(
+                        _bookCover!,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons
+                                .error, // Error icon if the image fails to load
+                            size: 50,
+                          );
+                        },
+                      ),
+                      const SizedBox(
+                          height: 8), // Space between the cover and author text
+                      if (_bookAuthor != null)
+                        Text(
+                          _bookAuthor!,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                    ],
                   ),
                 ),
               ],
