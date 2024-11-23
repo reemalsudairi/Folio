@@ -71,77 +71,82 @@ class _DynamicQuizPageState extends State<DynamicQuizPage> {
   }
 
 Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
-  // Build genre query
+  List<Map<String, dynamic>> finalBooks = [];
+
+  // بناء استعلام النوع
   String genreQuery = selectedAnswers["What are you in the mood for?"]
           ?.map((g) => "subject:${g.trim().toLowerCase()}")
           .join(" OR ") ??
       "";
 
-  // Build language query
-  String languageQuery = selectedAnswers["What language do you prefer?"]
+  // الحصول على اختيارات اللغة من المستخدم
+  List<String> selectedLanguages = selectedAnswers["What language do you prefer?"]
           ?.map((lang) => lang.toLowerCase() == "arabic" ? "ar" : "en")
-          .join("|") ??
-      "en";
+          .toList() ??
+      ["en"]; // الافتراضي الإنجليزية
 
-  // Ensure fallback if no genre or language is selected
-  String query = genreQuery.isNotEmpty ? "$genreQuery" : "bestseller";
-  String url =
-      "https://www.googleapis.com/books/v1/volumes?q=$query&langRestrict=$languageQuery&maxResults=40&orderBy=newest";
+  // تنفيذ استعلام لكل لغة
+  for (String lang in selectedLanguages) {
+    String url =
+        "https://www.googleapis.com/books/v1/volumes?q=$genreQuery&langRestrict=$lang&maxResults=20&orderBy=newest";
 
-  debugPrint("API Request URL: $url");
+    debugPrint("API Request URL: $url");
 
-  try {
-    final response = await http.get(Uri.parse(url));
+    try {
+      final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
 
-      debugPrint("Total books fetched: ${data['items']?.length ?? 0}");
+        debugPrint("Books fetched for $lang: ${data['items']?.length ?? 0}");
 
-      return (data['items'] as List<dynamic>)
-          .map<Map<String, dynamic>?>((item) {
-            final volumeInfo =
-                (item as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>? ?? {};
-                //here
-                final pageCount = volumeInfo['pageCount'] ?? 0;
-            final publishedYear = int.tryParse(volumeInfo['publishedDate']?.split("-")?.first ?? '') ?? 0;
+        // معالجة النتائج
+        List<Map<String, dynamic>> books = (data['items'] as List<dynamic>)
+            .map<Map<String, dynamic>?>((item) {
+              final volumeInfo = item['volumeInfo'] as Map<String, dynamic>? ?? {};
+              final pageCount = volumeInfo['pageCount'] ?? 0;
+              final publishedYear = int.tryParse(volumeInfo['publishedDate']?.split("-")?.first ?? '') ?? 0;
 
-            if (publishedYear < 2015 || volumeInfo['imageLinks']?['thumbnail'] == null || volumeInfo['description'] == null) {
-              return null;
-            }
+              // تصفية النتائج غير الصالحة
+              if (publishedYear < 2015 || 
+                  volumeInfo['imageLinks']?['thumbnail'] == null || 
+                  volumeInfo['description'] == null) {
+                return null;
+              }
 
-            return {
-              'id': item['id'],
-              'title': volumeInfo['title'] ?? 'No Title',
-              'authors': (volumeInfo['authors'] as List<dynamic>?)?.cast<String>() ?? ['Unknown'],
-              'categories': (volumeInfo['categories'] as List<dynamic>?)?.cast<String>().join(', ') ?? '',
-              'language': volumeInfo['language'] ?? 'Unknown',
-              'imageUrl': volumeInfo['imageLinks']?['thumbnail'] ?? '',
-              'description': volumeInfo['description'] ?? 'No description available.',
-              //here
-              'publishedDate': volumeInfo['publishedDate'] ?? '',
-              'averageRating': volumeInfo['averageRating'] ?? 0.0,
-              'ratingsCount': volumeInfo['ratingsCount'] ?? 0,
-              'matches': calculateMatches(volumeInfo),
+              return {
+                'id': item['id'],
+                'title': volumeInfo['title'] ?? 'No Title',
+                'authors': (volumeInfo['authors'] as List<dynamic>?)?.cast<String>() ?? ['Unknown'],
+                'categories': (volumeInfo['categories'] as List<dynamic>?)?.cast<String>().join(', ') ?? '',
+                'language': volumeInfo['language'] ?? 'Unknown',
+                'imageUrl': volumeInfo['imageLinks']?['thumbnail'] ?? '',
+                'description': volumeInfo['description'] ?? 'No description available.',
+                'publishedDate': volumeInfo['publishedDate'] ?? '',
+                'averageRating': volumeInfo['averageRating'] ?? 0.0,
+                'ratingsCount': volumeInfo['ratingsCount'] ?? 0,
+                'pageCount': volumeInfo['pageCount'] ?? 0,
+              };
+            })
+            .where((book) => book != null)
+            .toList()
+            .cast<Map<String, dynamic>>();
 
-              'pageCount': volumeInfo['pageCount'] ?? 0,
-            };
-          })
-          .where((book) => book != null)
-          .toList()
-          
-          .cast<Map<String, dynamic>>();
-//delete sort
-    } else {
-      debugPrint("API Error: ${response.statusCode}");
-      throw Exception("Failed to load books");
+        finalBooks.addAll(books);
+      } else {
+        debugPrint("API Error for $lang: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("Error fetching books for $lang: $e");
     }
-  } catch (e) {
-    debugPrint("Error fetching books: $e");
-    return [];
   }
-}
 
+  // إزالة التكرار بناءً على ID
+  finalBooks = finalBooks.toSet().toList();
+
+  debugPrint("Final merged books count: ${finalBooks.length}");
+  return finalBooks;
+}
 
 
 int calculateMatches(Map<String, dynamic> volumeInfo) {
