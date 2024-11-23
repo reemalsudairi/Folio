@@ -17,121 +17,138 @@ class _UpdatesNotificationBellState extends State<UpdatesNotificationBell> {
   List<String> deletedUpdateIds = []; // Track deleted update IDs
 
   @override
-void initState() {
-  super.initState();
-  _setLastCheckedUpdates();  // Update the lastCheckedUpdates when the page opens
-}
-
-Future<void> _setLastCheckedUpdates() async {
-  try {
-    DocumentReference readerDoc = _firestore.collection('reader').doc(widget.currentUserId);
-
-    // Set the current timestamp as the last checked updates timestamp
-    await readerDoc.update({
-      'lastCheckedUpdates': FieldValue.serverTimestamp(),
-    });
-  } catch (e) {
-    print('Error setting lastCheckedUpdates: $e');
+  void initState() {
+    super.initState();
+    _setLastCheckedUpdates(); // Update the lastCheckedUpdates when the page opens
   }
-}
 
+  Future<void> _setLastCheckedUpdates() async {
+    try {
+      DocumentReference readerDoc =
+          _firestore.collection('reader').doc(widget.currentUserId);
+
+      // Set the current timestamp as the last checked updates timestamp
+      await readerDoc.update({
+        'lastCheckedUpdates': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error setting lastCheckedUpdates: $e');
+    }
+  }
 
 Stream<List<Map<String, String>>> _getUpdates() {
   return _firestore
       .collection('reader')
       .doc(widget.currentUserId)
-      .snapshots() // Listen to changes in the reader's document
-      .asyncMap((readerSnapshot) async {
-    // Safely get reader data
-    if (!readerSnapshot.exists) {
-      return [];
-    }
+      .snapshots()
+      .asyncExpand((readerSnapshot) {
+    List<String> hiddenUpdates = List<String>.from(
+      readerSnapshot.data()?['hiddenUpdates'] ?? [],
+    );
 
-    Map<String, dynamic> readerData = readerSnapshot.data() as Map<String, dynamic>;
-    List<String> hiddenUpdates = List<String>.from(readerData['hiddenUpdates'] ?? []);
-
-    // Fetch the user's clubs
-    QuerySnapshot clubSnapshot = await _firestore
-        .collection('clubs')
+    return _firestore
+        .collection('updates')
         .where('ownerID', isEqualTo: widget.currentUserId)
-        .get();
+        .where('hidden', isEqualTo: false)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .asyncMap((updatesSnapshot) async {
+      List<Map<String, String>> updatesList = [];
 
-    List<Map<String, String>> updates = [];
+      for (var doc in updatesSnapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        String clubID = data['clubID'] ?? '';
+        String updateID = doc.id;
 
-    for (var clubDoc in clubSnapshot.docs) {
-      String clubName = clubDoc['name'] ?? 'Unknown Club';
-      var membersSnapshot = await clubDoc.reference.collection('members').get();
+        // Skip hidden updates
+        if (hiddenUpdates.contains('$clubID|$updateID')) {
+          continue;
+        }
 
-      for (var doc in membersSnapshot.docs) {
-        if (doc.id == widget.currentUserId) continue; // Skip the owner
+        // Fetch the club name using clubID
+        String clubName = '';
+        if (clubID.isNotEmpty) {
+          var clubDoc = await _firestore.collection('clubs').doc(clubID).get();
+          clubName = clubDoc.data()?['name'] ?? 'Unknown Club';
+        }
 
-        String updateKey = '${clubDoc.id}|${doc.id}';
+        // Modify the message to include the club name
+        String message = (data['message'] ?? 'No message').toString();
+        if (clubName.isNotEmpty) {
+          message = '$message : "$clubName"';
+        }
 
-        if (hiddenUpdates.contains(updateKey)) continue;
-
-        updates.add({
-          'message': '${doc['username'] ?? 'Unknown'} joined your club: $clubName',
-          'timestamp': (doc['joinedAt'] as Timestamp?) != null
-              ? DateFormat('yyyy-MM-dd HH:mm:ss').format((doc['joinedAt'] as Timestamp).toDate())
+        updatesList.add({
+          'message': message,
+          'timestamp': (data['timestamp'] as Timestamp?) != null
+              ? DateFormat('yyyy-MM-dd HH:mm:ss')
+                  .format((data['timestamp'] as Timestamp).toDate())
               : 'No date available',
-          'updateID': doc.id,
-          'clubID': clubDoc.id,
+          'updateID': updateID,
+          'clubID': clubID,
         });
       }
-    }
-
-    return updates;
+      return updatesList;
+    });
   });
 }
 
 
 
+
   Future<void> _removeUpdate(String clubID, String memberID) async {
-    try {
-      DocumentReference readerDoc =
-          _firestore.collection('reader').doc(widget.currentUserId);
-
-      await readerDoc.update({
-        'hiddenUpdates': FieldValue.arrayUnion(['$clubID|$memberID']),
-      });
-
-      setState(() {
-        deletedUpdateIds
-            .add('$clubID|$memberID'); // Track removed updates in UI
-      });
-
-      _showConfirmationMessage('Update');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error removing update: $e')),
-      );
-    }
-  }
-
-Future<void> _clearAllUpdates() async {
   try {
-    DocumentReference readerDoc = _firestore.collection('reader').doc(widget.currentUserId);
+    DocumentReference readerDoc =
+        _firestore.collection('reader').doc(widget.currentUserId);
+
+    // Update Firestore
+    await readerDoc.update({
+      'hiddenUpdates': FieldValue.arrayUnion(['$clubID|$memberID']),
+    });
+
+    // Update UI immediately
+    setState(() {
+      deletedUpdateIds.add('$clubID|$memberID');
+    });
+
+    _showConfirmationMessage('Update');
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error removing update: $e')),
+    );
+  }
+}
+
+  Future<void> _clearAllUpdates() async {
+  try {
+    DocumentReference readerDoc =
+        _firestore.collection('reader').doc(widget.currentUserId);
 
     // Get all update keys for this user and add them to the hiddenUpdates array
-    List<Map<String, String>> updates = await _getUpdates().first;
-    List<String> allUpdateKeys = updates.map((update) => '${update['clubID']}|${update['updateID']}').toList();
+    List<Map<String, String>> updates = await _getUpdates().first; // Fetch the current updates
+    List<String> allUpdateKeys = updates
+        .map((update) => '${update['clubID']}|${update['updateID']}')
+        .toList();
 
-    await readerDoc.update({
-      'hiddenUpdates': FieldValue.arrayUnion(allUpdateKeys), // Add all updates to hiddenUpdates
-    });
+    if (allUpdateKeys.isNotEmpty) {
+      // Update Firestore
+      await readerDoc.update({
+        'hiddenUpdates': FieldValue.arrayUnion(allUpdateKeys),
+      });
 
-    setState(() {
-      deletedUpdateIds.addAll(allUpdateKeys); // Update local state to reflect the cleared updates
-    });
+      // Update the UI immediately
+      setState(() {
+        deletedUpdateIds.addAll(allUpdateKeys);
+      });
 
-    _showConfirmationMessage('All updates');
+      _showConfirmationMessage('All Updates');
+    } 
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error clearing updates: $e')),
     );
   }
 }
-
 
 
   void _showRemoveUpdateConfirmation(String clubID, String memberID) {
@@ -359,56 +376,71 @@ Future<void> _clearAllUpdates() async {
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(
-            0xFFF8F5F0), // Optional: Customize AppBar background color
+        backgroundColor: const Color(0xFFF8F5F0),
         actions: [
-          IconButton(
-            icon: Icon(
-              Icons.clear_all,
-              color: Color(0xFF4A2E2A), // Set color for the icon
-            ),
-            onPressed: _showClearAllUpdatesConfirmation,
+          // Only show the "Clear All" button if there are updates
+          StreamBuilder<List<Map<String, String>>>(
+            stream: _getUpdates(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox
+                    .shrink(); // Return an empty widget while waiting
+              }
+
+              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                return IconButton(
+                  icon: Icon(
+                    Icons.clear_all,
+                    color: Color(0xFF4A2E2A),
+                  ),
+                  onPressed: _showClearAllUpdatesConfirmation,
+                );
+              } else {
+                return SizedBox
+                    .shrink(); // Hide the button if there are no updates
+              }
+            },
           ),
         ],
       ),
       body: StreamBuilder<List<Map<String, String>>>(
-  stream: _getUpdates(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
-    }
+        stream: _getUpdates(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-    if (snapshot.hasError) {
-      // Handle specific errors here (e.g., null field, empty list)
-      return Center(child: Text("Error loading updates: ${snapshot.error}"));
-    }
+          if (snapshot.hasError) {
+            return Center(
+                child: Text("Error loading updates: ${snapshot.error}"));
+          }
 
-    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-      return Center(child: Text("No updates to display."));
-    }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text("No updates to display."));
+          }
 
-    List<Map<String, String>> updates = snapshot.data!;
+          List<Map<String, String>> updates = snapshot.data!;
 
-    return ListView.builder(
-      itemCount: updates.length,
-      itemBuilder: (context, index) {
-        var update = updates[index];
-        return Card(
-          child: ListTile(
-            leading: Icon(Icons.notifications, color: Color(0xFFF790AD)),
-            title: Text(update['message']!),
-            subtitle: Text(update['timestamp']!),
-            trailing: IconButton(
-              icon: Icon(Icons.remove_circle, color: Colors.red),
-              onPressed: () => _showRemoveUpdateConfirmation(update['clubID']!, update['updateID']!),
-            ),
-          ),
-        );
-      },
-    );
-  },
-),
-
+          return ListView.builder(
+            itemCount: updates.length,
+            itemBuilder: (context, index) {
+              var update = updates[index];
+              return Card(
+                child: ListTile(
+                  leading: Icon(Icons.notifications, color: Color(0xFFF790AD)),
+                  title: Text(update['message']!),
+                  subtitle: Text(update['timestamp']!),
+                  trailing: IconButton(
+                    icon: Icon(Icons.remove_circle, color: Colors.red),
+                    onPressed: () => _showRemoveUpdateConfirmation(
+                        update['clubID']!, update['updateID']!),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
-} 
+}

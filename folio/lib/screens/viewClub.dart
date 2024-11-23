@@ -69,6 +69,8 @@ class _ViewClubState extends State<ViewClub> {
   String _clubOwnerProfilePhoto = '';
   String _language = '';
   final User? currentUser = FirebaseAuth.instance.currentUser;
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance; // Firestore initialization
+
 
   @override
   void initState() {
@@ -536,89 +538,100 @@ class _ViewClubState extends State<ViewClub> {
     });
   }
 
-  Future<void> _joinClub() async {
-    try {
-      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+Future<void> _createUpdate(String clubID, String memberID, String username) async {
+  try {
+    // Fetch the club document to get the owner's ID
+    DocumentSnapshot clubDoc = await _firestore.collection('clubs').doc(clubID).get();
+    if (clubDoc.exists) {
+      String ownerID = clubDoc['ownerID'];
 
-      // Reference to the club's members subcollection
-      var clubRef =
-          FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
+      // Add the update to Firestore with the ownerID
+      await _firestore.collection('updates').add({
+        'clubID': clubID,
+        'memberID': memberID,
+        'ownerID': ownerID, // Add the owner's ID
+        'message': '$username joined your club', // Custom message
+        'timestamp': FieldValue.serverTimestamp(), // Timestamp of the event
+        'hidden': false, // Initially visible, can be hidden later
+      });
+    }
+  } catch (e) {
+    print('Error creating update: $e');
+  }
+}
 
-      // Check the club data
-      var clubData = await clubRef.get();
-      String ownerID = clubData['ownerID'];
+Future<void> _joinClub() async {
+  try {
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-      // Add the owner to the members subcollection if not already present
-      var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
-      if (!ownerDoc.exists) {
-        var ownerData = await FirebaseFirestore.instance
-            .collection('reader')
-            .doc(ownerID)
-            .get();
-        if (ownerData.exists) {
-          String ownerName = ownerData['name'] ?? 'No Name';
-          String ownerUsername = ownerData['username'] ?? 'No Username';
-          String ownerProfilePhoto = ownerData['profilePhoto'] ??
-              'assets/profile_pic.png'; // Default profile picture
+    // Reference to the club's members subcollection
+    var clubRef = FirebaseFirestore.instance.collection('clubs').doc(widget.clubId);
 
-          // Add the owner to the members subcollection
-          await clubRef.collection('members').doc(ownerID).set({
-            'joinedAt': FieldValue.serverTimestamp(),
-            'name': ownerName,
-            'username': ownerUsername,
-            'profilePhoto': ownerProfilePhoto,
-          });
-        }
-      }
+    // Check the club data
+    var clubData = await clubRef.get();
+    String ownerID = clubData['ownerID'];
 
-      // Fetch the current user's profile data
-      var userDoc = await FirebaseFirestore.instance
+    // Add the owner to the members subcollection if not already present
+    var ownerDoc = await clubRef.collection('members').doc(ownerID).get();
+    if (!ownerDoc.exists) {
+      var ownerData = await FirebaseFirestore.instance
           .collection('reader')
-          .doc(currentUserId)
+          .doc(ownerID)
           .get();
-
-      if (userDoc.exists) {
-        var userData = userDoc.data()!;
-        String name = userData['name'] ?? 'No Name';
-        String username = userData['username'] ?? 'No Username';
-        String profilePhoto = userData['profilePhoto'] ??
+      if (ownerData.exists) {
+        String ownerName = ownerData['name'] ?? 'No Name';
+        String ownerUsername = ownerData['username'] ?? 'No Username';
+        String ownerProfilePhoto = ownerData['profilePhoto'] ??
             'assets/profile_pic.png'; // Default profile picture
 
-        // Add the current user as a member with additional information
-        await clubRef.collection('members').doc(currentUserId).set({
+        // Add the owner to the members subcollection
+        await clubRef.collection('members').doc(ownerID).set({
           'joinedAt': FieldValue.serverTimestamp(),
-          'name': name,
-          'username': username,
-          'profilePhoto': profilePhoto,
+          'name': ownerName,
+          'username': ownerUsername,
+          'profilePhoto': ownerProfilePhoto,
         });
       }
+    }
 
-      setState(() {
-        _isMember = true;
-        log("mem");
+    // Fetch the current user's profile data
+    var userDoc = await FirebaseFirestore.instance
+        .collection('reader')
+        .doc(currentUserId)
+        .get();
+
+    if (userDoc.exists) {
+      var userData = userDoc.data()!;
+      String name = userData['name'] ?? 'No Name';
+      String username = userData['username'] ?? 'No Username';
+      String profilePhoto = userData['profilePhoto'] ??
+          'assets/profile_pic.png'; // Default profile picture
+
+      // Add the current user as a member with additional information
+      await clubRef.collection('members').doc(currentUserId).set({
+        'joinedAt': FieldValue.serverTimestamp(),
+        'name': name,
+        'username': username,
+        'profilePhoto': profilePhoto,
       });
 
-      // Ensure the notification is scheduled only if the discussion date is valid
-      // if (_discussionDate != null &&
-      //     _isDiscussionScheduled &&
-      //     DateTime.now().isBefore(_discussionDate!.toLocal())) {
-      //   LocalNotificationService.showScheduledNotification(
-      //     id: widget.clubId.hashCode, // Unique ID for the club notification
-      //     title: '$_name Discussion Starts', // Club name as the title
-      //     body:
-      //         '$_clubOwnerName invites you to join a meeting.', // Owner name as the body
-      //     scheduledTime: _discussionDate!,
-      //   );
-      //   log("Notification scheduled for $_discussionDate");
-      // }
-    } catch (e) {
-      print('Error joining club: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Failed to join the club. Please try again.')),
-      );
+      // After successfully adding the member, create an update
+      await _createUpdate(widget.clubId, currentUserId, username);
     }
+
+    setState(() {
+      _isMember = true;
+      log("Member joined club");
+    });
+
+  } catch (e) {
+    print('Error joining club: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Failed to join the club. Please try again.')),
+    );
   }
+}
 
   Future<void> _leaveClub() async {
     try {
