@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:folio/screens/SelectBookPage.dart';
 import 'package:folio/screens/viewClub.dart';
-import 'package:folio/services/local.notifications.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CreateClubPage extends StatefulWidget {
@@ -130,11 +129,13 @@ class _CreateClubPageState extends State<CreateClubPage> {
   }
 
   Future<void> _createClub() async {
-    // Check if the club name is empty or contains only whitespace
-    if (_clubNameController.text.trim().isEmpty) {
+    // Validate club name
+    String clubName = _clubNameController.text.trim();
+    if (clubName.isEmpty) {
       setState(() {
         _errorMessage = 'Please enter a club name.';
       });
+      log('Error: Club name is empty.');
       return;
     }
 
@@ -145,8 +146,11 @@ class _CreateClubPageState extends State<CreateClubPage> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated.');
+      }
 
-      // Upload the club picture if available
+      // Upload club picture if available
       if (_clubImageFile != null) {
         final ref = _storage
             .ref()
@@ -154,112 +158,55 @@ class _CreateClubPageState extends State<CreateClubPage> {
             .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
         await ref.putFile(_clubImageFile!);
         _clubImageUrl = await ref.getDownloadURL();
+        log('Club picture uploaded: $_clubImageUrl');
       }
 
-      if (user != null) {
-        // Create the club and get the DocumentReference
-        DocumentReference clubRef = await _firestore.collection('clubs').add({
-          'name': _clubNameController.text.trim(),
-          'description': _descriptionController.text.trim(),
-          'language': _selectedLanguage ?? '',
-          'currentBookID': _selectedBookId ?? '', // Store book ID
-          'ownerID': user.uid,
-          'picture': _clubImageUrl ?? null, // Club picture URL
-          if (_selectedBookId != null && _discussionDate != null)
-            'discussionDate': _discussionDate,
-          'members': [user.uid], // Add the owner as the initial member
-        });
+      // Prepare club data
+      Map<String, dynamic> clubData = {
+        'name': clubName,
+        'description': _descriptionController.text.trim(),
+        'language': _selectedLanguage ?? '',
+        'currentBookID': _selectedBookId ?? '', // Store book ID
+        'ownerID': user.uid,
+        'picture': _clubImageUrl ?? null,
+        'members': [user.uid], // Add the owner as the initial member
+      };
 
-        // Log club creation
-        log('Club created with ID: ${clubRef.id}');
-        log('Owner ID: ${user.uid}');
-        log('Discussion Date: ${_discussionDate?.toDate().toString()}');
+      if (_discussionDate != null) {
+        clubData['discussionDate'] = _discussionDate;
+      }
 
-        if (_discussionDate != null) {
-          // Notify the owner
-          log('Sending notification to owner...');
-          LocalNotificationService.showScheduledNotification(
-            id: clubRef.id.hashCode, // Unique ID for the owner notification
-            title: 'Discussion Stats for Club "${_clubNameController.text}"',
-            body: 'Join the discussion now to be part of the conversation ',
-            scheduledTime: _discussionDate!.toDate(),
-          );
-          log('Notification sent to owner: ${user.uid}');
-        }
+      // Add club to Firestore
+      DocumentReference clubRef =
+          await _firestore.collection('clubs').add(clubData);
+      log('Club created with ID: ${clubRef.id}');
 
-        // Fetch the updated club document to get the members
-        DocumentSnapshot clubSnapshot =
-            await _firestore.collection('clubs').doc(clubRef.id).get();
+      // Log additional info
+      log('Owner ID: ${user.uid}');
+      if (_discussionDate != null) {
+        log('Discussion Date: ${_discussionDate!.toDate()}');
+      }
 
-        if (clubSnapshot.exists && clubSnapshot.data() != null) {
-          // Extract the members list
-          List<String> allMembers = List<String>.from(clubSnapshot['members']);
-          log('All members fetched from Firestore: $allMembers');
+      // Navigate to the View Club page
+      _showConfirmationMessage();
 
-          // Separate owner and members
-          String ownerID = clubSnapshot['ownerID'];
-          List<String> members =
-              allMembers.where((memberId) => memberId != ownerID).toList();
-          log('Owner ID: $ownerID');
-          log('Filtered members (excluding owner): $members');
-
-          // Check if the logged-in user is the owner
-          if (user.uid == ownerID) {
-            log('You are the owner of the club!');
-          } else {
-            log('You are a member of the club.');
-          }
-
-          // Notify each member
-          for (var memberId in members) {
-            log('Sending notification to member: $memberId');
-            LocalNotificationService.showScheduledNotification(
-              id: clubRef.id.hashCode +
-                  memberId.hashCode, // Unique ID per member
-              title: 'Discussion Stats for Club "${_clubNameController.text}"',
-              body: 'Join the discussion now to be part of the conversation ',
-              scheduledTime: _discussionDate!.toDate(),
-            );
-            log('Notification sent to member: $memberId');
-          }
-        } else {
-          log('Error: Club document not found or data is null');
-        }
-
-        // Show success message
-        _showConfirmationMessage();
-
-        // Delay the navigation to allow the confirmation message to be displayed
-        await Future.delayed(const Duration(seconds: 2)); // 2-second delay
-
-        // Navigate to the View Club page, passing the club ID
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ViewClub(
-              clubId: clubRef.id,
-              fromCreate: true,
-            ),
+      await Future.delayed(
+          const Duration(seconds: 2)); // Show confirmation message
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewClub(
+            clubId: clubRef.id,
+            fromCreate: true,
           ),
-        );
+        ),
+      );
 
-        // Clear the form
-        _clubNameController.clear();
-        _descriptionController.clear();
-        _currentBookController.clear();
-
-        setState(() {
-          _discussionDate = null;
-          _clubImageFile = null;
-          _currentImage = const AssetImage(
-              'assets/images/clubs.jpg'); // Revert to default image
-          _selectedLanguage = null;
-          _selectedBookId = null; // Clear the selected book ID
-          _bookCover = null; // Clear the book cover URL
-          _bookAuthor = null; // Clear the author name
-        });
-      }
-    } catch (e) {
+      // Clear the form
+      _resetForm();
+    } catch (e, stackTrace) {
+      log('Error creating club: $e');
+      log('Stack Trace: $stackTrace');
       setState(() {
         _errorMessage = "Error creating club: $e";
       });
@@ -268,6 +215,22 @@ class _CreateClubPageState extends State<CreateClubPage> {
         _isLoading = false;
       });
     }
+  }
+
+  void _resetForm() {
+    _clubNameController.clear();
+    _descriptionController.clear();
+    _currentBookController.clear();
+
+    setState(() {
+      _discussionDate = null;
+      _clubImageFile = null;
+      _currentImage = const AssetImage('assets/images/clubs.jpg');
+      _selectedLanguage = null;
+      _selectedBookId = null;
+      _bookCover = null;
+      _bookAuthor = null;
+    });
   }
 
   void _showCreateClubConfirmation() {
@@ -404,14 +367,20 @@ class _CreateClubPageState extends State<CreateClubPage> {
       lastDate: DateTime(2100),
     );
 
-    if (selectedDate == null) return; // User canceled the date picker
+    if (selectedDate == null) {
+      log('Date picker canceled.');
+      return; // User canceled the date picker
+    }
 
     TimeOfDay? selectedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
 
-    if (selectedTime == null) return; // User canceled the time picker
+    if (selectedTime == null) {
+      log('Time picker canceled.');
+      return; // User canceled the time picker
+    }
 
     DateTime fullDateTime = DateTime(
       selectedDate.year,
@@ -421,37 +390,39 @@ class _CreateClubPageState extends State<CreateClubPage> {
       selectedTime.minute,
     );
 
+    log('Selected discussion date and time: $fullDateTime');
+
     if (fullDateTime.isBefore(DateTime.now())) {
       setState(() {
         _errorMessage = 'You cannot select a past time.';
       });
+      log('Error: Selected a past date and time.');
     } else {
       setState(() {
         _discussionDate = Timestamp.fromDate(fullDateTime);
+        _errorMessage = null; // Clear any previous error
       });
-
-      // Call the method to schedule the notification after the date is picked
-      _scheduleDiscussionNotification();
+      log('Discussion date set successfully.');
     }
   }
 
-  void _scheduleDiscussionNotification() {
-    if (_discussionDate != null) {
-      // Generate a unique ID using DateTime or any other unique logic
-      int clubNotificationId = DateTime.now().millisecondsSinceEpoch;
+  // void _scheduleDiscussionNotification() {
+  //   if (_discussionDate != null) {
+  //     // Generate a unique ID using DateTime or any other unique logic
+  //     int clubNotificationId = DateTime.now().millisecondsSinceEpoch;
 
-      // Corrected Notification for the owner
-      LocalNotificationService.showScheduledNotification(
-        id: clubNotificationId, // Use generated unique ID
-        title:
-            'Discussion Time for ${_clubNameController.text}', // Access the club name
-        body: 'Discussion Time starts, Join now to lead the conversation!',
-        scheduledTime: _discussionDate!
-            .toDate(), // Ensure correct conversion from Timestamp
-      );
-      print("Notification scheduled for discussion time!");
-    }
-  }
+  //     // Corrected Notification for the owner
+  //     LocalNotificationService.showScheduledNotification(
+  //       id: clubNotificationId, // Use generated unique ID
+  //       title:
+  //           'Discussion Time for ${_clubNameController.text}', // Access the club name
+  //       body: 'Discussion Time starts, Join now to lead the conversation!',
+  //       scheduledTime: _discussionDate!
+  //           .toDate(), // Ensure correct conversion from Timestamp
+  //     );
+  //     print("Notification scheduled for discussion time!");
+  //   }
+  // }
 
   // Format Firestore timestamp to readable date
   String _formatTimestamp(Timestamp timestamp) {
@@ -460,7 +431,6 @@ class _CreateClubPageState extends State<CreateClubPage> {
         '${_twoDigits(date.hour)}:${_twoDigits(date.minute)}';
   }
 
-  // Helper function to ensure two digits
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
 
   @override

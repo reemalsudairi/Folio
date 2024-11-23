@@ -76,4 +76,15 @@ class LocalNotificationService {
       androidScheduleMode: AndroidScheduleMode.exact,
     );
   }
+//   static Future<void> enableNotifications() async {
+//     // Initialize notifications or reschedule previously canceled ones
+//     log('Notifications enabled via LocalNotificationService.');
+//   }
+
+//   static Future<void> disableNotifications() async {
+//   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+//       FlutterLocalNotificationsPlugin();
+//   await flutterLocalNotificationsPlugin.cancelAll();
+//   log('All notifications have been canceled.');
+// }
 }

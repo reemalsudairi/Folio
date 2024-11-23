@@ -1,8 +1,11 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/firebase_options.dart';
 import 'package:folio/screens/splash.dart';
+import 'package:folio/services/ClubListener.dart';
 import 'package:folio/services/local.notifications.dart';
 
 void main() async {
@@ -14,8 +17,14 @@ void main() async {
   //  tz.initializeTimeZones();
   await LocalNotificationService.init();
   // await requestNotificationPermission();
+  // Start listening for club updates
+//  _clubListener = ClubListener();
+//   log('listen');
 
   runApp(const MyApp());
+  // Start listening for club updates
+  // ClubListener().listenForClubUpdates();
+  // log('listen');
 }
 
 class MyApp extends StatefulWidget {
@@ -27,11 +36,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   User? user;
-
+  late ClubListener _clubListener;
   @override
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
+    _clubListener = ClubListener();
+    log('listen m');
   }
 
   @override
