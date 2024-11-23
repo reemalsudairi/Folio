@@ -70,7 +70,8 @@ void _showReportDialog(String reviewId) async {
 
   // Proceed with showing the reporting dialog
   List<bool> selectedReasons = List.generate(reasons.length, (index) => false);
-  bool showError = false;
+  bool showError = false; // Track if no reason is selected
+  bool showOtherError = false; // Track if the "Other" field is empty
   String customReason = ''; // Variable to hold the custom reason
   bool isOtherSelected = false; // Track if "Other" is selected
 
@@ -113,6 +114,10 @@ void _showReportDialog(String reviewId) async {
                                 showError = false; // Clear error when a reason is selected
                                 if (reasons[index] == 'Other') {
                                   isOtherSelected = selectedReasons[index];
+                                  if (!isOtherSelected) {
+                                    customReason = ''; // Clear custom reason if "Other" is deselected
+                                    showOtherError = false; // Clear error for "Other"
+                                  }
                                 }
                               });
                             },
@@ -139,10 +144,14 @@ void _showReportDialog(String reviewId) async {
                   TextField(
                     onChanged: (value) {
                       customReason = value; // Update the custom reason as the user types
+                      setDialogState(() {
+                        showOtherError = false; // Clear error when user types
+                      });
                     },
                     decoration: InputDecoration(
                       hintText: 'Please specify...',
                       border: OutlineInputBorder(),
+                      errorText: showOtherError ? 'This field cannot be empty' : null, // Show error message
                     ),
                   ),
                 const SizedBox(height: 20),
@@ -154,70 +163,65 @@ void _showReportDialog(String reviewId) async {
               ],
             ),
             actions: [
-  Center(
-    child: Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          ElevatedButton(
-            onPressed: () {
-              bool isAnySelected = selectedReasons.contains(true);
-              if (isAnySelected) {
-                // If "Other" is selected, add the custom reason
-                if (isOtherSelected && customReason.isNotEmpty) {
-                  selectedReasons[reasons.length - 1] = true; // Assuming "Other" is the last item
-                }
-                _submitReport(selectedReasons, reviewId, reviewWriterId, customReason); // Pass custom reason
-                Navigator.of(context).pop(); // Close the dialog
-              } else {
-                setDialogState(() {
-                  showError = true; // Display error message if no reason is selected
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF790AD),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          bool isAnySelected = selectedReasons.contains(true);
+                          if (isAnySelected) {
+                            // If "Other" is selected, check if the custom reason is empty
+                            if (isOtherSelected && customReason.isEmpty) {
+                              setDialogState(() {
+                                showOtherError = true; // Show error if "Other" is selected but empty
+                              });
+                            } else {
+                              // Call the submit report method
+                              _submitReport(selectedReasons, reviewId, reviewWriterId, customReason);
+                              Navigator.of(context).pop(); // Close the dialog
+                            }
+                          } else {
+                            setDialogState(() {
+                              showError = true; // Display error message if no reason is selected
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF790AD),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          'Submit',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Close the dialog
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[300],
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontSize: 18, color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            child: const Text(
-              'Submit',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Set text color to white
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 255, 255, 255), // Set text color to black
-              ),
-            ),
-          ),
-        ],
-       
-      ),
-    ),
-  ),
-],
+            ],
           );
         },
       );
