@@ -88,7 +88,7 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
   // تنفيذ استعلام لكل لغة
   for (String lang in selectedLanguages) {
     String url =
-        "https://www.googleapis.com/books/v1/volumes?q=$genreQuery&langRestrict=$lang&maxResults=20&orderBy=newest";
+        "https://www.googleapis.com/books/v1/volumes?q=$genreQuery&langRestrict=$lang&maxResults=10&orderBy=newest";
 
     debugPrint("API Request URL: $url");
 
@@ -145,6 +145,8 @@ Future<List<Map<String, dynamic>>> fetchBooksFromAPI() async {
   finalBooks = finalBooks.toSet().toList();
 
   debugPrint("Final merged books count: ${finalBooks.length}");
+  
+
   return finalBooks;
 }
 
