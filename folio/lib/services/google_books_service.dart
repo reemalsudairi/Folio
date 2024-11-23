@@ -1,29 +1,43 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
 
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
-final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
+  final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
   final String apiKey2 = 'AIzaSyA_g6ljLsAnGo_mM6ufkasr_KESLvSWils';
 
   // Fetch the top 30 best-selling books (or highly relevant books)
-  Future<List<dynamic>> fetchBestSellingBooks() async {
-    List<dynamic> bestSellingBooks = [];
+  // Fetch books sorted by the most recent published date
+  Future<List<dynamic>> fetchBooksByRecentPublication() async {
+    List<dynamic> recentBooks = [];
     int maxResults = 30; // Fetch the top 30 books
 
     final Uri url = Uri.parse(
-        '$_baseUrl?q=best+seller&orderBy=relevance&maxResults=$maxResults&key=$apiKey1');
-    final response = await http.get(url);
+        'https://www.googleapis.com/books/v1/volumes?q=books&orderBy=newest&maxResults=$maxResults&key=$apiKey1');
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      bestSellingBooks = data['items'] ?? [];
-    } else {
-      throw Exception('Failed to load best-selling books');
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data.containsKey('items')) {
+          recentBooks = data['items'];
+        } else {
+          throw Exception('No items found in the response.');
+        }
+      } else {
+        print('HTTP Error: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+        throw Exception(
+            'Failed to load books sorted by recent publication. HTTP Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: ${e.toString()}');
+      throw Exception('Error fetching books by recent publication: $e');
     }
 
-    return bestSellingBooks;
+    return recentBooks;
   }
 
   // Get details of a specific book by its ID
@@ -55,42 +69,42 @@ final String apiKey1 = 'AIzaSyDEtX1xEizreYZkdFQtltWBm3z6KViocbI';
     return _processBooks(allBooks, query);
   }
 
- // Fetch books from the API in a specific language with API key fallback
-Future<List<dynamic>> _fetchBooks(String query, String language) async {
-  List<dynamic> books = [];
-  int maxResultsPerRequest = 40;
-  int totalResultsToFetch = 100;
-  int startIndex = 0;
-  String currentKey = apiKey1; // Start with the first key
+  // Fetch books from the API in a specific language with API key fallback
+  Future<List<dynamic>> _fetchBooks(String query, String language) async {
+    List<dynamic> books = [];
+    int maxResultsPerRequest = 40;
+    int totalResultsToFetch = 100;
+    int startIndex = 0;
+    String currentKey = apiKey1; // Start with the first key
 
-  while (books.length < totalResultsToFetch) {
-    try {
-      final Uri url = Uri.parse(
-          '$_baseUrl?q=$query&langRestrict=$language&orderBy=newest&startIndex=$startIndex&maxResults=$maxResultsPerRequest&key=$currentKey');
-      final response = await http.get(url);
+    while (books.length < totalResultsToFetch) {
+      try {
+        final Uri url = Uri.parse(
+            '$_baseUrl?q=$query&langRestrict=$language&orderBy=newest&startIndex=$startIndex&maxResults=$maxResultsPerRequest&key=$currentKey');
+        final response = await http.get(url);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        List<dynamic> fetchedBooks = data['items'] ?? [];
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          List<dynamic> fetchedBooks = data['items'] ?? [];
 
-        if (fetchedBooks.isEmpty) break;
+          if (fetchedBooks.isEmpty) break;
 
-        books.addAll(fetchedBooks);
-        startIndex += maxResultsPerRequest;
-      } else if (response.statusCode == 403) {
-        // Switch to the second API key if quota is exceeded
-        currentKey = currentKey == apiKey1 ? apiKey2 : apiKey1;
-        continue; // Retry the request with the new key
-      } else {
-        throw Exception('Failed to load books: ${response.statusCode}');
+          books.addAll(fetchedBooks);
+          startIndex += maxResultsPerRequest;
+        } else if (response.statusCode == 403) {
+          // Switch to the second API key if quota is exceeded
+          currentKey = currentKey == apiKey1 ? apiKey2 : apiKey1;
+          continue; // Retry the request with the new key
+        } else {
+          throw Exception('Failed to load books: ${response.statusCode}');
+        }
+      } catch (e) {
+        throw Exception('Error fetching books: $e');
       }
-    } catch (e) {
-      throw Exception('Error fetching books: $e');
     }
-  }
 
-  return books;
-}
+    return books;
+  }
 
   // Process books and filter them based on excluded keywords, duplicates, etc.
   List<dynamic> _processBooks(List<dynamic> books, String searchTerm) {
@@ -113,20 +127,20 @@ Future<List<dynamic>> _fetchBooks(String query, String language) async {
       List<dynamic> categories = book['volumeInfo']['categories'] ?? [];
 
       // Exclude books with explicit content or certain keywords
-     List<String> excludedKeywords = [
-          'erotic',
-          'lgbt',
-          'gay',
-          'adult',
-          'explicit',
-          'israel',
-          'judaism',
-          'jewish',
-          'zionism',
-          'porn',
-          'sex',
-          'xxx'
-        ];
+      List<String> excludedKeywords = [
+        'erotic',
+        'lgbt',
+        'gay',
+        'adult',
+        'explicit',
+        'israel',
+        'judaism',
+        'jewish',
+        'zionism',
+        'porn',
+        'sex',
+        'xxx'
+      ];
 
       if (maturityRating == 'MATURE' ||
           containsExcludedKeyword(description, categories, excludedKeywords)) {
@@ -200,6 +214,4 @@ Future<List<dynamic>> _fetchBooks(String query, String language) async {
       {'category': 'Fantasy', 'image': 'assets/images/wolf.png'},
     ];
   }
-
-  
 }

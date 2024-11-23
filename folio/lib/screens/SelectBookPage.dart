@@ -35,7 +35,7 @@ class _SelectBookPageState extends State<SelectBookPage> {
   // Function to load 30 best-selling books from Google Books API
   void _loadBestSellingBooks() async {
     try {
-      final books = await _googleBooksService.fetchBestSellingBooks();
+      final books = await _googleBooksService.fetchBooksByRecentPublication();
       if (books.isEmpty) {
         setState(() => _errorMessage = "No books found.");
       } else {
@@ -147,7 +147,7 @@ class _SelectBookPageState extends State<SelectBookPage> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Bestsellers",
+                  "Newest Books",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
