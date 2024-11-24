@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:folio/screens/first.page.dart'; // Import the WelcomePage
+import 'package:folio/services/ClubListener.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
 
 class SettingsPage extends StatefulWidget {
@@ -12,94 +16,150 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final bool _notificationOn = true;
+  bool _notificationsEnabled = true; // Default state for notifications
+  final ClubListener _clubListener = ClubListener();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationStatus(); // Load the saved notification status
+  }
+
+  // Function to load the notification status from SharedPreferences
+  Future<void> _loadNotificationStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notificationsEnabled') ??
+          true; // Default to true if not set
+    });
+  }
+
+  // Toggle the notification status
+  // Toggle the notification status
+  void _toggleNotifications(bool value) async {
+    try {
+      // Update the notification state in SharedPreferences
+      await _saveNotificationStatus(value);
+
+      // Update the notification state in ClubListener
+      _clubListener.toggleNotifications(value);
+
+      // Update the UI state
+      setState(() {
+        _notificationsEnabled = value;
+      });
+
+      if (!value) {
+        // Cancel all scheduled notifications and stop the timer
+        _clubListener.cancelAllNotifications();
+      }
+    } catch (e) {
+      log('Error toggling notifications: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update notifications: $e')),
+      );
+    }
+  }
+
+  // Save the notification status to SharedPreferences
+  Future<void> _saveNotificationStatus(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notificationsEnabled', value);
+  }
 
   // Function to show the sign-out confirmation dialog
- // Function to show the sign-out confirmation dialog
-void _showSignOutConfirmationDialog() {
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Disable dismissal by clicking outside
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.exit_to_app, // Icon for sign out
-              color: Colors.white,
-              size: 40,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Are you sure you want to sign out?',
-              style: const TextStyle(
+  // Function to show the sign-out confirmation dialog
+  void _showSignOutConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD)
+                .withOpacity(0.9), // Pinkish background with opacity
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.exit_to_app, // Icon for sign out
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                size: 40,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 131, 201, 133), // Green for sign out
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    minimumSize: const Size(100, 40), // Set button width and height
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                    _signOut(); // Call the sign-out function
-                  },
-                  child: const Text(
-                    'Yes',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              const SizedBox(height: 10),
+              Text(
+                'Are you sure you want to sign out?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
-                const SizedBox(width: 12), // Space between buttons
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Center the buttons
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 131, 201, 133), // Green for sign out
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
                     ),
-                    minimumSize: const Size(100, 40), // Set button width and height
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog without action
-                  },
-                  child: const Text(
-                    'No',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                      _signOut(); // Call the sign-out function
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 12), // Space between buttons
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 160, 160, 160), // Grey for "No" button
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
+                    ),
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(); // Close the dialog without action
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Function to sign out the user
   Future<void> _signOut() async {
@@ -124,89 +184,96 @@ void _showSignOutConfirmationDialog() {
 
   // Function to show the delete account confirmation dialog
   void _showDeleteAccountConfirmationDialog() {
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Disable dismissal by clicking outside
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF790AD).withOpacity(0.9), // Pinkish background with opacity
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.delete_forever, // Icon for delete account
-              color: Colors.white,
-              size: 40,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Are you sure you want to delete your account? This action cannot be undone.',
-              style: const TextStyle(
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Disable dismissal by clicking outside
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF790AD)
+                .withOpacity(0.9), // Pinkish background with opacity
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.delete_forever, // Icon for delete account
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                size: 40,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 245, 114, 105), // Red for delete account
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    minimumSize: const Size(100, 40), // Set button width and height
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                    _deleteAccount(); // Call the delete account function
-                  },
-                  child: const Text(
-                    'Yes',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              const SizedBox(height: 10),
+              Text(
+                'Are you sure you want to delete your account? This action cannot be undone.',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
-                const SizedBox(width: 12), // Space between buttons
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 160, 160, 160), // Grey for "No" button
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Center the buttons
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 245, 114, 105), // Red for delete account
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
                     ),
-                    minimumSize: const Size(100, 40), // Set button width and height
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog without action
-                  },
-                  child: const Text(
-                    'No',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                      _deleteAccount(); // Call the delete account function
+                    },
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 12), // Space between buttons
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 160, 160, 160), // Grey for "No" button
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      minimumSize:
+                          const Size(100, 40), // Set button width and height
+                    ),
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(); // Close the dialog without action
+                    },
+                    child: const Text(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Function to delete the Firebase user and their Firestore data
   Future<void> _deleteAccount() async {
@@ -254,6 +321,8 @@ void _showSignOutConfirmationDialog() {
     }
   }
 
+  // Function to toggle notifications
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -286,6 +355,7 @@ void _showSignOutConfirmationDialog() {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Notification toggle
                 ListTile(
                   leading:
                       const Icon(Icons.notifications, color: Color(0xFF4A2E2B)),
@@ -297,21 +367,18 @@ void _showSignOutConfirmationDialog() {
                       fontFamily: 'Nunito',
                     ),
                   ),
-                  trailing: IgnorePointer(
-                    child: Switch(
-                      value: _notificationOn,
-                      onChanged:
-                          null, // Set onChanged to null to disable the switch
-                      activeColor: const Color(0xFFF790AD),
-                      activeTrackColor:
-                          const Color.fromARGB(255, 255, 255, 255),
-                      inactiveThumbColor:
-                          Colors.grey, // Set inactive thumb color to grey
-                      inactiveTrackColor:
-                          Colors.grey, // Set inactive track color to grey
-                    ),
+                  trailing: Switch(
+                    value: _notificationsEnabled,
+                    onChanged: (value) {
+                      _toggleNotifications(value);
+                    },
+                    activeColor: Colors.white,
+                    activeTrackColor: const Color(0xFFF790AD),
+                    inactiveThumbColor: Colors.white,
+                    inactiveTrackColor: Colors.grey,
                   ),
                 ),
+                // Other settings options
                 ListTile(
                   leading: const Icon(Icons.chat, color: Color(0xFF4A2E2B)),
                   title: const Text(
@@ -330,7 +397,7 @@ void _showSignOutConfirmationDialog() {
                     children: [
                       OutlinedButton(
                         onPressed: () {
-                          _showSignOutConfirmationDialog(); // Show the sign-out confirmation dialog
+                          _showSignOutConfirmationDialog();
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFF790AD)),
@@ -339,7 +406,7 @@ void _showSignOutConfirmationDialog() {
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 40, vertical: 12),
-                          minimumSize: const Size(410, 48), // Add minimum size
+                          minimumSize: const Size(410, 48),
                         ),
                         child: const Text(
                           'Sign Out',
@@ -350,20 +417,19 @@ void _showSignOutConfirmationDialog() {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16), // Space between the buttons
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
-                          _showDeleteAccountConfirmationDialog(); // Show the delete account confirmation dialog
+                          _showDeleteAccountConfirmationDialog();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.red, // Set background color to red
+                          backgroundColor: Colors.red,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30.0),
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 40, vertical: 12),
-                          minimumSize: const Size(410, 48), // Add minimum size
+                          minimumSize: const Size(410, 48),
                         ),
                         child: const Text(
                           'Delete Account',
@@ -377,7 +443,7 @@ void _showSignOutConfirmationDialog() {
                     ],
                   ),
                 ),
-                const SizedBox(height: 50), // Space from the bottom
+                const SizedBox(height: 50),
               ],
             ),
           ),

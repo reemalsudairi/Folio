@@ -5,23 +5,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:folio/services/local.notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ClubListener {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   Timer? _timer;
-
+  bool _notificationsEnabled = true;
   ClubListener() {
     // Initialize local notifications
     _initializeNotifications();
 
     // Listen for authentication state changes
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user == null) {
+      if (user == null || _notificationsEnabled) {
         // User signed out, cancel notifications and stop timer
         cancelAllNotifications();
         _timer?.cancel();
+        _timer = null;
         log('User signed out: Notifications and timer stopped.');
       } else {
         // User signed in, start periodic checks
@@ -44,9 +46,13 @@ class ClubListener {
 
   // Start a periodic timer to check club members every 30 seconds
   void _startPeriodicChecks() {
+    if (!_notificationsEnabled) {
+      log('Notifications disabled: Skipping checks.');
+      return;
+    }
     _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
       log('Performing periodic club member checks...');
-      if (_isUserSignedIn()) {
+      if (_isUserSignedIn() && _notificationsEnabled) {
         await _fetchClubsAndCheckMembers();
       } else {
         log('User is signed out. Skipping notifications.');
@@ -232,5 +238,20 @@ class ClubListener {
   Future<void> cancelAllNotifications() async {
     await _flutterLocalNotificationsPlugin.cancelAll();
     log('All scheduled notifications have been canceled.');
+  }
+
+  void toggleNotifications(bool enable) async {
+    _notificationsEnabled = enable;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notificationsEnabled', enable);
+
+    if (enable) {
+      log('Notifications enabled: Starting periodic checks.');
+      _startPeriodicChecks();
+    } else {
+      log('Notifications disabled: Stopping periodic checks and clearing notifications.');
+      cancelAllNotifications();
+      _timer?.cancel();
+    }
   }
 }
