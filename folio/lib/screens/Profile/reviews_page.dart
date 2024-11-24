@@ -152,169 +152,156 @@ void _showReportDialog(BuildContext context, String bookID) async {
   String otherReasonText = ''; // Store the text input for "Other"
 
   showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setDialogState) {
-          return AlertDialog(
-            title: const Text(
-              'Report Review',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Please select the reason(s) for reporting this review:",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                Column(
-                  children: List.generate(reasons.length, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              reasons[index],
-                              style: const TextStyle(fontSize: 18),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              setDialogState(() {
-                                selectedReasons[index] = !selectedReasons[index];
-                                // Check if "Other" is selected
-                                if (reasons[index] == 'Other') {
-                                  // If "Other" is selected, toggle the state
-                                  if (selectedReasons[index]) {
-                                    otherReasonText = ''; // Clear the text when selected
-                                    showOtherError = false; // Clear error message
-                                  }
-                                }
-                              });
-                            },
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(4),
-                                color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
-                              ),
-                              child: selectedReasons[index]
-                                  ? const Icon(Icons.check, color: Colors.white, size: 16)
-                                  : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
-                // Show the TextField for "Other" reason if selected
-                if (selectedReasons.last)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Column(
+  context: context,
+  barrierDismissible: false,
+  builder: (BuildContext context) {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setDialogState) {
+        return AlertDialog(
+          title: const Text(
+            'Report Review',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Please select the reason(s) for reporting this review:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Column(
+                children: List.generate(reasons.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        TextField(
-                          maxLength: 50, // Limit to 50 characters
-                          onChanged: (value) {
-                            otherReasonText = value; // Update the other reason text
-                            setDialogState(() {
-                              showOtherError = false; // Clear error when user types
-                            });
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Please specify...',
-                            border: OutlineInputBorder(),
-                            errorText: showOtherError ? 'This field cannot be empty' : null, // Show error message
+                        Expanded(
+                          child: Text(
+                            reasons[index],
+                            style: const TextStyle(fontSize: 18),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        // Display character count
-                        Align(
-                          alignment: Alignment.centerRight,
-                          
+                        GestureDetector(
+                          onTap: () {
+                            setDialogState(() {
+                              selectedReasons[index] = !selectedReasons[index];
+                              // Check if "Other" is selected
+                              if (reasons[index] == 'Other') {
+                                // If "Other" is selected, toggle the state
+                                if (selectedReasons[index]) {
+                                  otherReasonText = ''; // Clear the text when selected
+                                  showOtherError = false; // Clear error message
+                                }
+                              }
+                            });
+                          },
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(4),
+                              color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
+                            ),
+                            child: selectedReasons[index]
+                                ? const Icon(Icons.check, color: Colors.white, size: 16)
+                                : null,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                const SizedBox(height: 20),
-                if (showError)
-                  const Text(
-                    'Please select at least one reason.',
-                    style: TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-              ],
-            ),
-            actions: [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          // Validate selection
-                          if (selectedReasons.contains(true)) {
-                            // If "Other" is selected, check if the input is empty
-                            if (selectedReasons.last && otherReasonText.isEmpty) {
-                              setDialogState(() {
-                                showOtherError = true; // Show error if "Other" is selected but empty
-                              });
-                            } else {
-                              // Call the submit report method
-                              _submitReport(selectedReasons, reviewId, otherReasonText, context, bookID);
-                              Navigator.of(context).pop(); // Close the dialog
-                            }
-                          } else {
-                            setDialogState(() {
-                              showError = true; // Show error if no reason is selected
-                            });
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF790AD),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: const Text(
-                          'Submit',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(), // Close the dialog
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(fontSize: 18, color: Colors.black),
-                        ),
-                      ),
-                    ],
+                  );
+                }),
+              ),
+              // Show the TextField for "Other" reason if selected
+              if (selectedReasons.last)
+                TextField(
+                  maxLength: 50, // Limit to 50 characters
+                  onChanged: (value) {
+                    otherReasonText = value; // Update the other reason text
+                    setDialogState(() {
+                      showOtherError = false; // Clear error when user types
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: showOtherError ? 'This field cannot be empty' : 'Please specify...',
+                    border: OutlineInputBorder(),
+                    hintStyle: TextStyle(color: showOtherError ? Colors.red : Colors.grey), // Change color of hint text based on error state
                   ),
                 ),
-              ),
+              const SizedBox(height: 0), // Optional: Small space before buttons
+              if (showError)
+                const Text(
+                  'Please select at least one reason.',
+                  style: TextStyle(color: Colors.red, fontSize: 16),
+                ),
             ],
-          );
-        },
-      );
-    },
-  );
+          ),
+          actions: [
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        // Validate selection
+                        if (selectedReasons.contains(true)) {
+                          // If "Other" is selected, check if the input is empty
+                          if (selectedReasons.last && otherReasonText.isEmpty) {
+                            setDialogState(() {
+                              showOtherError = true; // Show error if "Other" is selected but empty
+                            });
+                          } else {
+                            // Call the submit report method
+                            _submitReport(selectedReasons, reviewId, otherReasonText, context, bookID);
+                            Navigator.of(context).pop(); // Close the dialog
+                          }
+                        } else {
+                          setDialogState(() {
+                            showError = true; // Show error if no reason is selected
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF790AD),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        'Submit',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(), // Close the dialog
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontSize: 18, color: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  },
+);
 }
 
 void _showReportConfirmationDialog(

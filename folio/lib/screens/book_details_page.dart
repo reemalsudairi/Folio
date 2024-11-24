@@ -93,7 +93,7 @@ void _showReportDialog(String reviewId) async {
                   "Please select the reason(s) for reporting this review:",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 0),
                 Column(
                   children: List.generate(reasons.length, (index) {
                     return Padding(
@@ -154,21 +154,15 @@ void _showReportDialog(String reviewId) async {
                             });
                           },
                           decoration: InputDecoration(
-                            hintText: 'Please specify...',
+                            hintText: showOtherError ? 'This field cannot be empty' : 'Please specify...',
                             border: OutlineInputBorder(),
-                            errorText: showOtherError ? 'This field cannot be empty' : null, // Show error message
+                            hintStyle: TextStyle(color: showOtherError ? Colors.red : Colors.grey), // Change color of hint text based on error state
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        // Display character count
-                        Align(
-                          alignment: Alignment.centerRight,
-                         
-                        ),
+                        const SizedBox(height: 0),
                       ],
                     ),
                   ),
-                const SizedBox(height: 20),
                 if (showError)
                   const Text(
                     'Please select at least one reason.',
