@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 
 class GoogleBooksService {
   final String _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
-  final String apiKey1 = 'AIzaSyD1U9QRMvD2Gjt1lSlpfAZY4ejl33XJE5g';
-  final String apiKey2 = 'AIzaSyA_g6ljLsAnGo_mM6ufkasr_KESLvSWils';
+  final String apiKey1 = 'AIzaSyDM8X3s7iiywKx2RVhV18tsiE6CTz6NCbY';
+  final String apiKey2 = 'AIzaSyCE9WJusc3fxfJvAiu7AAWCmUjDhKW9WqI';
 
   // Fetch the top 30 best-selling books (or highly relevant books)
   // Fetch books sorted by the most recent published date

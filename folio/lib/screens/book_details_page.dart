@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter/material.dart';
@@ -86,89 +85,91 @@ void _showReportDialog(String reviewId) async {
               'Report Review',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Please select the reason(s) for reporting this review:",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 0),
-                Column(
-                  children: List.generate(reasons.length, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              reasons[index],
-                              style: const TextStyle(fontSize: 18),
+            content: SingleChildScrollView( // Wrap the content with SingleChildScrollView
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Please select the reason(s) for reporting this review:",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 0),
+                  Column(
+                    children: List.generate(reasons.length, (index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                reasons[index],
+                                style: const TextStyle(fontSize: 18),
+                              ),
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              setDialogState(() {
-                                selectedReasons[index] = !selectedReasons[index];
-                                showError = false; // Clear error when a reason is selected
-                                if (reasons[index] == 'Other') {
-                                  isOtherSelected = selectedReasons[index];
-                                  if (!isOtherSelected) {
-                                    customReason = ''; // Clear custom reason if "Other" is deselected
-                                    showOtherError = false; // Clear error for "Other"
+                            GestureDetector(
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedReasons[index] = !selectedReasons[index];
+                                  showError = false; // Clear error when a reason is selected
+                                  if (reasons[index] == 'Other') {
+                                    isOtherSelected = selectedReasons[index];
+                                    if (!isOtherSelected) {
+                                      customReason = ''; // Clear custom reason if "Other" is deselected
+                                      showOtherError = false; // Clear error for "Other"
+                                    }
                                   }
-                                }
+                                });
+                              },
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: selectedReasons[index]
+                                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                  // Display the TextField for the "Other" reason if selected
+                  if (isOtherSelected)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Column(
+                        children: [
+                          TextField(
+                            maxLength: 50, // Limit to 50 characters
+                            onChanged: (value) {
+                              customReason = value; // Update the custom reason as the user types
+                              setDialogState(() {
+                                showOtherError = false; // Clear error when user types
                               });
                             },
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: selectedReasons[index] ? const Color(0xFFF790AD) : Colors.transparent,
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: selectedReasons[index]
-                                  ? const Icon(Icons.check, color: Colors.white, size: 16)
-                                  : null,
+                            decoration: InputDecoration(
+                              hintText: showOtherError ? 'This field cannot be empty' : 'Please specify...',
+                              border: OutlineInputBorder(),
+                              hintStyle: TextStyle(color: showOtherError ? Colors.red : Colors.grey), // Change color of hint text based on error state
                             ),
                           ),
+                          const SizedBox(height: 0),
                         ],
                       ),
-                    );
-                  }),
-                ),
-                // Display the TextField for the "Other" reason if selected
-                if (isOtherSelected)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Column(
-                      children: [
-                        TextField(
-                          maxLength: 50, // Limit to 50 characters
-                          onChanged: (value) {
-                            customReason = value; // Update the custom reason as the user types
-                            setDialogState(() {
-                              showOtherError = false; // Clear error when user types
-                            });
-                          },
-                          decoration: InputDecoration(
-                            hintText: showOtherError ? 'This field cannot be empty' : 'Please specify...',
-                            border: OutlineInputBorder(),
-                            hintStyle: TextStyle(color: showOtherError ? Colors.red : Colors.grey), // Change color of hint text based on error state
-                          ),
-                        ),
-                        const SizedBox(height: 0),
-                      ],
                     ),
-                  ),
-                if (showError)
-                  const Text(
-                    'Please select at least one reason.',
-                    style: TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-              ],
+                  if (showError)
+                    const Text(
+                      'Please select at least one reason.',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                ],
+              ),
             ),
             actions: [
               Center(
@@ -2101,3 +2102,4 @@ String timeAgo(DateTime date) {
     return '${(difference.inDays / 365).floor()} year${(difference.inDays / 365).floor() > 1 ? 's' : ''} ago';
   }
 }
+
