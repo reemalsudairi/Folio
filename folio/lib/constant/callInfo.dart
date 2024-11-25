@@ -1,4 +1,4 @@
 class CallInfo {
-  static const appId=1432843458;
-  static const appsign= "7c5ece90dc49d46631b7d5624c90fe9fad37c176377ee5d440a3ed67b6c59046" ;
+  static const appId=1337325719;
+  static const appsign= "5ad1bc7bbfe1e84687982bfc08e24c15cd5a1fb660864f18f8212b25752485a3" ;
 }
