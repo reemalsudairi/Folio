@@ -65,79 +65,112 @@ class _LoginPageState extends State<LoginPage> {
 
 Future<void> signUserIn() async {
   if (_formKey.currentState?.validate() ?? false && _isPasswordFieldValid) {
-    FocusScope.of(context).unfocus();
-
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      // Sign in the user
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      final userId = userCredential.user?.uid ?? '';
-      final readerDoc = FirebaseFirestore.instance.collection('reader').doc(userId);
-
-      // Fetch user data from Firestore
-      var userDocSnapshot = await readerDoc.get();
-
-      if (userDocSnapshot.exists) {
-        int numberOfReports = userDocSnapshot.data()?['NumberOfReports'] ?? 0;
-
-        // Check if the user should be banned
-        if (numberOfReports >= 3) {
-          await readerDoc.update({'banned': true});
-
-          Navigator.pop(context); // Remove loading dialog
-          setState(() {
-            _errorMessage = "Your account has been suspended. Please contact support for assistance.";
-          });
-          return;
-        }
-
-        // Ensure 'hiddenUpdates' field exists
-        await initializeHiddenUpdates(readerDoc);
-      }
-
-      Navigator.pop(context); // Remove loading dialog
-
-      setState(() {
-        _errorMessage = null;
-      });
-
-      _showConfirmationMessage();
-
-      // Delay navigation AFTER confirmation dialog is shown and closed
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.pop(context); // Close the confirmation dialog
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage(userId: userId)),
-        );
-      });
-    } on FirebaseAuthException catch (e) {
-      Navigator.pop(context); // Remove loading dialog on error
-      setState(() {
-        _errorMessage = _handleAuthError(e);
-      });
-    } catch (e) {
-      Navigator.pop(context);
-      setState(() {
-        _errorMessage = "An unexpected error occurred.";
-      });
-    }
+    FocusScope.of(context).unfocus(); 
+    _showLoadingDialog(); // Show loading dialog while processing login
+    await _attemptLogin(); // Perform authentication
   } else {
-    setState(() {
-      _errorMessage = "Please fill in all fields correctly.";
+    setState(() { 
+      _errorMessage = "Please fill in all fields correctly."; // Display validation error
     });
   }
 }
+// Show loading indicator while authentication is in progress
+void _showLoadingDialog() {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Prevent user from closing the dialog manually
+    builder: (context) => const Center(child: CircularProgressIndicator()),
+  );
+}
+// Handles user authentication, Firestore checks, and navigation
+Future<void> _attemptLogin() async {
+  try {
+    // Sign in the user using Firebase Authentication
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
+
+    final userId = userCredential.user?.uid ?? '';
+    final readerDoc = FirebaseFirestore.instance.collection('reader').doc(userId);
+
+    // Fetch user data and check if the user is banned
+    if (await _checkUserStatus(readerDoc)) return; // Stop login if user is banned
+
+    await _initializeHiddenUpdates(readerDoc); // Ensure Firestore document structure
+
+    Navigator.pop(context); // Remove loading dialog after successful login
+
+    setState(() { 
+      _errorMessage = null; // Clear any previous error messages
+    });
+    _showConfirmationMessage(); // Show confirmation message before navigation
+
+    // Delay navigation AFTER confirmation dialog is shown and closed
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context); // Close the confirmation dialog
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(userId: userId), // Navigate to home page
+        ),
+      );
+    });
+  } on FirebaseAuthException catch (e) {
+    Navigator.pop(context); // Remove loading dialog on error
+    setState(() { 
+      _errorMessage = _handleAuthError(e); // Display appropriate error message
+    });
+  }
+}
+
+// Check if the user has been reported too many times and needs to be banned
+Future<bool> _checkUserStatus(DocumentReference readerDoc) async {
+  var userDocSnapshot = await readerDoc.get();
+
+  if (userDocSnapshot.exists) {
+    Map<String, dynamic>? userData = userDocSnapshot.data() as Map<String, dynamic>?;
+
+    int numberOfReports = (userData?['NumberOfReports'] as num?)?.toInt() ?? 0; 
+    // Ban user if they have 3 or more reports
+    if (numberOfReports >= 3) {
+      await readerDoc.update({'banned': true});
+
+      Navigator.pop(context); // Remove loading dialog
+      setState(() {
+        _errorMessage = "Your account has been suspended. Please contact support for assistance.";
+      });
+      return true; // Indicate that the user is banned
+    }
+  }
+  return false; // User is not banned, continue login process
+}
+
+
+// Ensure 'hiddenUpdates' field exists in Firestore
+Future<void> _initializeHiddenUpdates(DocumentReference readerDoc) async {
+  try {
+    DocumentSnapshot readerSnapshot = await readerDoc.get();
+
+    if (readerSnapshot.exists) {
+      Map<String, dynamic>? data = readerSnapshot.data() as Map<String, dynamic>?;
+      if (data != null && !data.containsKey('hiddenUpdates')) {
+        await readerDoc.update({
+          'hiddenUpdates': FieldValue.arrayUnion([]),
+        });
+      }
+    } else {
+      await readerDoc.set({'hiddenUpdates': []}, SetOptions(merge: true));
+    }
+  } catch (e) {
+    print("Error initializing hidden updates: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error initializing document: $e')),
+    );
+  }
+}
+
+
 
 Future<void> initializeHiddenUpdates(DocumentReference readerDoc) async {
   try {
