@@ -56,76 +56,76 @@ class _SignUpState extends State<SignUp> {
 // Sign up function
   String? _errorMessage;
 
-  Future<void> _signUp() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        isLoading = true;
-        _errorMessage = null; // Reset error message
+  // Consolidate checks for username and email existence into a single method
+Future<bool> checkIfFieldExists(String field, String value) async {
+  final QuerySnapshot result = await _firestore
+      .collection('reader')
+      .where(field, isEqualTo: value)
+      .limit(1)
+      .get();
+  final List<DocumentSnapshot> documents = result.docs;
+  return documents.isNotEmpty;
+}
+
+// Sign up function
+Future<void> _signUp() async {
+  if (_formKey.currentState!.validate()) {
+    setState(() {
+      isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Check if username or email already exists
+      if (await checkIfFieldExists('username', _usernameController.text.trim())) {
+        _errorMessage = 'Username is already in use';
+        throw FirebaseAuthException(code: 'username-already-in-use');
+      }
+
+      if (await checkIfFieldExists('email', _emailController.text.trim())) {
+        _errorMessage = 'Email is already in use';
+        throw FirebaseAuthException(code: 'email-already-in-use');
+      }
+
+      // Sign up the user using Firebase Auth
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Add user data to Firestore "reader" collection
+      await _firestore.collection('reader').doc(userCredential.user!.uid).set({
+        'username': _usernameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'uid': userCredential.user!.uid,
+        'createdAt': Timestamp.now(),
+        'banned': false,
+        'NumberOfReports': 0,
       });
 
-      try {
-        // Check if username already exists
-        bool usernameExists =
-            await checkIfUsernameExists(_usernameController.text.trim());
-        if (usernameExists) {
-          _errorMessage = 'Username is already in use';
-          throw FirebaseAuthException(code: 'username-already-in-use');
-        }
-
-        // Check if email already exists
-        bool emailExists =
-            await checkIfEmailExists(_emailController.text.trim());
-        if (emailExists) {
-          _errorMessage = 'Email is already in use';
-          throw FirebaseAuthException(code: 'email-already-in-use');
-        }
-
-        // Sign up the user using Firebase Auth
-        UserCredential userCredential =
-            await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        // Add user data to Firestore "reader" collection
-        await _firestore
-            .collection('reader')
-            .doc(userCredential.user!.uid)
-            .set({
-          'username': _usernameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'uid': userCredential.user!.uid,
-          'createdAt': Timestamp.now(),
-          'banned': false,
-          'NumberOfReports':0,
-        });
-
-        // Navigate to the Profile Setup screen
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ProfileSetup(userId: userCredential.user!.uid),
-          ),
-        );
-      } on FirebaseAuthException catch (e) {
-        // Handle Firebase Auth errors
-        _errorMessage = _handleAuthError(e);
-      } catch (e) {
-        // Handle any other errors
-        _errorMessage = "An unexpected error occurred.";
-      } finally {
-        setState(() {
-          isLoading = false; // Ensure loading state is reset
-        });
-      }
-    } else {
-      _errorMessage = "Please fill in all fields correctly.";
+      // Navigate to the Profile Setup screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileSetup(userId: userCredential.user!.uid),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = _handleAuthError(e);
+    } catch (e) {
+      _errorMessage = "An unexpected error occurred.";
+    } finally {
       setState(() {
-        isLoading = false; // Reset loading state if validation fails
-      }); // Update UI to show the error message
+        isLoading = false;
+      });
     }
+  } else {
+    _errorMessage = "Please fill in all fields correctly.";
+    setState(() {
+      isLoading = false;
+    });
   }
+}
 
   String _handleAuthError(FirebaseAuthException error) {
     switch (error.code) {
@@ -615,15 +615,12 @@ class _SignUpState extends State<SignUp> {
                                           // Icon button for visibility toggle
                                           IconButton(
                                             icon: Icon(
-                                              _obscureConfirmPassword
-                                                  ? Icons.visibility_off
-                                                  : Icons.visibility,
+                                              _obscureConfirmPassword? Icons.visibility_off: Icons.visibility,
                                               color: const Color(0xFFF790AD),
                                             ),
                                             onPressed: () {
                                               setState(() {
-                                                _obscureConfirmPassword =
-                                                    !_obscureConfirmPassword;
+                                                _obscureConfirmPassword =!_obscureConfirmPassword;
                                               });
                                             },
                                           ),
