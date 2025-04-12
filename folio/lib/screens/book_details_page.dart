@@ -1009,44 +1009,37 @@ Future<String> _getReviewWriterID(String reviewId) async {
       _selectedIndex = index;
     });
   }
+Future<double> calculateAverageRating(String bookId) async {
+  try {
+    final QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('reviews')
+        .where('bookID', isEqualTo: bookId)
+        .get();
 
-  Future<double> calculateAverageRating(String bookId) async {
-    try {
-      final QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('reviews')
-          .where('bookID', isEqualTo: bookId)
-          .get();
+    double totalRating = 0.0;
+    int validRatingCount = 0;
 
-      if (snapshot.docs.isEmpty) {
-        print('No reviews found for bookId: $bookId'); // Debugging output
-        return 0.0; // No ratings available
+    for (var doc in snapshot.docs) {
+      final double? validRating = _validateAndConvertRating(doc['rating']);
+      if (validRating != null) {
+        totalRating += validRating;
+        validRatingCount++;
       }
-
-      double totalRating = 0.0;
-      int validRatingCount = 0; // Counter for valid ratings
-
-      for (var doc in snapshot.docs) {
-        final rating = doc['rating'];
-        if (rating is double) {
-          totalRating += rating; // Add if rating is double
-          if (rating > 0) validRatingCount++; // Increment valid rating counter
-        } else if (rating is int) {
-          totalRating += rating.toDouble(); // Convert int to double and add
-          if (rating > 0) validRatingCount++; // Increment valid rating counter
-        }
-      }
-
-      print(
-          'Total Rating: $totalRating, Rating Count: $validRatingCount'); // Debugging output
-
-      return validRatingCount > 0
-          ? totalRating / validRatingCount
-          : 0.0; // Calculate average if there are valid ratings
-    } catch (e) {
-      print('Error calculating average rating: $e');
-      return 0.0; // Default return value in case of error
     }
+    return validRatingCount > 0 ? totalRating / validRatingCount : 0.0;
+  } catch (e) {
+    return 0.0;
   }
+}
+
+// Extracted validation logic
+double? _validateAndConvertRating(dynamic rating) {
+  if (rating is num && rating > 0) {     // Combined check for all number types
+    return rating.toDouble();            // Unified conversion
+  }
+  return null;                           // Invalid ratings return null
+}
+
 
   @override
   Widget build(BuildContext context) {
