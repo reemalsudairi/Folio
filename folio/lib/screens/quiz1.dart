@@ -261,62 +261,64 @@ Widget build(BuildContext context) {
 
         // Main Content (Split into question, options, and image + button section)
 Expanded(
-  child: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Question Section
-        Text(
-          currentQuestion['question'],
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 53, 31, 31),
-          ),
-        ),
-        if (currentQuestion['question'] == "What language do you prefer?")
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "Choose one language only",
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+  child: SingleChildScrollView(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Question Section
+          Text(
+            currentQuestion['question'],
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 53, 31, 31),
             ),
           ),
-        SizedBox(height: 20),
+          if (currentQuestion['question'] == "What language do you prefer?")
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                "Choose one language only",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          SizedBox(height: 20),
 
-        // Options Section
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: (currentQuestion['options'] as List<String>)
-              .map((option) {
-            bool isSelected = selectedAnswers[currentQuestion['question']]
-                    ?.contains(option) ??
-                false;
-            return ChoiceChip(
-              label: Text(option),
-              labelStyle: TextStyle(
-                color: isSelected
-                    ? Colors.white
-                    : Color.fromARGB(255, 53, 31, 31),
-              ),
-              selected: isSelected,
-              selectedColor: Color(0xFFF790AD),
-              backgroundColor: Colors.grey[200],
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              onSelected: (selected) {
-                _toggleOption(option);
-              },
-            );
-          }).toList(),
-        ),
-      ],
+          // Options Section
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: (currentQuestion['options'] as List<String>)
+                .map((option) {
+              bool isSelected = selectedAnswers[currentQuestion['question']]
+                      ?.contains(option) ??
+                  false;
+              return ChoiceChip(
+                label: Text(option),
+                labelStyle: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : Color.fromARGB(255, 53, 31, 31),
+                ),
+                selected: isSelected,
+                selectedColor: Color(0xFFF790AD),
+                backgroundColor: Colors.grey[200],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                onSelected: (selected) {
+                  _toggleOption(option);
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     ),
   ),
 ),
@@ -330,7 +332,7 @@ Expanded(
               // Image (Consistently above the button)
               Image.asset(
                 currentQuestion['image'],
-                height: 180,
+                height: 150,
                 fit: BoxFit.contain,
               ),
               SizedBox(height: 20), // Space between the image and the button
