@@ -1,21 +1,22 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import 'package:folio/screens/Profile/book.dart';
 import 'package:folio/screens/Profile/currently_reading_page.dart';
-import 'package:folio/screens/Profile/profile.dart';
+import 'package:folio/screens/UpdatesNotificationBell.dart';
 import 'package:folio/screens/book_details_page.dart';
-import 'package:folio/screens/bookclubs_page.dart';
 import 'package:folio/screens/categories_page.dart';
+import 'package:folio/screens/Profile/profile.dart';
+import 'package:folio/screens/bookclubs_page.dart';
+import 'package:folio/screens/Homedataservice.dart';
 import 'package:folio/screens/extendedclubs.dart';
+import 'package:folio/screens/firebase_homedataservice.dart';
 import 'package:folio/screens/quiz1.dart';
 import 'package:folio/screens/searchMemebr.dart';
-import 'package:folio/screens/settings.dart';
 import 'package:folio/screens/viewClub.dart';
 import 'package:http/http.dart' as http;
-import 'package:folio/screens/UpdatesNotificationBell.dart';
-import 'Profile/book.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.userId});
@@ -27,6 +28,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late final HomeDataService _dataService;
   int _selectedIndex = 0;
   String _name = '';
   String _profilePhotoUrl = '';
@@ -37,237 +39,40 @@ class _HomePageState extends State<HomePage> {
   List<Club> joinedClubs = [];
   bool _isLoadingBooks = true;
   bool _isLoadingClubs = true;
-  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
   @override
   void initState() {
     super.initState();
-    _setupUserDataListener();
-    _fetchCurrentlyReadingBooks();
-    _fetchClubs();
-  }
+    _dataService = FirebaseHomeDataService();
 
-  Future<void> _setupUserDataListener() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      FirebaseFirestore.instance
-          .collection('reader')
-          .doc(user.uid)
-          .snapshots()
-          .listen((snapshot) {
-        if (snapshot.exists) {
-          final userData = snapshot.data();
-          setState(() {
-            _name = userData?['name'] ?? '';
-            _profilePhotoUrl = userData?['profilePhoto'] ?? '';
-            _booksGoal = userData?['books'] ?? 0;
-            _booksRead = userData?['booksRead'] ?? 0;
-          });
-        }
-      });
-    }
-  }
-
-  Future<void> _fetchCurrentlyReadingBooks() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    // Force Firebase to refresh user data in case of cache issues
-    await user?.reload();
-
-    if (user == null) return;
-
-    try {
-      CollectionReference booksRef = FirebaseFirestore.instance
-          .collection('reader')
-          .doc(user.uid)
-          .collection('currently reading');
-
-      booksRef
-          .orderBy('timestamp', descending: true)
-          .snapshots()
-          .listen((snapshot) async {
-        List<Book> books = [];
-        for (var doc in snapshot.docs) {
-          var bookId = doc['bookID'];
-          Book book = await _fetchBookFromGoogleAPI(bookId);
-          books.add(book);
-        }
-
-        setState(() {
-          currentlyReadingBooks = books;
-          _isLoadingBooks = false;
-        });
-      });
-    } catch (error) {
-      print('Error fetching currently reading books: $error');
+    _dataService.getUserData(widget.userId).listen((user) {
       setState(() {
+        _name = user.name;
+        _profilePhotoUrl = user.profilePhotoUrl;
+        _booksGoal = user.booksGoal;
+        _booksRead = user.booksRead;
+      });
+    });
+
+    _dataService.getCurrentlyReadingBooks(widget.userId).listen((books) {
+      setState(() {
+        currentlyReadingBooks = books;
         _isLoadingBooks = false;
       });
-    }
-  }
+    });
 
-  Future<Book> _fetchBookFromGoogleAPI(String bookId) async {
-    String url = 'https://www.googleapis.com/books/v1/volumes/$bookId';
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      return Book.fromGoogleBooksAPI(data);
-    } else {
-      throw Exception('Failed to load book data');
-    }
-  }
-
-  Future<void> _fetchClubs() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final userId = user?.uid ?? '';
-
-    if (userId.isEmpty) {
-      print('User is not logged in.');
-      return;
-    }
-
-    try {
-      // Listener for clubs the user owns
-      FirebaseFirestore.instance
-          .collection('clubs')
-          .where('ownerID', isEqualTo: userId)
-          .snapshots()
-          .listen((QuerySnapshot myClubsSnapshot) {
-        List<Club> tempMyClubs = [];
-
-        for (var doc in myClubsSnapshot.docs) {
-          // Real-time listener for member count in each owned club
-          FirebaseFirestore.instance
-              .collection('clubs')
-              .doc(doc.id)
-              .collection('members')
-              .snapshots()
-              .listen((membersSnapshot) {
-            int memberCount = membersSnapshot.size;
-
-            Club club = Club.fromMap(
-              doc.data() as Map<String, dynamic>,
-              doc.id,
-              memberCount,
-            );
-
-            int existingIndex = tempMyClubs.indexWhere((c) => c.id == doc.id);
-            if (existingIndex >= 0) {
-              tempMyClubs[existingIndex] = club;
-            } else {
-              tempMyClubs.add(club);
-            }
-
-            setState(() {
-              myClubs = tempMyClubs;
-            });
-          });
-        }
-
-        // Remove clubs that were deleted from Firestore
-        final updatedClubIds =
-            myClubsSnapshot.docs.map((doc) => doc.id).toSet();
-        tempMyClubs.removeWhere((club) => !updatedClubIds.contains(club.id));
-
-        setState(() {
-          myClubs = tempMyClubs;
-        });
-      });
-
-      // Listener for clubs the user has joined but does not own
-      FirebaseFirestore.instance.collection('clubs').snapshots().listen(
-        (QuerySnapshot joinedClubsSnapshot) {
-          List<Club> tempJoinedClubs = [];
-
-          for (var doc in joinedClubsSnapshot.docs) {
-            var clubData = doc.data() as Map<String, dynamic>?;
-
-            if (clubData != null && clubData['ownerID'] != userId) {
-              // Check if the user is a member of this club
-              FirebaseFirestore.instance
-                  .collection('clubs')
-                  .doc(doc.id)
-                  .collection('members')
-                  .doc(userId)
-                  .snapshots()
-                  .listen((memberSnapshot) {
-                if (memberSnapshot.exists) {
-                  // Real-time listener for member count updates
-                  FirebaseFirestore.instance
-                      .collection('clubs')
-                      .doc(doc.id)
-                      .collection('members')
-                      .snapshots()
-                      .listen((membersSnapshot) {
-                    int memberCount = membersSnapshot.size;
-
-                    Club club = Club.fromMap(
-                      clubData,
-                      doc.id,
-                      memberCount,
-                    );
-
-                    int existingIndex =
-                        tempJoinedClubs.indexWhere((c) => c.id == doc.id);
-                    if (existingIndex >= 0) {
-                      tempJoinedClubs[existingIndex] = club;
-                    } else {
-                      tempJoinedClubs.add(club);
-                    }
-
-                    setState(() {
-                      joinedClubs = tempJoinedClubs;
-                      _isLoadingClubs = false;
-                    });
-                  });
-                } else {
-                  // Remove club if the user is no longer a member
-                  tempJoinedClubs.removeWhere((c) => c.id == doc.id);
-                  setState(() {
-                    joinedClubs = tempJoinedClubs;
-                    _isLoadingClubs = false;
-                  });
-                }
-              });
-            }
-          }
-        },
-        onError: (e) {
-          print('Error fetching joined clubs: $e');
-          setState(() {
-            _isLoadingClubs = false;
-          });
-        },
-      );
-    } catch (e) {
-      print('Error setting up club listeners: $e');
+    _dataService.getOwnedClubs(widget.userId).listen((clubs) {
       setState(() {
+        myClubs = clubs.cast<Club>();
+      });
+    });
+
+    _dataService.getJoinedClubs(widget.userId).listen((clubs) {
+      setState(() {
+        joinedClubs = clubs.cast<Club>();
         _isLoadingClubs = false;
       });
-    }
-  }
-
-  Stream<int> fetchMemberCount(String clubId) {
-    try {
-      // Listen for real-time updates from the members subcollection
-      return FirebaseFirestore.instance
-          .collection('clubs')
-          .doc(clubId)
-          .collection('members')
-          .snapshots()
-          .map((membersSnapshot) {
-        // If the members collection is empty, return 1 to indicate only the owner.
-        if (membersSnapshot.size == 0) {
-          return 1;
-        }
-        // Otherwise, return the size of the members collection.
-        return membersSnapshot.size;
-      });
-    } catch (e) {
-      print('Error fetching member count for club $clubId: $e');
-      // Return a stream with a single value of 1 in case of an error.
-      return Stream.value(1);
-    }
+    });
   }
 
   void _onItemTapped(int index) {
@@ -296,7 +101,7 @@ class _HomePageState extends State<HomePage> {
               ? const CategoriesPage()
               : _selectedIndex == 2
                   ? ClubsBody()
-                  : ProfilePage(onEdit: _setupUserDataListener),
+                  : ProfilePage(onEdit: () {}),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: const Color(0xFFF790AD),
@@ -326,6 +131,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
 
 class HomePageContent extends StatelessWidget {
   final String name;
