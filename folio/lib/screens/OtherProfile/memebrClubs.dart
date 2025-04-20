@@ -4,7 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:folio/screens/viewClub.dart';
 import 'package:folio/screens/Profile/clubs_page.dart';
 
-class Club {
+abstract class IClub {
+  String get id;
+  String get name;
+  String get description;
+  String get picture;
+  int get memberCount;
+}
+
+class Club implements IClub {
   final String id;
   final String name;
   final String description;

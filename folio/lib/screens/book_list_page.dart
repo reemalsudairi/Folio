@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter/material.dart';
 import 'package:folio/services/google_books_service.dart';
-
 import 'book_details_page.dart';
 
 class BookListPage extends StatefulWidget {
@@ -23,7 +22,8 @@ class _BookListPageState extends State<BookListPage> {
   List<dynamic> _books = [];
   bool _isLoading = true;
   String _errorMessage = '';
-  String? userId;
+  // Define a variable to store the current user's ID
+    String? userId;  //L26
 
   @override
   void initState() {
@@ -32,12 +32,16 @@ class _BookListPageState extends State<BookListPage> {
     _fetchUserId(); // Fetch user ID from Firebase Auth
   }
 
-  Future<void> _fetchUserId() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      setState(() {
-        userId = user.uid;
-      });
+  // This method is called to fetch the current user's ID from Firebase Authentication
+  Future<void> _fetchUserId() async { //L36
+  // Get the currently signed-in user from Firebase
+  User? user = FirebaseAuth.instance.currentUser; //L38
+
+  // If the user exists, update the userId state variable
+  if (user != null) {  //L41
+    setState(() {  //L42
+      userId = user.uid; // Save the user's unique ID    //L43
+    });  //L44
     }
   }
 
@@ -108,19 +112,25 @@ class _BookListPageState extends State<BookListPage> {
                       final bookId = book['id'];
 
                       return GestureDetector(
-                        onTap: () {
-                          if (userId != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookDetailsPage(
-                                    bookId: bookId,
-                                    userId:
-                                        userId!), // Make sure userId is passed.
-                              ),
-                            );
-                          }
-                        },
+
+                        // Inside the itemBuilder, this section handles what happens when a book is tapped
+                          onTap: () {  //117
+                            // Check if userId is not null (user is signed in)
+                            if (userId != null) {  //L119
+                              // Navigate to the BookDetailsPage, passing both bookId and userId
+                              Navigator.push(  //L121
+                                context,  //L122
+                                MaterialPageRoute(  //L123
+                                  builder: (context) => BookDetailsPage(  //L124
+                                    bookId: bookId, // The selected book's ID  //L125
+                                    userId: userId!, // The current user's ID   //L126
+                                  ),
+                                ),
+                              );
+                            }
+                            return;
+                          },
+
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10.0),
                           child: Container(
